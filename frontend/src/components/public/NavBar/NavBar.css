@@ -82,6 +82,12 @@
   margin-right: 0.5rem;
 }
 
+/* => active states for clicking */
+.nav-links a.active {
+  background: #262626;
+  color: #fff;
+}
+
 /* responsive section */
 @media (max-width: 768px) {
   .nav-right {
@@ -114,3 +120,4 @@
     display: flex;
   }
 }
+
