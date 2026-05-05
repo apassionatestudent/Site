@@ -1,0 +1,78 @@
+.contact {
+  color: #fff;
+  min-height: 100vh;
+}
+
+.contact-hero {
+  padding: 5rem 2rem 3rem;
+  text-align: center;
+  background: linear-gradient(180deg, #1a0305 0%, #000 100%);
+}
+
+.contact-tag {
+  display: inline-block;
+  background: rgba(102, 9, 17, 0.4);
+  border: 1px solid #660911;
+  color: #ff6b7a;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 0.3rem 1rem;
+  border-radius: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.contact-hero h1 {
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 800;
+  margin-bottom: 1rem;
+}
+
+.contact-hero p {
+  color: #aaa;
+  max-width: 500px;
+  margin: 0 auto;
+  line-height: 1.7;
+}
+
+.contact-body {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.5rem;
+  padding: 4rem 2rem;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.contact-card {
+  background: #111;
+  border: 1px solid #222;
+  border-radius: 1rem;
+  padding: 2rem;
+  text-align: center;
+  transition: border-color 0.3s, transform 0.3s;
+}
+
+.contact-card:hover {
+  border-color: #660911;
+  transform: translateY(-4px);
+}
+
+.contact-icon {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.contact-card h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+  color: #ff6b7a;
+}
+
+.contact-card p {
+  color: #888;
+  font-size: 0.9rem;
+  line-height: 1.8;
+}

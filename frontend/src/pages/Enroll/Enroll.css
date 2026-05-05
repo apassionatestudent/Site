@@ -1,0 +1,133 @@
+.enroll {
+  color: #fff;
+  min-height: 100vh;
+}
+
+.enroll-hero {
+  padding: 5rem 2rem 3rem;
+  text-align: center;
+  background: linear-gradient(180deg, #1a0305 0%, #000 100%);
+}
+
+.enroll-tag {
+  display: inline-block;
+  background: rgba(102, 9, 17, 0.4);
+  border: 1px solid #660911;
+  color: #ff6b7a;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 0.3rem 1rem;
+  border-radius: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.enroll-hero h1 {
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 800;
+  margin-bottom: 1rem;
+}
+
+.enroll-hero p {
+  color: #aaa;
+  max-width: 500px;
+  margin: 0 auto;
+  line-height: 1.7;
+}
+
+.enroll-body {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 4rem 2rem;
+}
+
+.enroll-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.form-group label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #ccc;
+  letter-spacing: 0.05em;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  background: #111;
+  border: 1px solid #333;
+  border-radius: 0.5rem;
+  color: #fff;
+  padding: 0.75rem 1rem;
+  font-size: 0.95rem;
+  transition: border-color 0.3s;
+  outline: none;
+  font-family: inherit;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  border-color: #660911;
+}
+
+.form-group select option {
+  background: #111;
+}
+
+.btn-primary {
+  background: #660911;
+  color: #fff;
+  padding: 0.85rem 2rem;
+  border-radius: 0.5rem;
+  text-decoration: none;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background 0.3s;
+  font-family: inherit;
+}
+
+.btn-primary:hover {
+  background: #8a0d17;
+}
+
+.enroll-submit {
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+/* Success state */
+.enroll-success {
+  text-align: center;
+  padding: 3rem 2rem;
+  background: #111;
+  border: 1px solid #222;
+  border-radius: 1rem;
+}
+
+.success-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.enroll-success h2 {
+  font-size: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.enroll-success p {
+  color: #888;
+  margin-bottom: 1.5rem;
+}

@@ -1,0 +1,128 @@
+.home {
+  color: #fff;
+}
+
+/* Hero */
+.home-hero {
+  min-height: 80vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a0305 60%, #660911 100%);
+  text-align: center;
+}
+
+.home-hero-content {
+  max-width: 700px;
+}
+
+.home-tag {
+  display: inline-block;
+  background: rgba(102, 9, 17, 0.4);
+  border: 1px solid #660911;
+  color: #ff6b7a;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  padding: 0.3rem 1rem;
+  border-radius: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.home-hero-content h1 {
+  font-size: clamp(2.2rem, 5vw, 3.8rem);
+  font-weight: 800;
+  line-height: 1.15;
+  margin-bottom: 1.5rem;
+  color: #fff;
+}
+
+.home-hero-content h1 span {
+  color: #ff6b7a;
+}
+
+.home-hero-content p {
+  font-size: 1.1rem;
+  color: #aaa;
+  line-height: 1.7;
+  margin-bottom: 2.5rem;
+}
+
+.home-hero-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.btn-primary {
+  background: #660911;
+  color: #fff;
+  padding: 0.85rem 2rem;
+  border-radius: 0.5rem;
+  text-decoration: none;
+  font-weight: 600;
+  transition: background 0.3s;
+}
+
+.btn-primary:hover {
+  background: #8a0d17;
+}
+
+.btn-secondary {
+  background: transparent;
+  color: #fff;
+  padding: 0.85rem 2rem;
+  border-radius: 0.5rem;
+  text-decoration: none;
+  font-weight: 600;
+  border: 1px solid #444;
+  transition: border-color 0.3s, color 0.3s;
+}
+
+.btn-secondary:hover {
+  border-color: #fff;
+}
+
+/* Features */
+.home-features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.5rem;
+  padding: 4rem 2rem;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.home-feature-card {
+  background: #111;
+  border: 1px solid #222;
+  border-radius: 1rem;
+  padding: 2rem;
+  transition: border-color 0.3s, transform 0.3s;
+}
+
+.home-feature-card:hover {
+  border-color: #660911;
+  transform: translateY(-4px);
+}
+
+.feature-icon {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.home-feature-card h3 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+  color: #fff;
+}
+
+.home-feature-card p {
+  color: #888;
+  line-height: 1.6;
+  font-size: 0.95rem;
+}
