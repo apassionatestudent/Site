@@ -1,35 +1,142 @@
-/* index.css — must be first lines */
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Sans:wght@300;400;500&display=swap');
 
+/* ── Global font tokens ─────────────────────────── */
 :root {
   --font-display: 'Cormorant Garamond', serif;
   --font-body: 'DM Sans', sans-serif;
 }
 
+/* ── Light theme ────────────────────────────────── */
 :root[data-theme="light"] {
-  --bg-primary: #ffffff;
-  --bg-secondary: #f4f4f5;
-  --text-primary: #111827;
-  --text-secondary: #6b7280;
-  --border: #e5e7eb;
-  --accent: #3b82f6;
+  /* Base */
+  --bg-primary: #fafafa;
+  --bg-secondary: #f5f0f0;
+  --text-primary: #1a0305;
+  --text-secondary: #555;
+  --text-muted: #666;
+  --border: #e0d8d0;
+
+  /* Home Hero */
+  --bg-hero: linear-gradient(135deg, #f5f0f0 0%, #fde8ea 60%, #f9c0c5 100%);
+  --tag-bg: rgba(102, 9, 17, 0.08);
+  --tag-border: #660911;
+  --tag-color: #660911;
+  --accent: #660911;
+  --accent-hover: #8a0d17;
+  --accent-span: #660911;
+  --btn-secondary-color: #1a0305;
+  --btn-secondary-border: #999;
+  --btn-secondary-hover-border: #1a0305;
+
+  /* Cards */
+  --card-bg: #ffffff;
+  --card-border: #e8d5d7;
+  --card-border-hover: #660911;
+  --card-glow: 0 0 16px rgba(102, 9, 17, 0.2);
+  --card-h3: #1a0305;
+  --card-p: #666;
+
+  /* About */
+  --about-hero-bg: linear-gradient(180deg, #fde8ea 0%, #fafafa 100%);
+  --about-watermark: rgba(102, 9, 17, 0.04);
+  --about-card-num: #660911;
+
+  /* Footer */
+  --footer-bg: #f5f0eb;
+  --footer-text: #2a2520;
+  --footer-border-top: #e0d8d0;
+  --footer-map-border: #d5cdc5;
+  --footer-map-label: #8a6a3a;
+  --footer-map-filter: grayscale(20%) contrast(90%);
+  --footer-map-filter-hover: grayscale(0%) contrast(100%);
+  --footer-brand-name: #1a0f05;
+  --footer-brand-tagline: #6a5a4a;
+  --footer-section-title: #8a6a3a;
+  --footer-link-color: #3a3530;
+  --footer-link-hover: #660911;
+  --footer-link-underline: #8a6a3a;
+  --footer-detail-text: #3a3530;
+  --footer-detail-strong: #1a1510;
+  --footer-contact-color: #3a3530;
+  --footer-contact-hover: #660911;
+  --footer-contact-icon: #8a6a3a;
+  --footer-social-border: #d5cdc5;
+  --footer-social-color: #8a8480;
+  --footer-social-hover-border: #8a6a3a;
+  --footer-social-hover-color: #8a6a3a;
+  --footer-social-hover-bg: rgba(138, 106, 58, 0.06);
+  --footer-bottom-border: #e0d8d0;
+  --footer-copyright: #5a5550;
+  --footer-legal-color: #5a5550;
+  --footer-legal-hover: #1a1510;
 }
 
+/* ── Dark theme ─────────────────────────────────── */
 :root[data-theme="dark"] {
-  --bg-primary: #0f172a;
-  --bg-secondary: #1e293b;
-  --text-primary: #f1f5f9;
-  --text-secondary: #94a3b8;
-  --border: #334155;
-  --accent: #60a5fa;
+  /* Base */
+  --bg-primary: #0a0a0a;
+  --bg-secondary: #111;
+  --text-primary: #fff;
+  --text-secondary: #aaa;
+  --text-muted: #888;
+  --border: #222;
+
+  /* Home Hero */
+  --bg-hero: linear-gradient(135deg, #0a0a0a 0%, #1a0305 60%, #660911 100%);
+  --tag-bg: rgba(102, 9, 17, 0.4);
+  --tag-border: #660911;
+  --tag-color: #ff6b7a;
+  --accent: #660911;
+  --accent-hover: #8a0d17;
+  --accent-span: #ff6b7a;
+  --btn-secondary-color: #fff;
+  --btn-secondary-border: #444;
+  --btn-secondary-hover-border: #fff;
+
+  /* Cards */
+  --card-bg: #111;
+  --card-border: #222;
+  --card-border-hover: #660911;
+  --card-glow: 0 0 16px rgba(102, 9, 17, 0.6);
+  --card-h3: #fff;
+  --card-p: #888;
+
+  /* About */
+  --about-hero-bg: linear-gradient(180deg, #1a0305 0%, #0a0a0a 100%);
+  --about-watermark: rgba(255, 255, 255, 0.03);
+  --about-card-num: #fff;
+
+  /* Footer */
+  --footer-bg: #0a0a0a;
+  --footer-text: #c8c2b8;
+  --footer-border-top: #1f1f1f;
+  --footer-map-border: #2a2a2a;
+  --footer-map-label: #b89c6e;
+  --footer-map-filter: grayscale(100%) invert(92%) contrast(83%);
+  --footer-map-filter-hover: grayscale(60%) invert(92%) contrast(90%);
+  --footer-brand-name: #e8e0d4;
+  --footer-brand-tagline: #5a5550;
+  --footer-section-title: #b89c6e;
+  --footer-link-color: #9a948e;
+  --footer-link-hover: #d4c9b8;
+  --footer-link-underline: #b89c6e;
+  --footer-detail-text: #7a7470;
+  --footer-detail-strong: #9a948e;
+  --footer-contact-color: #7a7470;
+  --footer-contact-hover: #d4c9b8;
+  --footer-contact-icon: #b89c6e;
+  --footer-social-border: #2a2a2a;
+  --footer-social-color: #6a6460;
+  --footer-social-hover-border: #b89c6e;
+  --footer-social-hover-color: #b89c6e;
+  --footer-social-hover-bg: rgba(184, 156, 110, 0.06);
+  --footer-bottom-border: #161616;
+  --footer-copyright: #3d3a37;
+  --footer-legal-color: #3d3a37;
+  --footer-legal-hover: #7a7470;
 }
 
-body {
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
-  transition: background-color 0.3s ease, color 0.3s ease;
-}
-
+/* ── Base styles (declared ONCE) ────────────────── */
 *, *::before, *::after {
   box-sizing: border-box;
 }
@@ -37,10 +144,12 @@ body {
 body {
   font-family: var(--font-body);
   font-weight: 300;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-display);
   font-weight: 600;
 }
-

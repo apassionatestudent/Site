@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
+import ThemeToggle from "../../ThemeToggle"; // => day/night mode toggle button
 import './NavBar.css';
 import homeIcon from '../../../assets/icons/home.png';
 import aboutIcon from '../../../assets/icons/about.png';
@@ -17,7 +18,7 @@ const NavBar = () => {
       <div className="nav-left">
         <Link to="/" className="logo">
           <img src="/logo_white_border.png" alt="Logo" className="logo-icon" />
-          <span className="logo-text">3A Prime Hospitality Training Center Inc.</span>
+          <span className="logo-text">PrimeEnroll Digital</span>
         </Link>
       </div>
       <div className={`nav-right ${isOpen ? 'active' : ''}`}>
@@ -28,6 +29,7 @@ const NavBar = () => {
           <li><NavLink to="/enroll"><img src={enrollIcon} alt="Enroll" className="nav-icon" /> Enroll</NavLink></li>
           <li><NavLink to="/contact"><img src={contactIcon} alt="Contact" className="nav-icon" /> Contact</NavLink></li>
           <li><NavLink to="/login"><img src={loginIcon} alt="Login" className="nav-icon" /> Login</NavLink></li>
+          <li><ThemeToggle /></li>
         </ul>
       </div>
       <div className="hamburger" onClick={toggleMenu}>

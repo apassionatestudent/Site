@@ -7,8 +7,8 @@ export default function Home() {
       <section className="home-hero">
         <div className="home-hero-content">
           <span className="home-tag">Welcome</span>
-          <h1>3A Prime Hospitality <br /><span>Training Center</span> Inc.</h1>
-          <p>Empowering the next generation of hospitality professionals through world-class training and assessment programs.</p>
+          <h1>3A Prime Hospitality <br /><span>Training and Assessment Center </span> Inc.</h1>
+          <p>Providing students with the finest hospitality training in the field of Culinary Arts & Food and Beverages.</p>
           <div className="home-hero-actions">
             <Link to="/courses" className="btn-primary">Explore Courses</Link> 
             <Link to="/about" className="btn-secondary">Learn More</Link>      
