@@ -1,15 +1,15 @@
 .home {
-  color: #fff;
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
 }
 
-/* Hero */
 .home-hero {
   min-height: 80vh;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 4rem 2rem;
-  background: linear-gradient(135deg, #0a0a0a 0%, #1a0305 60%, #660911 100%);
+  background: var(--bg-hero);
   text-align: center;
 }
 
@@ -19,9 +19,9 @@
 
 .home-tag {
   display: inline-block;
-  background: rgba(102, 9, 17, 0.4);
-  border: 1px solid #660911;
-  color: #ff6b7a;
+  background: var(--tag-bg);
+  border: 1px solid var(--tag-border);
+  color: var(--tag-color);
   font-size: 0.8rem;
   font-weight: 600;
   letter-spacing: 0.15em;
@@ -36,16 +36,16 @@
   font-weight: 800;
   line-height: 1.15;
   margin-bottom: 1.5rem;
-  color: #fff;
+  color: var(--text-primary);
 }
 
 .home-hero-content h1 span {
-  color: #ff6b7a;
+  color: var(--accent-span);
 }
 
 .home-hero-content p {
   font-size: 1.1rem;
-  color: #aaa;
+  color: var(--text-secondary);
   line-height: 1.7;
   margin-bottom: 2.5rem;
 }
@@ -58,7 +58,7 @@
 }
 
 .btn-primary {
-  background: #660911;
+  background: var(--accent);
   color: #fff;
   padding: 0.85rem 2rem;
   border-radius: 0.5rem;
@@ -68,22 +68,22 @@
 }
 
 .btn-primary:hover {
-  background: #8a0d17;
+  background: var(--accent-hover);
 }
 
 .btn-secondary {
   background: transparent;
-  color: #fff;
+  color: var(--btn-secondary-color);
   padding: 0.85rem 2rem;
   border-radius: 0.5rem;
   text-decoration: none;
   font-weight: 600;
-  border: 1px solid #444;
+  border: 1px solid var(--btn-secondary-border);
   transition: border-color 0.3s, color 0.3s;
 }
 
 .btn-secondary:hover {
-  border-color: #fff;
+  border-color: var(--btn-secondary-hover-border);
 }
 
 /* Features */
@@ -97,16 +97,17 @@
 }
 
 .home-feature-card {
-  background: #111;
-  border: 1px solid #222;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
   border-radius: 1rem;
   padding: 2rem;
-  transition: border-color 0.3s, transform 0.3s;
+  transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
 }
 
 .home-feature-card:hover {
-  border-color: #660911;
+  border-color: var(--card-border-hover);
   transform: translateY(-4px);
+  box-shadow: var(--card-glow);
 }
 
 .feature-icon {
@@ -118,11 +119,11 @@
   font-size: 1.2rem;
   font-weight: 700;
   margin-bottom: 0.75rem;
-  color: #fff;
+  color: var(--card-h3);
 }
 
 .home-feature-card p {
-  color: #888;
+  color: var(--card-p);
   line-height: 1.6;
   font-size: 0.95rem;
 }
