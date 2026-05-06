@@ -3,8 +3,8 @@ import { Routes, Route } from 'react-router-dom';
 import './App.css'
 
 // => import components
-import NavBar from './components/Navbar/NavBar.jsx';
-import Footer from './components/Footer/Footer.jsx';
+import NavBar from './components/public/Navbar/NavBar.jsx';
+import Footer from './components/public/Footer/Footer.jsx';
 
 // => import pages
 import Home    from './pages/public/Home/Home.jsx';

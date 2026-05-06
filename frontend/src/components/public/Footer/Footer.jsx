@@ -57,17 +57,17 @@ const SOCIALS = [
   { label: 'YouTube',   href: 'https://youtube.com',   Icon: YouTubeIcon   },
 ];
 
-// ── Replace with your actual Google Maps embed URL ─────────────────────────
+// => iframe src for Google Map embed to allow map pinpointing and direction
 const MAP_EMBED_URL =
   'https://maps.app.goo.gl/anqtvKsgMLeNHWbg8https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3925.3293771673143!2d123.8872726750354!3d10.315503089806633!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x33a99980ab303539%3A0xbeccee4ef3abc8f8!2s3A%20PRIME%20HOSPITALITY%20TRAINING%20AND%20ASSESSMENT%20CENTER%20INC.!5e0!3m2!1ses!2sph!4v1777973748254!5m2!1ses!2sph';
 
-// ── Footer component ───────────────────────────────────────────────────────
+// => Footer component with Google Map and contact info, styled via Footer.css
 export default function Footer() {
   return (
     <footer className="footer">
       <div className="footer__inner">
 
-        {/* ── LEFT: Google Map ──────────────────────────── */}
+        {/* => LEFT: Google Map  */}
         <div className="footer__map-col">
           <span className="footer__map-label">Find Us</span>
           <div className="footer__map-frame">
@@ -84,7 +84,7 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* ── RIGHT: Info ───────────────────────────────── */}
+        {/* => RIGHT: Info */}
         <div className="footer__info-col">
 
           {/* Brand */}
@@ -99,10 +99,7 @@ export default function Footer() {
             <ul className="footer__links">
               <li><a href="/privacy-policy">Privacy Policy</a></li>
               <li><a href="/faqs">FAQs</a></li>
-              <li><a href="/about">About Us</a></li>
-              <li><a href="/courses">Courses</a></li>
-              <li><a href="/accreditations">Accreditations</a></li>
-              <li><a href="/enroll">Enroll Now</a></li>
+              <li><a href="/branches">Branches</a></li>
             </ul>
           </div>
 
@@ -170,14 +167,13 @@ export default function Footer() {
         </div>
       </div>
 
-      {/* ── Bottom bar ──────────────────────────────────── */}
+      {/* => Bottom bar  */}
       <div className="footer__bottom">
         <span className="footer__copyright">
           © {new Date().getFullYear()} 3A Prime Hospitality Training and Assessment Center Inc. All rights reserved.
         </span>
         <ul className="footer__legal-links">
           <li><a href="/privacy-policy">Privacy Policy</a></li>
-          <li><a href="/terms">Terms of Service</a></li>
           <li><a href="/sitemap">Sitemap</a></li>
         </ul>
       </div>

@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import './NavBar.css';
-import homeIcon from '../../assets/icons/home.png';
-import aboutIcon from '../../assets/icons/about.png';
-import coursesIcon from '../../assets/icons/courses.png';
-import enrollIcon from '../../assets/icons/enroll.png';
-import contactIcon from '../../assets/icons/contact.png';
-import loginIcon from '../../assets/icons/login.png';
+import homeIcon from '../../../assets/icons/home.png';
+import aboutIcon from '../../../assets/icons/about.png';
+import coursesIcon from '../../../assets/icons/courses.png';
+import enrollIcon from '../../../assets/icons/enroll.png';
+import contactIcon from '../../../assets/icons/contact.png';
+import loginIcon from '../../../assets/icons/login.png';
 
 const NavBar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -17,7 +17,7 @@ const NavBar = () => {
       <div className="nav-left">
         <Link to="/" className="logo">
           <img src="/logo_white_border.png" alt="Logo" className="logo-icon" />
-          <span className="logo-text">3A Prime Hospitality Training Center</span>
+          <span className="logo-text">3A Prime Hospitality Training Center Inc.</span>
         </Link>
       </div>
       <div className={`nav-right ${isOpen ? 'active' : ''}`}>
