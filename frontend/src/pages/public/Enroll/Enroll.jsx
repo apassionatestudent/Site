@@ -225,7 +225,7 @@ const Enroll = () => {
                     value={province}
                     onChange={(e) => setProvince(e.target.value)}
                     disabled={!region || loadingProvinces || isNCR} // => Disable for NCR
-                    style={{ opacity: isNCR ? 0.4 : 1 }}
+                    // style={{ opacity: isNCR ? 0.4 : 1 }}
                   >
                     <option value="">
                       {loadingProvinces ? 'Loading...' 

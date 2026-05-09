@@ -29,7 +29,9 @@ const NavBar = () => {
           <li><NavLink to="/enroll"><img src={enrollIcon} alt="Enroll" className="nav-icon" /> Enroll</NavLink></li>
           <li><NavLink to="/contact"><img src={contactIcon} alt="Contact" className="nav-icon" /> Contact</NavLink></li>
           <li><NavLink to="/login"><img src={loginIcon} alt="Login" className="nav-icon" /> Login</NavLink></li>
-          <li><ThemeToggle /></li>
+          <li className="theme-item">
+            <ThemeToggle />
+          </li>
         </ul>
       </div>
       <div className="hamburger" onClick={toggleMenu}>
