@@ -12,11 +12,17 @@ const courses = [
 export default function Courses() {
   return (
     <main className="courses">
-      <section className="courses-hero">
-        <span className="courses-tag">Programs</span>
-        <h1>Our Courses</h1>
-        <p>Choose from a range of accredited hospitality programs designed for real-world success.</p>
+      <section className="page-hero" data-watermark="COURSES">
+          <div className="page-hero-inner">
+            <span className="page-hero-tag">Courses</span>
+            <h1>Master Your Craft</h1>
+            <p className="page-hero-sub">
+              Enroll in our TESDA-accredited programs designed to prepare you for National Certification and opportunities.
+            </p>
+          </div>
+          <div className="page-hero-rule" />
       </section>
+
 
       <section className="courses-grid">
         {courses.map(course => (
