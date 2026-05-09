@@ -254,12 +254,12 @@ const Enroll = () => {
         }
 
         // => Cannot be more than 100 years ago
-        const maxAge = new Date();
-        maxAge.setFullYear(maxAge.getFullYear() - 100);
-        if (birth < maxAge) {
-          setDobError('Please enter a valid date of birth (maximum 100 years old).');
-          return;
-        }
+        // const maxAge = new Date();
+        // maxAge.setFullYear(maxAge.getFullYear() - 100);
+        // if (birth < maxAge) {
+        //   setDobError('Please enter a valid date of birth (maximum 100 years old).');
+        //   return;
+        // } I am skeptical to push for this since it kinda feels discrimination. It's up to the admin whether to accept or reject it.
 
         // => Must be at least 15 years old to enroll
         const minAge = new Date();
