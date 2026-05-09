@@ -1,133 +1,406 @@
-.enroll {
-  color: #fff;
-  min-height: 100vh;
+* { 
+  box-sizing: border-box; 
+  margin: 0; 
+  padding: 0; 
 }
 
-.enroll-hero {
-  padding: 5rem 2rem 3rem;
+.enroll-wrap {
+  font-family: var(--font-body);
+}
+
+.enroll-wrap .page-hero h1,
+.enroll-wrap .page-hero::before,
+.enroll-wrap .page-hero-rule {
+  font-family: var(--font-display);
+}
+
+.enroll-wrap .page-hero-tag,
+.enroll-wrap .page-hero-sub,
+.enroll-wrap .step-tab,
+.enroll-wrap .step-num,
+.enroll-wrap .step-label,
+.enroll-wrap .field-label,
+.enroll-wrap .birthplace-label,
+.enroll-wrap .field-input,
+.enroll-wrap .field-select,
+.enroll-wrap .btn-next {
+  font-family: 'Cormorant Garamond', serif;
+}
+
+.enroll-wrap {
+  font-family: var(--font-body);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 480px;
+  padding: 0 0 2rem;
+}
+
+.hero-strip {
+  padding: 6rem 2rem 4rem;
   text-align: center;
-  background: linear-gradient(180deg, #1a0305 0%, #000 100%);
+  background: var(--about-hero-bg);
+  position: relative;
+  overflow: hidden;
 }
 
-.enroll-tag {
+.hero-strip::before {
+  content: 'ENROLL';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: clamp(6rem, 15vw, 14rem);
+  font-family: var(--font-display);
+  font-weight: 800;
+  color: var(--about-watermark);
+  letter-spacing: 0.1em;
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.hero-inner {
+  position: relative;
+  z-index: 1;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.hero-badge {
   display: inline-block;
-  background: rgba(102, 9, 17, 0.4);
-  border: 1px solid #660911;
-  color: #ff6b7a;
-  font-size: 0.8rem;
+  background: var(--tag-bg);
+  border: 1px solid var(--tag-border);
+  color: var(--tag-color);
+  font-size: 0.75rem;
   font-weight: 600;
-  letter-spacing: 0.15em;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
-  padding: 0.3rem 1rem;
+  padding: 0.35rem 1.1rem;
   border-radius: 2rem;
   margin-bottom: 1.5rem;
 }
 
-.enroll-hero h1 {
-  font-size: clamp(2rem, 4vw, 3rem);
-  font-weight: 800;
-  margin-bottom: 1rem;
-}
-
-.enroll-hero p {
-  color: #aaa;
-  max-width: 500px;
-  margin: 0 auto;
-  line-height: 1.7;
-}
-
-.enroll-body {
-  max-width: 600px;
-  margin: 0 auto;
-  padding: 4rem 2rem;
-}
-
-.enroll-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-}
-
-.form-group label {
-  font-size: 0.85rem;
+.hero-title {
+  font-family: var(--font-display);
+  font-size: clamp(2.5rem, 5vw, 4rem);
   font-weight: 600;
-  color: #ccc;
-  letter-spacing: 0.05em;
-}
-
-.form-group input,
-.form-group select,
-.form-group textarea {
-  background: #111;
-  border: 1px solid #333;
-  border-radius: 0.5rem;
-  color: #fff;
-  padding: 0.75rem 1rem;
-  font-size: 0.95rem;
-  transition: border-color 0.3s;
-  outline: none;
-  font-family: inherit;
-}
-
-.form-group input:focus,
-.form-group select:focus,
-.form-group textarea:focus {
-  border-color: #660911;
-}
-
-.form-group select option {
-  background: #111;
-}
-
-.btn-primary {
-  background: #660911;
-  color: #fff;
-  padding: 0.85rem 2rem;
-  border-radius: 0.5rem;
-  text-decoration: none;
-  font-weight: 600;
-  border: none;
-  cursor: pointer;
-  font-size: 1rem;
-  transition: background 0.3s;
-  font-family: inherit;
-}
-
-.btn-primary:hover {
-  background: #8a0d17;
-}
-
-.enroll-submit {
-  width: 100%;
-  margin-top: 0.5rem;
-}
-
-/* Success state */
-.enroll-success {
-  text-align: center;
-  padding: 3rem 2rem;
-  background: #111;
-  border: 1px solid #222;
-  border-radius: 1rem;
-}
-
-.success-icon {
-  font-size: 3rem;
-  margin-bottom: 1rem;
-}
-
-.enroll-success h2 {
-  font-size: 1.5rem;
-  margin-bottom: 0.75rem;
-}
-
-.enroll-success p {
-  color: #888;
+  color: var(--enroll-hero-title);
+  line-height: 1.15;
   margin-bottom: 1.5rem;
+}
+
+.hero-sub {
+  font-size: 15px;
+  color: var(--enroll-hero-sub);
+  font-weight: 300;
+  line-height: 1.8;
+  max-width: 560px;
+  margin: 0 auto 3rem;
+}
+
+.hero-rule {
+  width: 60px;
+  height: 3px;
+  background: var(--enroll-hero-rule);
+  margin: 0 auto;
+  border-radius: 2px;
+}
+
+.field-select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.step-tabs {
+  display: flex;
+  background: var(--enroll-tabs-bg);
+  border-bottom: 1px solid var(--enroll-tabs-border);
+}
+
+/* => inactive tab => dark readable text, accent-colored circle */
+.step-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  color: var(--enroll-tabs-text);
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  border-right: 1px solid var(--enroll-tabs-divider);
+  text-align: left;
+  justify-content: space-between;
+}
+
+.step-tab:last-child { 
+  border-right: none; 
+}
+
+/* => active tab => red background, white text */
+.step-tab.active {
+  background: var(--enroll-tabs-active-bg);
+  color: #fff;
+}
+.step-tab:hover:not(.active) {
+  background: var(--enroll-tabs-hover-bg);
+  color: var(--enroll-tabs-text); /* => use the token instead of hardcoded dark red */
+}
+
+/* => always visible circle regardless of theme or active state */
+.step-num {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid var(--enroll-circle-color, var(--accent));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  flex-shrink: 0;
+  background: transparent;
+  color: var(--enroll-circle-color, var(--accent));
+  font-family: var(--font-body);
+}
+
+/* => active => flip to white circle so it pops on the red tab bg */
+.step-tab.active .step-num {
+  background: #fff;
+  border-color: #fff;
+  color: var(--accent);
+}
+
+
+.step-label { 
+  flex: 1;
+  font-size: 15px; 
+  line-height: 1.4; 
+  font-weight: 500;
+  font-family: var(--font-body);
+}
+
+.step-chevron {
+  font-size: 16px;
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.step-tab.active .step-chevron { 
+  transform: rotate(180deg); 
+  opacity: 1;
+}
+
+.form-body {
+  padding: 1.8rem 2rem 1rem;
+  background: var(--enroll-body-bg);
+}
+
+.form-section-title {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--accent);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 1.4rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--enroll-section-border);
+  font-family: var(--font-body);
+}
+
+.form-grid {
+  display: grid;
+  gap: 0 1.2rem;
+}
+
+.g-3 { grid-template-columns: 1fr 1fr 1fr; }
+.g-2 { grid-template-columns: 1fr 1fr; }
+.g-2l { grid-template-columns: 1fr 1fr 1fr; }
+.g-name-row { grid-template-columns: 1fr 1fr 1fr 0.35fr; }
+
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 1.2rem;
+}
+
+.field-label,
+.birthplace-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--enroll-label-color);
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-family: var(--font-body);
+}
+
+.birthplace-label {
+  margin-bottom: 6px;
+}
+
+.req { 
+  color: var(--accent); 
+  font-size: 14px; 
+}
+
+.field-input,
+.field-select {
+  height: 40px;
+  border: 1px solid var(--enroll-field-border);
+  border-radius: 6px;
+  padding: 0 12px;
+  font-size: 15px;
+  font-family: var(--font-body);
+  background: var(--card-bg);
+  color: var(--text-primary);
+  outline: none;
+  width: 100%;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.field-input:focus,
+.field-select:focus {
+  border-color: var(--enroll-field-focus);
+  box-shadow: 0 0 0 3px rgba(139, 26, 26, 0.1);
+}
+
+.field-select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 32px;
+  cursor: pointer;
+}
+
+.field-select option[value=""] { 
+  color: #999; 
+}
+
+.birthplace-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0 1.2rem;
+}
+
+.birthplace-row .field-group { 
+  margin-bottom: 0; 
+}
+
+.date-wrap {
+  position: relative;
+}
+
+.date-wrap .field-input { 
+  padding-right: 38px; 
+}
+
+.date-icon {
+  position: absolute;
+  right: 11px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #999;
+  font-size: 16px;
+  pointer-events: none;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 1rem 2rem 0.5rem;
+  border-top: 1px solid var(--enroll-actions-border);
+  background: var(--enroll-body-bg);
+}
+
+.btn-next {
+  display: flex; 
+  align-items: center; 
+  gap: 8px;
+  padding: 11px 28px;
+  background: var(--enroll-btn-bg);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+  letter-spacing: 0.02em;
+}
+
+.btn-next:hover { 
+  background: var(--enroll-btn-hover); 
+}
+
+.btn-next:active { 
+  transform: scale(0.98); 
+}
+
+.progress-bar {
+  height: 3px;
+  background: var(--enroll-progress-bg);
+}
+
+.progress-fill {
+  height: 100%;
+  width: 33.3%;
+  background: var(--accent);
+  transition: width 0.4s ease;
+}
+
+/* => progress bar => each step lights up a third of the bar */
+.progress-fill[data-step="1"] { width: 33.3%; }
+.progress-fill[data-step="2"] { width: 66.6%; }
+.progress-fill[data-step="3"] { width: 100%; }
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 700px) {
+  .hero-title { font-size: 1.8rem; }
+  .step-tabs { flex-direction: column; }
+  .step-tab {
+    border-right: none;
+    border-bottom: 1px solid var(--enroll-tabs-divider);
+    padding: 18px 20px;
+    font-size: 16px;
+    gap: 14px;
+  }
+  .step-num {
+    width: 36px;
+    height: 36px;
+    font-size: 15px;
+  }
+  .step-label { font-size: 16px; }
+  .step-chevron { font-size: 18px; }
+  .tab-content { display: none; }
+  .tab-content.open { display: block; }
+  .form-body { padding: 1.2rem; }
+  .form-actions { padding: 0.8rem 1.2rem 0.3rem; }
+  .g-3, .g-2, .g-2l, .g-name-row { grid-template-columns: 1fr 1fr; }
+  .birthplace-row { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 420px) {
+  .g-3, .g-2, .g-2l, .g-name-row { grid-template-columns: 1fr; }
+  .birthplace-row { grid-template-columns: 1fr; }
 }
