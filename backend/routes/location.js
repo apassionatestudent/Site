@@ -17,6 +17,7 @@ const regions  = JSON.parse(readFileSync(join(__dirname, '../regions.json'), 'ut
 const provinces = JSON.parse(readFileSync(join(__dirname, '../provinces.json'), 'utf-8'));
 const cities   = JSON.parse(readFileSync(join(__dirname, '../cities-municipalities.json'), 'utf-8'));
 
+
 const router = express.Router(); // => Express router to handle location-related API endpoints
 
 // GET /regions => returns list of all regions with their codes and names
@@ -45,6 +46,20 @@ router.get('/cities-by-region/:regionCode', (req, res) => {
   const filtered = cities
     .filter(c => c.regionCode === req.params.regionCode)
     .map(c => ({ code: c.code, name: c.name }));
+  res.json(filtered);
+});
+
+// => Load barangays — kept separate due to large file size (10MB+), kept at the bottom to prevent unnecessary loading. 
+const barangays = JSON.parse(readFileSync(join(__dirname, '../barangays.json'), 'utf-8')); 
+
+// GET /barangays/:cityCode => returns barangays under a specific city/municipality
+// => barangays.json uses cityCode for cities and municipalityCode for municipalities — never both
+// => so we check both fields against the incoming code to cover all cases
+router.get('/barangays/:cityCode', (req, res) => {
+  const code = req.params.cityCode;
+  const filtered = barangays
+    .filter(b => b.cityCode === code || b.municipalityCode === code)
+    .map(b => ({ code: b.code, name: b.name }));
   res.json(filtered);
 });
 
