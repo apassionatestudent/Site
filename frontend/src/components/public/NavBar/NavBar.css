@@ -53,6 +53,21 @@
   width: 1.2rem;
 }
 
+.nav-links li {
+  display: flex;
+  align-items: center;
+}
+
+.nav-links li:last-child {
+  display: flex;
+  align-items: center;
+}
+
+.nav-links li > * {
+  display: flex;
+  align-items: center;
+}
+
 .hamburger {
   display: none;
   flex-direction: column;
