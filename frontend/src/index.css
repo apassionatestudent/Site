@@ -1,12 +1,98 @@
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Sans:wght@300;400;500&display=swap');
 
-/* ── Global font tokens ─────────────────────────── */
+/* => Global font tokens  */
 :root {
   --font-display: 'Cormorant Garamond', serif;
   --font-body: 'DM Sans', sans-serif;
 }
 
-/* ── Light theme ────────────────────────────────── */
+/* => Global Hero Page Sections */ 
+.page-hero {
+  padding: 6rem 2rem 4rem;
+  text-align: center;
+  background: var(--about-hero-bg);
+  position: relative;
+  overflow: hidden;
+}
+
+.page-hero::before {
+  content: attr(data-watermark);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: clamp(6rem, 15vw, 14rem);
+  font-family: var(--font-display);
+  font-weight: 800;
+  color: var(--about-watermark);
+  letter-spacing: 0.1em;
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.page-hero-inner {
+  position: relative;
+  z-index: 1;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+/* Shared tag / badge pill */
+.page-hero-tag {
+  display: inline-block;
+  background: var(--tag-bg);
+  border: 1px solid var(--tag-border);
+  color: var(--tag-color);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  padding: 0.35rem 1.1rem;
+  border-radius: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.page-hero h1 {
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 1.5rem;
+  line-height: 1.1;
+}
+
+/* Subtitle / motto paragraph */
+.page-hero-sub {
+  font-size: 1.05rem;
+  color: var(--text-secondary);
+  line-height: 1.8;
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+/* Italic variant — used by About motto */
+.page-hero-sub--italic {
+  font-style: italic;
+}
+
+.motto-quote {
+  color: var(--accent-span);
+  font-size: 1.4rem;
+  font-style: normal;
+  line-height: 0;
+  vertical-align: -0.3em;
+}
+
+/* Decorative rule */
+.page-hero-rule {
+  width: 60px;
+  height: 3px;
+  background: var(--accent);
+  margin: 3rem auto 0;
+  border-radius: 2px;
+}
+
+/* => Light theme  */
 :root[data-theme="light"] {
   /* Base */
   --bg-primary: #fafafa;
@@ -39,7 +125,36 @@
   /* About */
   --about-hero-bg: linear-gradient(180deg, #fde8ea 0%, #fafafa 100%);
   --about-watermark: rgba(102, 9, 17, 0.04);
+
   --about-card-num: #660911;
+
+    /* Enrollment Form Light Theme */
+  --enroll-hero-bg: linear-gradient(135deg, #1a0a0a 0%, #6b1a1a 60%, #8b1a1a 100%);
+  --enroll-hero-watermark: rgba(255,255,255,0.08);
+  --enroll-hero-badge-border: rgba(255,255,255,0.3);
+  --enroll-hero-badge-color: rgba(255,255,255,0.85);
+  --enroll-hero-rule: rgba(255,255,255,0.3);
+  
+  --enroll-progress-bg: #e8d5d5;
+  --enroll-tabs-bg: #ffffff;             /* => white background for tabs */
+  --enroll-tabs-border: #e8d5d7;         /* => soft red-tinted border */
+  --enroll-tabs-divider: #e8d5d7;        /* => soft divider between tabs */
+  --enroll-tabs-text: #3a1010;          
+  --enroll-tabs-active-bg: #8a1020; /* => slightly lighter than #660911 */
+  --enroll-tabs-hover-bg: #f0d8d8;
+
+  --enroll-circle-color: #660911;
+  
+  --enroll-body-bg: #ffffff;
+  --enroll-content-bg: #ffffff;
+  --enroll-section-border: #e8d5d5;
+  --enroll-actions-border: #eee;
+  --enroll-field-border: #ddd;
+  --enroll-field-focus: #8b1a1a;
+  --enroll-label-color: #3a2020;         /* => darker label for readability */
+  
+  --enroll-btn-bg: #8b1a1a;
+  --enroll-btn-hover: #6b1010;
 
   /* Footer */
   --footer-bg: #f5f0eb;
@@ -71,7 +186,7 @@
   --footer-legal-hover: #1a1510;
 }
 
-/* ── Dark theme ─────────────────────────────────── */
+/* => Dark theme  */
 :root[data-theme="dark"] {
   /* Base */
   --bg-primary: #0a0a0a;
@@ -106,6 +221,34 @@
   --about-watermark: rgba(255, 255, 255, 0.03);
   --about-card-num: #fff;
 
+  /* Enrollment Form Dark Theme */
+  --enroll-hero-bg: linear-gradient(135deg, #0a0a0a 0%, #1a0305 60%, #660911 100%);
+  --enroll-hero-watermark: rgba(255,255,255,0.03);
+  --enroll-hero-badge-border: rgba(255,255,255,0.2);
+  --enroll-hero-badge-color: rgba(255,255,255,0.9);
+  --enroll-hero-rule: rgba(255,255,255,0.15);
+
+  --enroll-circle-color: #ff6b7a;      /* => brighter red so circle is visible on dark bg */
+  
+  --enroll-progress-bg: #333;
+  --enroll-tabs-bg: #111111;
+  --enroll-tabs-border: #222;
+  --enroll-tabs-divider: rgba(255,255,255,0.2);
+  --enroll-tabs-text: #e0e0e0;
+  --enroll-tabs-active-bg: #7a0b14; /* => same, consistent across themes */
+  --enroll-tabs-hover-bg: #2a2a2a; 
+  
+  --enroll-content-bg: #111111; 
+  --enroll-body-bg: #111111; 
+  --enroll-section-border: #333;
+  --enroll-actions-border: #222;
+  --enroll-field-border: #444;
+  --enroll-field-focus: #ff6b7a;
+  --enroll-label-color: #ccc;
+  
+  --enroll-btn-bg: #660911;
+  --enroll-btn-hover: #8a0d17;
+
   /* Footer */
   --footer-bg: #0a0a0a;
   --footer-text: #c8c2b8;
@@ -136,7 +279,7 @@
   --footer-legal-hover: #7a7470;
 }
 
-/* ── Base styles (declared ONCE) ────────────────── */
+/* => Base styles (declared ONCE)  */
 *, *::before, *::after {
   box-sizing: border-box;
 }
