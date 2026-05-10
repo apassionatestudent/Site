@@ -210,7 +210,7 @@
   margin-bottom: 1.4rem;
   padding-bottom: 0.5rem;
   border-bottom: 1px solid var(--enroll-section-border);
-  font-family: var(--font-body);
+  font-family: var(--font-display);
 }
 
 .form-grid {
