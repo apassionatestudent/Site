@@ -116,7 +116,7 @@ export default function About() {
       {/* => 1. HERO 
            Full-width header with the school tagline and motto.
            The watermark "ABOUT" text is added via CSS ::before pseudo-element. */}
-      <section className="page-hero" data-watermark="ABOUT US">
+      <section className="page-hero" data-watermark="ABOUT">
         <div className="page-hero-inner">
           <span className="page-hero-tag">About Us</span>
           <h1>Who We Are</h1>

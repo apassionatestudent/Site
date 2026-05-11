@@ -204,13 +204,15 @@
 .form-section-title {
   font-size: 15px;
   font-weight: 500;
-  color: var(--accent);
+  /* => Use theme-aware token so it's visible in both day and night mode */
+  color: var(--enroll-section-title-color);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   margin-bottom: 1.4rem;
   padding-bottom: 0.5rem;
   border-bottom: 1px solid var(--enroll-section-border);
   font-family: var(--font-display);
+  opacity: 0.85;
 }
 
 .form-grid {
@@ -475,6 +477,22 @@
   color: var(--text-primary);
 }
 
+/* => Educational attainment row — select + optional text input side by side */
+.educ-row {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.educ-row .field-select {
+  /* => Fixed width when alone; shrinks to share space when Others input appears */
+  flex: 0 0 280px;
+}
+
+.educ-row .field-input {
+  flex: 1; /* => takes remaining space when visible */
+}
+
 @media (max-width: 700px) {
   .hero-title { font-size: 1.8rem; }
   .step-tabs { flex-direction: column; }
@@ -498,6 +516,14 @@
   .form-actions { padding: 0.8rem 1.2rem 0.3rem; }
   .g-3, .g-2, .g-2l, .g-name-row { grid-template-columns: 1fr 1fr; }
   .birthplace-row { grid-template-columns: 1fr 1fr; }
+
+  .educ-row {
+    flex-direction: column;
+  }
+  .educ-row .field-select {
+    flex: unset;
+    width: 100%;
+  }
 }
 
 @media (max-width: 420px) {
