@@ -26,6 +26,8 @@ const Enroll = () => {
     const [mailProvince, setMailProvince] = useState('');
     const [mailCities, setMailCities] = useState([]);
     const [mailCity, setMailCity] = useState('');
+    const [mailZip, setMailZip] = useState('');
+    const [mailDistrict, setMailDistrict] = useState('');
     const [mailBarangays, setMailBarangays] = useState([]);
     const [mailBarangay, setMailBarangay] = useState('');
     const [mailStreet, setMailStreet] = useState('');
@@ -57,10 +59,10 @@ const Enroll = () => {
     // ============================================================
 
     // => NCR has no provinces, goes directly to cities
-    const isNCR = region === '130000000';
+    const isNCR = region === '1300000000';
 
     // => NCR check for mailing address
-    const isMailNCR = mailRegion === '130000000';
+    const isMailNCR = mailRegion === '1300000000';
 
     // ============================================================
     // ALL useEffect + useCallback hooks
@@ -734,7 +736,14 @@ const Enroll = () => {
                 <select
                   className="field-select"
                   value={mailCity}
-                  onChange={(e) => setMailCity(e.target.value)}
+                  onChange={(e) => {
+                    const selectedCode = e.target.value;
+                    setMailCity(selectedCode);
+                    // => Auto-fill zip and district from the already-loaded cities list
+                    const selected = mailCities.find(c => c.code === selectedCode);
+                    setMailZip(selected?.zip || '');
+                    setMailDistrict(selected?.district || '');
+                  }}
                   disabled={(!mailProvince && !isMailNCR) || loadingMailCities}
                 >
                   <option value="">
@@ -749,14 +758,39 @@ const Enroll = () => {
               </div>
             </div>
 
-            {/* Row 2 - District (placeholder) + Barangay + House No. / Street */}
-            <div className="birthplace-row">
+            {/* Row 2 - District + Zip Code (auto-filled) + Barangay + House No. / Street */}
+            {/* => District and Zip share the first column slot side by side */}
+            <div className="birthplace-row" style={{ marginTop: '1.2rem' }}>
               <div className="field-group">
-                <label className="field-label">District <span className="req">*</span></label>
-                {/* => District data not yet available - field reserved for future integration */}
-                <select className="field-select" disabled>
-                  <option value="">- Not yet available -</option>
-                </select>
+                <label className="field-label">Congressional District &amp; Zip Code</label>
+                <div className="district-zip-row">
+                  <input
+                    type="text"
+                    className="field-input"
+                    value={
+                      mailDistrict === 'Lone' ? 'Lone District'
+                      : mailDistrict ? `${mailDistrict} District`
+                      : mailCity ? 'Not in PSGC'
+                      : '-'
+                    }
+                    readOnly
+                    title="Congressional District - sourced from PSGC"
+                    style={{ background: 'var(--bg-secondary)', cursor: 'default', color: 'var(--text-secondary)' }}
+                  />
+                  <input
+                    type="text"
+                    className="field-input"
+                    placeholder="Zip"
+                    value={mailZip || '-'}
+                    readOnly
+                    title="Zip Code - auto-filled on city select"
+                    style={{ background: 'var(--bg-secondary)', cursor: 'default', color: 'var(--text-secondary)' }}
+                  />
+                </div>
+                {/* => Inform user both are auto-managed */}
+                {mailCity && !mailZip && (
+                  <span className="field-hint">Zip code not available for selected city.</span>
+                )}
               </div>
               <div className="field-group">
                 <label className="field-label">Barangay <span className="req">*</span></label>
