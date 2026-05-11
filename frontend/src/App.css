@@ -7,7 +7,25 @@
   font-family: 'Cormorant Garamond', serif;
 }
 
+
+
 /* App.css */
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-main {
+  flex: 1;
+}
 
 p {
   font-size: 16px;
