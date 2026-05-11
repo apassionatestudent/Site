@@ -20,10 +20,6 @@ const Enroll = () => {
     const [municipality, setMunicipality] = useState('');
     const [nationalities, setNationalities] = useState([]);
     const [nationality, setNationality] = useState('Filipino'); // => most applicants are obviously Filipinos 
-    const [email, setEmail] = useState('');
-    const [emailError, setEmailError] = useState('');
-    const [mobile, setMobile] = useState('');
-    const [mobileError, setMobileError] = useState('');
     const [telephone, setTelephone] = useState('');
     const [mailRegion, setMailRegion] = useState('');
     const [mailProvinces, setMailProvinces] = useState([]);
@@ -39,8 +35,25 @@ const Enroll = () => {
     const [guardianName, setGuardianName] = useState('');
     const [guardianSameAddress, setGuardianSameAddress] = useState(false);
 
+    // => Demographic information state
+    const [civilStatus, setCivilStatus] = useState('');
+    const [educAttainment, setEducAttainment] = useState('');
+    const [educOther, setEducOther] = useState(''); // => shown when 'Others' is selected
+    const [employmentStatus, setEmploymentStatus] = useState('');
+
+    // => Contact fields
+    const [email, setEmail] = useState('');
+    const [emailError, setEmailError] = useState('');
+    const [mobile, setMobile] = useState('');
+    const [mobileError, setMobileError] = useState('');
+    const [fax, setFax] = useState('');
+    const [facebook, setFacebook] = useState('');
+    const [otherContact, setOtherContact] = useState('');
+    
+    
+
     // ============================================================
-    // Derived state — computed from useState values, not hooks
+    // Derived state - computed from useState values, not hooks
     // ============================================================
 
     // => NCR has no provinces, goes directly to cities
@@ -87,7 +100,7 @@ const Enroll = () => {
         .finally(() => setLoadingProvinces(false));
     }, [region]);
 
-    // Fetch cities when province changes — OR directly for NCR
+    // Fetch cities when province changes - OR directly for NCR
     useEffect(() => {
       if (!province && !isNCR) {
         setCities([]);
@@ -120,7 +133,7 @@ const Enroll = () => {
         setMailProvince(''); setMailCity(''); setMailBarangay('');
         return;
       }
-      // => NCR has no provinces — skip province fetch and go straight to cities
+      // => NCR has no provinces - skip province fetch and go straight to cities
       if (isMailNCR) {
         setMailProvinces([]); setMailCities([]); setMailBarangays([]);
         setMailProvince(''); setMailCity(''); setMailBarangay('');
@@ -138,7 +151,7 @@ const Enroll = () => {
         .finally(() => setLoadingMailProvinces(false));
     }, [mailRegion, isMailNCR]);
 
-    // Fetch mail cities when mail province changes — OR directly for NCR
+    // Fetch mail cities when mail province changes - OR directly for NCR
     useEffect(() => {
       if (!mailProvince && !isMailNCR) {
         setMailCities([]); setMailBarangays([]);
@@ -172,7 +185,7 @@ const Enroll = () => {
     }, [mailCity]);
 
     // ============================================================
-    // Regular functions — all AFTER hooks
+    // Regular functions - all AFTER hooks
     // ============================================================
 
     const handleTabClick = (step) => {
@@ -352,6 +365,8 @@ const Enroll = () => {
           <div className="form-body">
 
             {/* First row  */}
+            <div className="form-section-title">Full Name</div>
+
             <div className="form-grid g-name-row">
               <div className="field-group">
                 <label className="field-label">Last Name <span className="req">*</span></label>
@@ -378,10 +393,11 @@ const Enroll = () => {
               </div>
             </div>
 
-            <hr/>
-            <br/>
+            <hr/> <br/>
 
             {/* Second row */}
+            <div className="form-section-title">Birth Information</div>
+
             <div style={{ marginBottom: '1.2rem' }}>
               <div className="birthplace-label">Birthplace <span className="req">*</span></div>
               <div className="birthplace-row">
@@ -443,7 +459,7 @@ const Enroll = () => {
               </div>
             </div>
 
-            {/* Third row */}
+            {/* Third Row */}
             <div className="form-grid g-3">
               <div className="field-group">
                 <label className="field-label">Date of Birth <span className="req">*</span></label>
@@ -472,7 +488,6 @@ const Enroll = () => {
                 </select>
               </div>
 
-              {/* TODO: Change to select with options populated from backend.  */}
               <div className="field-group">
                 <label className="field-label">Nationality <span className="req">*</span></label>
                 <select
@@ -487,12 +502,111 @@ const Enroll = () => {
                 </select>
               </div>
             </div>
+
+            {/* Fourth row */}
+            <div className="form-grid g-3">
+              <div className="field-group">
+                <div className="field-group">
+                  <label className="field-label">Mother's Name <span className="req">*</span></label>
+                  <input type="text" className="field-input" placeholder="e.g. Gabriela Silang" />
+                </div>
+                {/* => Show validation error below the field */}
+                {dobError && <span className="field-error">{dobError}</span>}
+              </div>
+
+              <div className="field-group">
+                <div className="field-group">
+                  <label className="field-label">Father's Name <span className="req">*</span></label>
+                  <input type="text" className="field-input" placeholder="e.g. Diego Silang" />
+                </div>
+              </div>
+
+            </div>
+
+            <hr/> <br/>
+
+            {/* Demographic Information */}
+            <div className="form-section-title">Demographic Information</div>
+
+            <div className="form-grid g-3">
+              <div className="field-group">
+                <label className="field-label">Civil Status <span className="req">*</span></label>
+                <select
+                  className="field-select"
+                  value={civilStatus}
+                  onChange={(e) => setCivilStatus(e.target.value)}
+                >
+                  <option value="">Select</option>
+                  <option value="single">Single</option>
+                  <option value="married">Married</option>
+                  <option value="widower">Widow/er</option>
+                  <option value="separated">Separated</option>
+                  <option value="solo_parent">Solo Parent</option>
+                </select>
+              </div>
+
+              <div className="field-group">
+                <label className="field-label">Highest Educational Attainment <span className="req">*</span></label>
+                <select
+                  className="field-select"
+                  value={educAttainment}
+                  onChange={(e) => {
+                    setEducAttainment(e.target.value);
+                    // => Clear the other text field when switching away from Others
+                    if (e.target.value !== 'others') setEducOther('');
+                  }}
+                >
+                  <option value="">Select</option>
+                  <option value="elem_grad">Elementary Graduate</option>
+                  <option value="hs_grad">High School Graduate</option>
+                  <option value="tvet_grad">TVET Graduate</option>
+                  <option value="college_level">College Level</option>
+                  <option value="college_grad">College Graduate</option>
+                  <option value="others">Others</option> {/*  loads of options so better ask them what */}
+                </select>
+              </div>
+
+              <div className="field-group">
+                <label className="field-label">Employment Status <span className="req">*</span></label>
+                <select
+                  className="field-select"
+                  value={employmentStatus}
+                  onChange={(e) => setEmploymentStatus(e.target.value)}
+                >
+                  <option value="">Select</option>
+                  <option value="unemployed">Unemployed</option>
+                  <option value="casual">Casual</option>
+                  <option value="job_order">Job Order</option>
+                  <option value="probationary">Probationary</option>                  
+                  <option value="permanent">Permanent</option>
+                  <option value="self_employed">Self-Employed</option>
+                  <option value="ofw">OFW</option>
+                </select>
+              </div>
+            </div>
+
+            {/* => Only shown when user selects 'Others' for educational attainment */}
+            {educAttainment === 'others' && (
+              <div className="field-group">
+                <label className="field-label">Please specify your educational attainment <span className="req">*</span></label>
+                <input
+                  type="text"
+                  className="field-input"
+                  placeholder="e.g. Vocational Course, Post-Graduate..."
+                  value={educOther}
+                  onChange={(e) => setEducOther(e.target.value)}
+                />
+              </div>
+            )}
+
           </div>
+
           <div className="form-actions">
             <button className="btn-next" onClick={goNext}>
               Next Step <i className="ti ti-arrow-right" aria-hidden="true"></i>
             </button>
           </div>
+
         </div>
 
         {/* Tab 2 contents here */}
@@ -500,52 +614,87 @@ const Enroll = () => {
           <div className="form-body">
 
             {/* Contact Information */}
-            <div className="form-section-title">Contact Information</div>
+<div className="form-section-title">Contact Information</div>
 
-            <div className="form-grid g-3">
-              <div className="field-group">
-                <label className="field-label">Email Address <span className="req">*</span></label>
-                <input
-                  type="email"
-                  className={`field-input ${emailError ? 'field-input--error' : ''}`}
-                  placeholder="e.g. juan@email.com"
-                  value={email}
-                  onChange={(e) => validateEmail(e.target.value)}
-                />
-                {/* => Show inline error when regex fails */}
-                {emailError && <span className="field-error">{emailError}</span>}
-              </div>
-              <div className="field-group">
-                <label className="field-label">Mobile Number <span className="req">*</span></label>
-                <input
-                  type="text"
-                  className={`field-input ${mobileError ? 'field-input--error' : ''}`}
-                  placeholder="e.g. 09XXXXXXXXX"
-                  maxLength={11}
-                  value={mobile}
-                  onChange={(e) => formatMobile(e.target.value)}
-                />
-                {/* => Show inline error when number is invalid */}
-                {mobileError && <span className="field-error">{mobileError}</span>}
-              </div>
-              <div className="field-group">
-                <label className="field-label">Telephone Number</label>
-                <input
-                  type="text"
-                  className="field-input"
-                  placeholder="e.g. (02) 8XXX XXXX"
-                  value={telephone}
-                  onChange={(e) => setTelephone(e.target.value)}
-                />
-              </div>
-            </div>
+{/* Row 1 - Email + Mobile + Telephone */}
+<div className="form-grid g-3">
+  <div className="field-group">
+    <label className="field-label">Email Address <span className="req">*</span></label>
+    <input
+      type="email"
+      className={`field-input ${emailError ? 'field-input--error' : ''}`}
+      placeholder="e.g. juan@email.com"
+      value={email}
+      onChange={(e) => validateEmail(e.target.value)}
+    />
+    {/* => Show inline error when regex fails */}
+    {emailError && <span className="field-error">{emailError}</span>}
+  </div>
+  <div className="field-group">
+    <label className="field-label">Mobile Number <span className="req">*</span></label>
+    <input
+      type="text"
+      className={`field-input ${mobileError ? 'field-input--error' : ''}`}
+      placeholder="e.g. 09XXXXXXXXX"
+      maxLength={11}
+      value={mobile}
+      onChange={(e) => formatMobile(e.target.value)}
+    />
+    {/* => Show inline error when number is invalid */}
+    {mobileError && <span className="field-error">{mobileError}</span>}
+  </div>
+  <div className="field-group">
+    <label className="field-label">Telephone Number</label>
+    <input
+      type="text"
+      className="field-input"
+      placeholder="e.g. (02) 8XXX XXXX"
+      value={telephone}
+      onChange={(e) => setTelephone(e.target.value)}
+    />
+  </div>
+</div>
+
+{/* Row 2 - Fax + Facebook + Others */}
+<div className="form-grid g-3">
+  <div className="field-group">
+    <label className="field-label">Fax Number</label>
+    <input
+      type="text"
+      className="field-input"
+      placeholder="e.g. (02) 8XXX XXXX"
+      value={fax}
+      onChange={(e) => setFax(e.target.value)}
+    />
+  </div>
+  <div className="field-group">
+    <label className="field-label">Facebook Account</label>
+    <input
+      type="text"
+      className="field-input"
+      placeholder="e.g. facebook.com/juandelacruz"
+      value={facebook}
+      onChange={(e) => setFacebook(e.target.value)}
+    />
+  </div>
+  <div className="field-group">
+    <label className="field-label">Other Contact</label>
+    <input
+      type="text"
+      className="field-input"
+      placeholder="e.g. Twitter, LinkedIn, etc."
+      value={otherContact}
+      onChange={(e) => setOtherContact(e.target.value)}
+    />
+  </div>
+</div>
 
             <hr /><br />
 
             {/* Mailing Address */}
             <div className="form-section-title">Complete Permanent Mailing Address</div>
 
-            {/* Row 1 — Region + Province + City / Municipality */}
+            {/* Row 1 - Region + Province + City / Municipality */}
             <div className="birthplace-row">
               <div className="field-group">
                 <label className="field-label">Region <span className="req">*</span></label>
@@ -571,9 +720,9 @@ const Enroll = () => {
                 >
                   <option value="">
                     {loadingMailProvinces ? 'Loading...'
-                      : isMailNCR ? '— No province for NCR —'
+                      : isMailNCR ? '- No province for NCR -'
                       : mailRegion ? 'Select Province'
-                      : '— Select Region first —'}
+                      : '- Select Region first -'}
                   </option>
                   {mailProvinces.map(p => (
                     <option key={p.code} value={p.code}>{p.name}</option>
@@ -591,7 +740,7 @@ const Enroll = () => {
                   <option value="">
                     {loadingMailCities ? 'Loading...'
                       : (mailProvince || isMailNCR) ? 'Select City / Municipality'
-                      : '— Select Province first —'}
+                      : '- Select Province first -'}
                   </option>
                   {mailCities.map(c => (
                     <option key={c.code} value={c.code}>{c.name}</option>
@@ -600,13 +749,13 @@ const Enroll = () => {
               </div>
             </div>
 
-            {/* Row 2 — District (placeholder) + Barangay + House No. / Street */}
+            {/* Row 2 - District (placeholder) + Barangay + House No. / Street */}
             <div className="birthplace-row">
               <div className="field-group">
-                <label className="field-label">District</label>
-                {/* => District data not yet available — field reserved for future integration */}
+                <label className="field-label">District <span className="req">*</span></label>
+                {/* => District data not yet available - field reserved for future integration */}
                 <select className="field-select" disabled>
-                  <option value="">— Not yet available —</option>
+                  <option value="">- Not yet available -</option>
                 </select>
               </div>
               <div className="field-group">
@@ -620,7 +769,7 @@ const Enroll = () => {
                   <option value="">
                     {loadingMailBarangays ? 'Loading...'
                       : mailCity ? 'Select Barangay'
-                      : '— Select City first —'}
+                      : '- Select City first -'}
                   </option>
                   {mailBarangays.map(b => (
                     <option key={b.code} value={b.code}>{b.name}</option>
@@ -641,40 +790,28 @@ const Enroll = () => {
 
             <br/>
 
-            {/* Guardian — conditionally shown when DOB indicates age 17 or below */}
+            {/* Guardian - conditionally shown when DOB indicates age 17 or below */}
             {isMinor && (
               <>
-              <hr /><br />
-              <div className="guardian-section">
-                <div className="form-section-title">
-                  Parent / Guardian Information
-                  <span className="section-note"> — Required for students 17 years old and below</span>
-                </div>
-                <div className="form-grid g-2">
-                  <div className="field-group">
-                    <label className="field-label">Parent / Guardian Full Name <span className="req">*</span></label>
-                    <input
-                      type="text"
-                      className="field-input"
-                      placeholder="e.g. Maria dela Cruz"
-                      value={guardianName}
-                      onChange={(e) => setGuardianName(e.target.value)}
-                    />
+                <hr /><br />
+                <div className="guardian-section">
+                  <div className="form-section-title">
+                    Parent / Guardian Information
+                    <span className="section-note"> - Required for students 17 years old and below</span>
+                  </div>
+                  <div className="form-grid g-2">
+                    <div className="field-group">
+                      <label className="field-label">Parent / Guardian Full Name <span className="req">*</span></label>
+                      <input
+                        type="text"
+                        className="field-input"
+                        placeholder="e.g. Maria dela Cruz"
+                        value={guardianName}
+                        onChange={(e) => setGuardianName(e.target.value)}
+                      />
+                    </div>
                   </div>
                 </div>
-                {/* => Ask if guardian shares the same permanent mailing address as the student */}
-                <div className="field-group checkbox-group">
-                  <label className="checkbox-label">
-                    <input
-                      type="checkbox"
-                      checked={guardianSameAddress}
-                      onChange={(e) => setGuardianSameAddress(e.target.checked)}
-                    />
-                    <span>Guardian's address is the same as the student's permanent mailing address above</span>
-                  </label>
-                </div>
-              </div>
-              
               </>
             )}
 

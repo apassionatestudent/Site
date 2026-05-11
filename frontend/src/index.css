@@ -144,6 +144,8 @@
   --enroll-tabs-hover-bg: #f0d8d8;
 
   --enroll-circle-color: #660911;
+
+  --enroll-section-title-color: #660911; /* => same dark red, fine on white bg */
   
   --enroll-body-bg: #ffffff;
   --enroll-content-bg: #ffffff;
@@ -229,6 +231,8 @@
   --enroll-hero-rule: rgba(255,255,255,0.15);
 
   --enroll-circle-color: #ff6b7a;      /* => brighter red so circle is visible on dark bg */
+
+  --enroll-section-title-color: #ff6b7a; /* => brighter red, readable on dark bg */
   
   --enroll-progress-bg: #333;
   --enroll-tabs-bg: #111111;
