@@ -18,7 +18,7 @@ export default function Login() {
         <div className="login-header">
           <span className="login-tag">Portal</span>
           <h1>Welcome Back</h1>
-          <p>Sign in to your student or staff account</p>
+          <p>Sign in to your student account</p>
         </div>
 
         <form className="login-form" onSubmit={handleSubmit}>

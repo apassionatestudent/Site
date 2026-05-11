@@ -243,6 +243,30 @@
   font-family: var(--font-body);
 }
 
+/* => Subtle hint text below a field — used for auto-filled fields */
+.field-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 2px;
+  font-family: var(--font-body);
+}
+
+/* => District + Zip Code side by side within one column slot */
+.district-zip-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* => */
+.district-zip-row .field-input:first-child {
+  flex: 0 0 250px;
+}
+
+/* => Zip takes remaining space */
+.district-zip-row .field-input:last-child {
+  flex: 1;
+}
+
 .birthplace-label {
   margin-bottom: 6px;
 }
