@@ -14,19 +14,6 @@
   font-family: var(--font-display);
 }
 
-.enroll-wrap .page-hero-tag,
-.enroll-wrap .page-hero-sub,
-.enroll-wrap .step-tab,
-.enroll-wrap .step-num,
-.enroll-wrap .step-label,
-.enroll-wrap .field-label,
-.enroll-wrap .birthplace-label,
-.enroll-wrap .field-input,
-.enroll-wrap .field-select,
-.enroll-wrap .btn-next {
-  font-family: 'Cormorant Garamond', serif;
-}
-
 .enroll-wrap {
   font-family: var(--font-body);
   background: var(--bg-primary);
@@ -50,7 +37,7 @@
   left: 50%;
   transform: translate(-50%, -50%);
   font-size: clamp(6rem, 15vw, 14rem);
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   font-weight: 800;
   color: var(--about-watermark);
   letter-spacing: 0.1em;
@@ -211,7 +198,7 @@
   margin-bottom: 1.4rem;
   padding-bottom: 0.5rem;
   border-bottom: 1px solid var(--enroll-section-border);
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   opacity: 0.85;
 }
 
@@ -277,7 +264,7 @@
 }
 
 .req { 
-  color: var(--accent); 
+  color: var(--req-asterisk); 
   font-size: 14px; 
 }
 

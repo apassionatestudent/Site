@@ -1,0 +1,275 @@
+/* 
+   CourseRequirements1.css
+   Styles for Step 3 Sub-step 1: Course Selection
+   Follows the existing Enroll.css / index.css token system
+    */
+
+.cr1-wrap {
+  font-family: var(--font-body);
+  padding: 1.8rem 2rem 1rem;
+  background: var(--enroll-body-bg);
+  color: var(--text-primary);
+}
+
+/* => Section title — matches .form-section-title in Enroll.css */
+
+.cr1-section-title {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--enroll-section-title-color);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 1.4rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--enroll-section-border);
+  font-family: var(--font-body);
+  opacity: 0.85;
+}
+
+/* => Grid — mirrors .form-grid in Enroll.css */
+
+.cr1-grid {
+  display: grid;
+  gap: 0 1.2rem;
+}
+
+.cr1-grid.g-3 { grid-template-columns: 1fr 1fr 1fr; }
+.cr1-grid.g-2 { grid-template-columns: 1fr 1fr; }
+
+/* => Field groups — mirrors .field-group in Enroll.css */
+
+.cr1-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 1.2rem;
+}
+
+.cr1-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--enroll-label-color);
+  font-family: var(--font-body);
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  flex-wrap: wrap;
+  line-height: 1.4;
+}
+
+.cr1-req {
+  color: var(--req-asterisk);
+  font-size: 14px;
+}
+
+/* => Small note beside label for db-pending fields */
+.cr1-note {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-muted);
+  font-style: italic;
+  margin-left: 2px;
+}
+
+/* ============================================================
+   Inputs and selects — mirrors .field-input / .field-select
+   ============================================================ */
+
+.cr1-select {
+  height: 40px;
+  border: 1px solid var(--enroll-field-border);
+  border-radius: 6px;
+  padding: 0 12px;
+  font-size: 15px;
+  font-family: var(--font-body);
+  background: var(--card-bg);
+  color: var(--text-primary);
+  outline: none;
+  width: 100%;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  -webkit-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 32px;
+  cursor: pointer;
+}
+
+.cr1-select:focus {
+  border-color: var(--enroll-field-focus);
+  box-shadow: 0 0 0 3px rgba(139, 26, 26, 0.1);
+}
+
+/* => Disabled selects for db-pending fields */
+.cr1-select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: var(--bg-secondary);
+}
+
+/* ============================================================
+   Course fee display
+   ============================================================ */
+
+.cr1-course-fee {
+  font-size: 13px;
+  color: var(--accent);
+  font-family: var(--font-body);
+  margin-top: 3px;
+}
+
+.cr1-course-fee strong {
+  font-weight: 600;
+}
+
+/* ============================================================
+   Hint text
+   ============================================================ */
+
+.cr1-field-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 2px;
+  font-family: var(--font-body);
+  line-height: 1.5;
+}
+
+/* => Scholar-specific hint — slightly more prominent */
+.cr1-hint-scholar {
+  color: var(--accent-span);
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+}
+
+.cr1-hint-scholar i {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* ============================================================
+   Radio buttons
+   ============================================================ */
+
+.cr1-radio-group {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+  height: 40px;
+}
+
+.cr1-radio-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14.5px;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  cursor: pointer;
+}
+
+.cr1-radio-label input[type="radio"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* => Fix font to use display font (Cormorant Garamond) to match the rest of the form */
+.cr1-section-title,
+.cr1-label,
+.cr1-select,
+.cr1-field-hint,
+.cr1-note,
+.cr1-radio-label,
+.cr1-course-fee {
+  font-family: var(--font-body);
+}
+
+/* ============================================================
+   Navigation — Back + Next
+   Mirrors .form-actions--split in Enroll.css
+   ============================================================ */
+
+.cr1-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 0 0.5rem;
+  margin-top: 0.5rem;
+  border-top: 1px solid var(--enroll-actions-border);
+}
+
+.cr1-btn-back {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 24px;
+  background: transparent;
+  color: var(--enroll-label-color);
+  border: 1px solid var(--enroll-field-border);
+  border-radius: 6px;
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  letter-spacing: 0.02em;
+}
+
+.cr1-btn-back:hover {
+  background: var(--enroll-field-border);
+  color: var(--text-primary);
+}
+
+.cr1-btn-next {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 28px;
+  background: var(--enroll-btn-bg);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+  letter-spacing: 0.02em;
+}
+
+.cr1-btn-next:hover {
+  background: var(--enroll-btn-hover);
+}
+
+.cr1-btn-next:active {
+  transform: scale(0.98);
+}
+
+/* ============================================================
+   Responsive
+   ============================================================ */
+
+@media (max-width: 700px) {
+  .cr1-wrap {
+    padding: 1.2rem;
+  }
+
+  .cr1-grid.g-3 {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .cr1-grid.g-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 420px) {
+  .cr1-grid.g-3,
+  .cr1-grid.g-2 {
+    grid-template-columns: 1fr;
+  }
+}

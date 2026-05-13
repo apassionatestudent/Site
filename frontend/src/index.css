@@ -1,9 +1,17 @@
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Sans:wght@300;400;500&display=swap');
 
+@import url('https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700&display=swap');
+
+html {
+    scroll-behavior: smooth;
+    -webkit-scroll-behavior: smooth;
+    scrollbar-gutter: stable;
+}
+
 /* => Global font tokens  */
 :root {
   --font-display: 'Cormorant Garamond', serif;
-  --font-body: 'DM Sans', sans-serif;
+  --font-body: 'Merriweather', serif;
 }
 
 /* => Global Hero Page Sections */ 
@@ -158,6 +166,8 @@
   --enroll-btn-bg: #8b1a1a;
   --enroll-btn-hover: #6b1010;
 
+  --req-asterisk: var(--accent);
+
   /* Footer */
   --footer-bg: #f5f0eb;
   --footer-text: #2a2520;
@@ -252,6 +262,8 @@
   
   --enroll-btn-bg: #660911;
   --enroll-btn-hover: #8a0d17;
+
+  --req-asterisk: #ff6b7a;
 
   /* Footer */
   --footer-bg: #0a0a0a;
