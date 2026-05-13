@@ -1,5 +1,13 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import './Enroll.css';
+
+// => Importing the course requirements components for Step 3
+import CourseRequirements1 from './../../../components/public/CourseRequirements1/CourseRequirements1';
+import CourseRequirements2 from './../../../components/public/CourseRequirements2/CourseRequirements2';
+import CourseRequirements3 from './../../../components/public/CourseRequirements3/CourseRequirements3';
+
+// => Info tooltip component used for additional explanations in the form
+import Info from '../../../components/Info.jsx';
 
 const Enroll = () => {
     // ============================================================
@@ -51,22 +59,61 @@ const Enroll = () => {
     const [fax, setFax] = useState('');
     const [facebook, setFacebook] = useState('');
     const [otherContact, setOtherContact] = useState('');
-    
-    
 
-    // ============================================================
-    // Derived state - computed from useState values, not hooks
-    // ============================================================
+    const [step3SubStep, setStep3SubStep] = useState(1); // => 1=3.1, 2=3.2, 3=3.3\
 
+    const stepTabsRef = useRef(null); // ref for the tabs container or the target element
+
+    const goNext = () => {
+      if (activeStep === 3 && step3SubStep === 1) {
+        // From Step 3.1 to Step 3.2
+        setStep3SubStep(2);
+        return;
+      }
+      const next = (activeStep || 1) < 3 ? (activeStep || 1) + 1 : 3;
+      handleTabClick(next);
+    };
+
+    // => Nav functions in Step 3 
+    const goToStep32 = () => setStep3SubStep(2);
+    const goToStep33 = () => setStep3SubStep(3);
+    const goToStep31 = () => setStep3SubStep(1);
+
+    // => Course selection state for Step 3: Part 1 
+    const [courseData, setCourseData] = useState({
+      assessmentType: '',
+      clientType: '',
+      branch: '',
+      course: '',
+      courseFee: '',
+      courseClass: '',
+      isSHS: '',
+      isScholar: '',
+    });
+
+    const handleCourseChange = (key, value) => {
+      setCourseData(prev => ({ ...prev, [key]: value }));
+    };
+
+    // => Experience, trainings, licensures, competencies for Step 3: Part 2 (sub-step 2)
+    const [expData, setExpData] = useState({
+      workExperience: [{ id: 1, company: '', position: '', salary: '', dateFrom: '', dateTo: '', appointmentStatus: '', yearsExp: '' }],
+      trainings:      [{ id: 1, title: '', venue: '', dateFrom: '', dateTo: '', hours: '', conductedBy: '' }],
+      licensures:     [{ id: 1, title: '', yearTaken: '', venue: '', rating: '', remarks: '', expiryDate: '' }],
+      competencies:   [{ id: 1, title: '', qualificationLevel: '', industrySector: '', certNumber: '', dateIssued: '', expirationDate: '' }],
+    });
+
+    const handleExpChange = (key, value) => {
+      setExpData(prev => ({ ...prev, [key]: value }));
+    };
+    
     // => NCR has no provinces, goes directly to cities
     const isNCR = region === '1300000000';
 
     // => NCR check for mailing address
     const isMailNCR = mailRegion === '1300000000';
 
-    // ============================================================
     // ALL useEffect + useCallback hooks
-    // ============================================================
 
     // Resize handler
     const handleResize = useCallback(() => {
@@ -198,10 +245,6 @@ const Enroll = () => {
       }
     };
 
-    const goNext = () => {
-      const next = (activeStep || 1) < 3 ? (activeStep || 1) + 1 : 3;
-      handleTabClick(next);
-    };
 
     // => Email regex validation
     const validateEmail = (value) => {
@@ -268,14 +311,6 @@ const Enroll = () => {
           return;
         }
 
-        // => Cannot be more than 100 years ago
-        // const maxAge = new Date();
-        // maxAge.setFullYear(maxAge.getFullYear() - 100);
-        // if (birth < maxAge) {
-        //   setDobError('Please enter a valid date of birth (maximum 100 years old).');
-        //   return;
-        // } I am skeptical to push for this since it kinda feels discrimination. It's up to the admin whether to accept or reject it.
-
         // => Must be at least 15 years old to enroll
         const minAge = new Date();
         minAge.setFullYear(minAge.getFullYear() - 15);
@@ -307,6 +342,22 @@ const Enroll = () => {
 
     // => isMinor drives the guardian section visibility in Step 2
     const isMinor = getAge() !== null && getAge() <= 17;
+
+    // => Go to top page upon clicking the Back and Next buttons, not perfect but will do for now  
+    useEffect(() => {
+    // delay next tick to ensure DOM has updated (fixes timing issues)
+    const id = setTimeout(() => {
+      const el = stepTabsRef.current;
+      if (el && el.scrollIntoView) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else {
+        // fallback
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }, 0);
+
+    return () => clearTimeout(id);
+  }, [activeStep]);
 
   return (
     <>
@@ -509,7 +560,9 @@ const Enroll = () => {
             <div className="form-grid g-3">
               <div className="field-group">
                 <div className="field-group">
-                  <label className="field-label">Mother's Name <span className="req">*</span></label>
+                  <label className="field-label">Mother's Name <span className="req">*</span>
+                    <Info content="As shown in your PSA Birth Certificate" />
+                  </label>
                   <input type="text" className="field-input" placeholder="e.g. Gabriela Silang" />
                 </div>
                 {/* => Show validation error below the field */}
@@ -518,7 +571,9 @@ const Enroll = () => {
 
               <div className="field-group">
                 <div className="field-group">
-                  <label className="field-label">Father's Name <span className="req">*</span></label>
+                  <label className="field-label">Father's Name <span className="req">*</span>
+                    <Info content="As shown in your PSA Birth Certificate" />
+                  </label>
                   <input type="text" className="field-input" placeholder="e.g. Diego Silang" />
                 </div>
               </div>
@@ -616,80 +671,80 @@ const Enroll = () => {
           <div className="form-body">
 
             {/* Contact Information */}
-<div className="form-section-title">Contact Information</div>
+            <div className="form-section-title">Contact Information</div>
 
-{/* Row 1 - Email + Mobile + Telephone */}
-<div className="form-grid g-3">
-  <div className="field-group">
-    <label className="field-label">Email Address <span className="req">*</span></label>
-    <input
-      type="email"
-      className={`field-input ${emailError ? 'field-input--error' : ''}`}
-      placeholder="e.g. juan@email.com"
-      value={email}
-      onChange={(e) => validateEmail(e.target.value)}
-    />
-    {/* => Show inline error when regex fails */}
-    {emailError && <span className="field-error">{emailError}</span>}
-  </div>
-  <div className="field-group">
-    <label className="field-label">Mobile Number <span className="req">*</span></label>
-    <input
-      type="text"
-      className={`field-input ${mobileError ? 'field-input--error' : ''}`}
-      placeholder="e.g. 09XXXXXXXXX"
-      maxLength={11}
-      value={mobile}
-      onChange={(e) => formatMobile(e.target.value)}
-    />
-    {/* => Show inline error when number is invalid */}
-    {mobileError && <span className="field-error">{mobileError}</span>}
-  </div>
-  <div className="field-group">
-    <label className="field-label">Telephone Number</label>
-    <input
-      type="text"
-      className="field-input"
-      placeholder="e.g. (02) 8XXX XXXX"
-      value={telephone}
-      onChange={(e) => setTelephone(e.target.value)}
-    />
-  </div>
-</div>
+            {/* Row 1 - Email + Mobile + Telephone */}
+            <div className="form-grid g-3">
+              <div className="field-group">
+                <label className="field-label">Email Address <span className="req">*</span></label>
+                <input
+                  type="email"
+                  className={`field-input ${emailError ? 'field-input--error' : ''}`}
+                  placeholder="e.g. juan@email.com"
+                  value={email}
+                  onChange={(e) => validateEmail(e.target.value)}
+                />
+                {/* => Show inline error when regex fails */}
+                {emailError && <span className="field-error">{emailError}</span>}
+              </div>
+              <div className="field-group">
+                <label className="field-label">Mobile Number <span className="req">*</span></label>
+                <input
+                  type="text"
+                  className={`field-input ${mobileError ? 'field-input--error' : ''}`}
+                  placeholder="e.g. 09XXXXXXXXX"
+                  maxLength={11}
+                  value={mobile}
+                  onChange={(e) => formatMobile(e.target.value)}
+                />
+                {/* => Show inline error when number is invalid */}
+                {mobileError && <span className="field-error">{mobileError}</span>}
+              </div>
+              <div className="field-group">
+                <label className="field-label">Telephone Number</label>
+                <input
+                  type="text"
+                  className="field-input"
+                  placeholder="e.g. (02) 8XXX XXXX"
+                  value={telephone}
+                  onChange={(e) => setTelephone(e.target.value)}
+                />
+              </div>
+            </div>
 
-{/* Row 2 - Fax + Facebook + Others */}
-<div className="form-grid g-3">
-  <div className="field-group">
-    <label className="field-label">Fax Number</label>
-    <input
-      type="text"
-      className="field-input"
-      placeholder="e.g. (02) 8XXX XXXX"
-      value={fax}
-      onChange={(e) => setFax(e.target.value)}
-    />
-  </div>
-  <div className="field-group">
-    <label className="field-label">Facebook Account</label>
-    <input
-      type="text"
-      className="field-input"
-      placeholder="e.g. facebook.com/juandelacruz"
-      value={facebook}
-      onChange={(e) => setFacebook(e.target.value)}
-    />
-  </div>
-  <div className="field-group">
-    <label className="field-label">Other Contact</label>
-    <input
-      type="text"
-      className="field-input"
-      placeholder="e.g. Twitter, LinkedIn, etc."
-      value={otherContact}
-      onChange={(e) => setOtherContact(e.target.value)}
-    />
-  </div>
-</div>
+            {/* Row 2 - Fax + Facebook + Others */}
+            <div className="form-grid g-3">
+              <div className="field-group">
+                <label className="field-label">Fax Number</label>
+                <input
+                  type="text"
+                  className="field-input"
+                  placeholder="e.g. (02) 8XXX XXXX"
+                  value={fax}
+                  onChange={(e) => setFax(e.target.value)}
+                />
+              </div>
+              <div className="field-group">
+                <label className="field-label">Facebook Account</label>
+                <input
+                  type="text"
+                  className="field-input"
+                  placeholder="e.g. facebook.com/juandelacruz"
+                  value={facebook}
+                  onChange={(e) => setFacebook(e.target.value)}
+                />
+              </div>
+              <div className="field-group">
+                <label className="field-label">Other Contact</label>
+                <input
+                  type="text"
+                  className="field-input"
+                  placeholder="e.g. Twitter, LinkedIn, etc."
+                  value={otherContact}
+                  onChange={(e) => setOtherContact(e.target.value)}
+                />
+              </div>
+            </div>
 
             <hr /><br />
 
@@ -762,7 +817,7 @@ const Enroll = () => {
             {/* => District and Zip share the first column slot side by side */}
             <div className="birthplace-row" style={{ marginTop: '1.2rem' }}>
               <div className="field-group">
-                <label className="field-label">Congressional District &amp; Zip Code</label>
+                <label className="field-label">Congressional District &amp; Zip Code <Info content="This will be filled up automatically." /> </label>
                 <div className="district-zip-row">
                   <input
                     type="text"
@@ -861,6 +916,40 @@ const Enroll = () => {
             </button>
           </div>
         </div>
+
+        {/* Tab 3 contents here */}
+        <div className={`tab-content ${activeStep === 3 ? 'open' : ''}`} id="content-3">
+          {step3SubStep === 1 && (
+            <CourseRequirements1
+              data={courseData}
+              onChange={handleCourseChange}
+              onBack={() => handleTabClick(2)} 
+              onNext={goToStep32}
+            />
+          )}
+          
+          {step3SubStep === 2 && (
+            <CourseRequirements2
+              data={expData}
+              onChange={handleExpChange}
+              isScholar={courseData.isScholar === 'yes'} 
+              onBack={goToStep31}
+              onNext={goToStep33}
+            />
+          )}
+          
+          {step3SubStep === 3 && (
+            <CourseRequirements3
+              onBack={() => setStep3SubStep(2)}
+              onSubmit={() => {
+                // Handle final submission - redirect, show success, etc.
+                alert('Enrollment submitted successfully!');
+                // Or navigate to success page, reset form, etc.
+              }}
+            />
+          )}
+        </div>
+
       </div>
     </>
   );

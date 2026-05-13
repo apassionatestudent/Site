@@ -1,0 +1,99 @@
+.info-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(59,131,246,0.77);
+  border: 2px solid rgba(193,193,193,0.85);
+  color: #fff;
+  font-weight: 700;
+  font-size: 10px;
+  line-height: 1;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+  padding: 0;
+  margin-left: 6px;
+}
+
+.info-trigger:hover,
+.info-trigger:focus {
+  background: rgba(59,130,246,0.25);
+  border-color: #3b82f6;
+  transform: scale(1.05);
+  color: #2563eb;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
+}
+
+/* Tooltip container */
+.info-tooltip {
+  pointer-events: none;
+  transform-origin: left center;
+}
+
+/* content */
+.info-content {
+  background: var(--bg-primary, #ffffff);
+  color: var(--text-primary, #111827);
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border, #e5e7eb);
+  box-shadow: 0 8px 28px rgba(0,0,0,0.12);
+  max-width: 280px;
+  font-size: 13px;
+  line-height: 1.4;
+  pointer-events: auto;
+  white-space: pre-line;
+}
+
+/* Arrow base */
+.info-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+/* Right side (tooltip rendered right of trigger) */
+.info-tooltip.right .info-arrow {
+  left: -10px;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+  border-right: 10px solid var(--border, #e5e7eb);
+}
+.info-tooltip.right .info-content {
+  margin-left: 6px;
+}
+
+/* Left side (tooltip rendered left of trigger) */
+.info-tooltip.left .info-arrow {
+  right: -10px;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+  border-left: 10px solid var(--border, #e5e7eb);
+}
+.info-tooltip.left .info-content {
+  margin-right: 6px;
+}
+
+/* small animation */
+.info-tooltip[aria-hidden="false"] {
+  animation: infoSlideIn 160ms ease-out;
+  pointer-events: auto;
+}
+@keyframes infoSlideIn {
+  from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Mobile tweaks */
+@media (max-width: 768px) {
+  .info-content { max-width: 220px; font-size: 12px; }
+  .info-trigger { width: 18px; height: 18px; font-size: 9px; margin-left: 4px; }
+}
