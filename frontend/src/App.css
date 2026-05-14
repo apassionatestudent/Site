@@ -29,3 +29,20 @@ body,
 p {
   font-size: 16px;
 }
+
+/* => default layout for public pages */
+/* .app-main {
+  width: 100%;
+}
+
+/* => dashboard layout - offset content by the sidebar width */
+.app-main--dashboard {
+  margin-left: 240px; /* must match --sidebar-width in Sidebar.css */
+}
+
+/* => shrink offset on mobile to match the collapsed sidebar */
+@media (max-width: 768px) {
+  .app-main--dashboard {
+    margin-left: 64px;
+  }
+}

@@ -1,48 +1,16 @@
 
-// import { Routes, Route } from 'react-router-dom';
-// import './App.css'
-
-// // => import components
-// import NavBar from './components/public/Navbar/NavBar.jsx';
-// import Footer from './components/public/Footer/Footer.jsx';
-
-// // => import pages
-// import Home    from './pages/public/Home/Home.jsx';
-// import About   from './pages/public/About/About.jsx';
-// import Courses from './pages/public/Courses/Courses.jsx';
-// import Enroll  from './pages/public/Enroll/Enroll.jsx';
-// import Contact from './pages/public/Contact/Contact.jsx';
-// import Login   from './pages/public/Login/Login.jsx';
-
-// function App() {
-
-//   return (
-//     <>
-//       <NavBar />
-//       <Routes>
-//         <Route path="/"        element={<Home />} />
-//         <Route path="/home"    element={<Home />} />
-//         <Route path="/about"   element={<About />} />
-//         <Route path="/courses" element={<Courses />} />
-//         <Route path="/enroll"  element={<Enroll />} />
-//         <Route path="/contact" element={<Contact />} />
-//         <Route path="/login"   element={<Login />} />
-//       </Routes>
-//       <Footer />
-//     </>
-//   )
-// }
-
-// export default App
-
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation  } from 'react-router-dom';
 import './App.css'
 
-// => import components
+// => import public components
 import NavBar from './components/public/Navbar/NavBar.jsx';
 import Footer from './components/public/Footer/Footer.jsx';
+import NotFound from './components/NotFound.jsx';
 
-// => import pages
+// => import private components
+import Sidebar from './components/private/SideBar/SideBar.jsx';
+
+// => import public pages
 import Home from './pages/public/Home/Home.jsx';
 import About from './pages/public/About/About.jsx';
 import Courses from './pages/public/Courses/Courses.jsx';
@@ -50,13 +18,48 @@ import Enroll from './pages/public/Enroll/Enroll.jsx';
 import Contact from './pages/public/Contact/Contact.jsx';
 import Login from './pages/public/Login/Login.jsx';
 
+// => import private (dashboard) pages
+import Dashboard from './pages/private/Dashboard/Dashboard.jsx';
+import Account from './pages/private/Account/Account.jsx';
+import Documents from './pages/private/Documents/Documents.jsx';
+import Enrollment from './pages/private/Enrollment/Enrollment.jsx';
+import SupportTickets from './pages/private/SupportTickets/SupportTickets.jsx';
+import Announcements from './pages/private/Announcements/Announcements.jsx';
+
+// => all routes that belong to the student dashboard
+const DASHBOARD_ROUTES = [
+  '/dashboard',
+  '/dashboard/account',
+  '/dashboard/documents',
+  '/dashboard/enrollment',
+  '/dashboard/support',
+  '/dashboard/announcements',
+];
+
+
 function App() {
+  const location = useLocation();
+
+  // => true when the user is on any dashboard route
+  const isDashboard = DASHBOARD_ROUTES.some(route =>
+    location.pathname.startsWith(route)
+  );
+
   return (
     <div className="app-shell">
-      <NavBar />
 
-      <main className="app-main">
+
+      {/* => show public NavBar only on public pages */}
+      {!isDashboard && <NavBar />}
+
+      {/* => show Sidebar only on dashboard pages */}
+      {isDashboard && <Sidebar />}
+
+
+      <main className={isDashboard ? 'app-main app-main--dashboard' : 'app-main'}>
         <Routes>
+
+          {/* => public routes */}
           <Route path="/" element={<Home />} />
           <Route path="/home" element={<Home />} />
           <Route path="/about" element={<About />} />
@@ -64,12 +67,24 @@ function App() {
           <Route path="/enroll" element={<Enroll />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/login" element={<Login />} />
+
+          {/* => private / dashboard routes */} 
+          <Route path="/dashboard" element={<Announcements />} />
+          <Route path="/dashboard/account" element={<Account />} />
+          <Route path="/dashboard/documents" element={<Documents />} />
+          <Route path="/dashboard/enrollment" element={<Enrollment />} />
+          <Route path="/dashboard/supporttickets" element={<SupportTickets />} />
+-
+          <Route path="*" element={<NotFound />} />
         </Routes>
+
       </main>
 
-      <Footer />
+      {/* => show Footer only on public pages */}
+      {!isDashboard && <Footer />}
+
     </div>
   )
 }
 
-export default App
+export default App;

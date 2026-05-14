@@ -65,12 +65,12 @@ const MAP_EMBED_URL =
 export default function Footer() {
   return (
     <footer className="footer">
-      <div className="footer__inner">
+      <div className="footer-inner">
 
         {/* => LEFT: Google Map  */}
-        <div className="footer__map-col">
-          <span className="footer__map-label">Find Us</span>
-          <div className="footer__map-frame">
+        <div className="footer-map-col">
+          <span className="footer-map-label">Find Us</span>
+          <div className="footer-map-frame">
             <iframe
               src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3925.3293771673143!2d123.8872726750354!3d10.315503089806633!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x33a99980ab303539%3A0xbeccee4ef3abc8f8!2s3A%20PRIME%20HOSPITALITY%20TRAINING%20AND%20ASSESSMENT%20CENTER%20INC.!5e0!3m2!1ses!2sph!4v1777973748254!5m2!1ses!2sph"
               width="600"
@@ -85,18 +85,18 @@ export default function Footer() {
         </div>
 
         {/* => RIGHT: Info */}
-        <div className="footer__info-col">
+        <div className="footer-info-col">
 
           {/* Brand */}
           <div>
-            <h2 className="footer__brand-name">3A Prime Hospitality</h2>
-            <p className="footer__brand-tagline">Training &amp; Assessment Center Inc.</p>
+            <h2 className="footer-brand-name">3A Prime Hospitality</h2>
+            <p className="footer-brand-tagline">Training &amp; Assessment Center Inc.</p>
           </div>
 
           {/* Quick Links */}
-          <div className="footer__section">
-            <p className="footer__section-title">Quick Links</p>
-            <ul className="footer__links">
+          <div className="footer-section">
+            <p className="footer-section-title">Quick Links</p>
+            <ul className="footer-links">
               <li><a href="/privacy-policy">Privacy Policy</a></li>
               <li><a href="/faqs">FAQs</a></li>
               <li><a href="/branches">Branches</a></li>
@@ -104,9 +104,9 @@ export default function Footer() {
           </div>
 
           {/* Address */}
-          <div className="footer__section">
-            <p className="footer__section-title">Address</p>
-            <p className="footer__detail-text">
+          <div className="footer-section">
+            <p className="footer-section-title">Address</p>
+            <p className="footer-detail-text">
               0362 Don Mariano Cui,<br />
               Corner N Escario St,<br />
               Cebu City, 6000 Cebu Philippines
@@ -114,31 +114,31 @@ export default function Footer() {
           </div>
 
           {/* Business Hours */}
-          <div className="footer__section">
-            <p className="footer__section-title">Business Hours</p>
-            <p className="footer__detail-text">
+          <div className="footer-section">
+            <p className="footer-section-title">Business Hours</p>
+            <p className="footer-detail-text">
               <strong>Mon – Sat</strong>&ensp;8:00 AM – 5:00 PM<br />
               <strong>Sunday</strong>&ensp;Closed
             </p>
           </div>
 
           {/* Contact */}
-          <div className="footer__section">
-            <p className="footer__section-title">Contact Us</p>
-            <div className="footer__contacts">
-              <a href="tel:+6332XXXXXXX" className="footer__contact-item">
+          <div className="footer-section">
+            <p className="footer-section-title">Contact Us</p>
+            <div className="footer-contacts">
+              <a href="tel:+6332XXXXXXX" className="footer-contact-item">
                 <PhoneIcon />
                 +63 32 XXX XXXX
               </a>
-              <a href="tel:+639XXXXXXXXX" className="footer__contact-item">
+              <a href="tel:+639XXXXXXXXX" className="footer-contact-item">
                 <PhoneIcon />
                 +63 9XX XXX XXXX
               </a>
-              <a href="mailto:info@3aprime.com.ph" className="footer__contact-item">
+              <a href="mailto:info@3aprime.com.ph" className="footer-contact-item">
                 <MailIcon />
                 info@3aprime.com.ph
               </a>
-              <a href="mailto:admissions@3aprime.com.ph" className="footer__contact-item">
+              <a href="mailto:admissions@3aprime.com.ph" className="footer-contact-item">
                 <MailIcon />
                 admissions@3aprime.com.ph
               </a>
@@ -146,9 +146,9 @@ export default function Footer() {
           </div>
 
           {/* Social Media */}
-          <div className="footer__section">
-            <p className="footer__section-title">Follow Us</p>
-            <div className="footer__socials">
+          <div className="footer-section">
+            <p className="footer-section-title">Follow Us</p>
+            <div className="footer-socials">
               {SOCIALS.map(({ label, href, Icon }) => (
                 <a
                   key={label}
@@ -156,7 +156,7 @@ export default function Footer() {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={label}
-                  className="footer__social-link"
+                  className="footer-social-link"
                 >
                   <Icon />
                 </a>
@@ -168,11 +168,11 @@ export default function Footer() {
       </div>
 
       {/* => Bottom bar  */}
-      <div className="footer__bottom">
-        <span className="footer__copyright">
+      <div className="footer-bottom">
+        <span className="footer-copyright">
           © {new Date().getFullYear()} 3A Prime Hospitality Training and Assessment Center Inc. All rights reserved.
         </span>
-        <ul className="footer__legal-links">
+        <ul className="footer-legal-links">
           <li><a href="/privacy-policy">Privacy Policy</a></li>
           <li><a href="/sitemap">Sitemap</a></li>
         </ul>
