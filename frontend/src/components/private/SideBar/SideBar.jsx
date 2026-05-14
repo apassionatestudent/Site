@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
+import axios from "axios";
 import "./SideBar.css";
 
 import AnnouncementsIcon from "../../../assets/icons/announcements.png";
@@ -32,9 +33,28 @@ const Sidebar = ({
   profilePicture = DefaultAvatar,
   profileName    = "Student Name",
   onNavClick     = () => {},
-  onLogout       = () => {},
 }) => {
   const [hoveredItem, setHoveredItem] = useState(null);
+  const navigate = useNavigate();
+
+  // => Clears the localStorage flag, calls the backend to clear the httpOnly cookie,
+  // => then redirects to /login
+  const handleLogout = async () => {
+    try {
+      await axios.post(
+        'http://localhost:5000/api/student-auth/logout',
+        {},
+        { withCredentials: true } // => required so the backend can clear the httpOnly cookie
+      );
+    } catch (error) {
+      // => Even if the backend call fails, still clear the frontend state
+      console.error('Logout error:', error);
+    } finally {
+      // => Always clear the localStorage flag and redirect regardless of backend response
+      localStorage.removeItem('isLoggedIn');
+      navigate('/login');
+    }
+  };
 
   const navLinkClass = (id) => ({ isActive }) =>
     [
@@ -96,7 +116,7 @@ const Sidebar = ({
         <div className="sidebar-divider" />
         <button
           className="sidebar-nav-item sidebar-nav-item--logout"
-          onClick={onLogout}
+          onClick={handleLogout}
         >
           <img src={LogoutIcon} alt="Logout icon" className="sidebar-nav-icon" />
           <span className="sidebar-nav-label">Logout</span>

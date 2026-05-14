@@ -11,7 +11,7 @@ const { PGHOST, PGDATABASE, PGUSER, PGPASSWORD } = process.env;
 
 // connect to the database 
 export const sql = neon(
-    `postgresql://${PGUSER}:${PGPASSWORD}@${PGHOST}/${PGDATABASE}?sslmode=require`,
+    `postgresql://${PGUSER}:${PGPASSWORD}@${PGHOST}/${PGDATABASE}?sslmode=require&channel_binding=require`,
 
     { 
         fullResults: true,  // Returns full { rows: [...] } instead of raw arrays 
