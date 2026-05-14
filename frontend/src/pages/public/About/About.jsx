@@ -137,13 +137,13 @@ export default function About() {
         <div className="about-card mission-card">
           <div className="about-card-label">01</div>
           <h2>Our Mission</h2>
-          <p>We focus in preparing hospitality professionals through dynamic skills training and diverse educational opportunities that emphasize critical thinking, creativity, and the development of attitudes suitable for progressive employment in the global hospitality, travel, and related industry.</p>
+          <p>We focus in preparing hospitality professionals. Through dynamic skills training and diverse educational opportunities that emphasizes critical thinking, creativity and the development of attitudes suitable for progressive employment in the global hospitality, travel and related industry</p>
         </div>
 
         <div className="about-card vision-card">
           <div className="about-card-label">02</div>
           <h2>Our Vision</h2>
-          <p><strong>3A Prime Hospitality Training and Assessment Center Inc.</strong> endeavors to become the leading provider in hospitality education — committed to developing the full potential of all its students in a stimulating and rigorous learning environment dedicated to hospitality service at its finest.</p>
+          <p><strong>3A Prime Hospitality Training and Assessment Center Inc.</strong> endeavors to become the leading provider in hospitality education. We are committed to developing the full potential of all its students in a stimulating and rigorous learning environment. As an institution, we are dedicated to embracing hospitality service at its finest.</p>
         </div>
 
         <div className="about-card values-card">
@@ -191,11 +191,11 @@ export default function About() {
           {/* Text column => company history and background */}
           <div className="story-text-col">
             <p>We are creating bridges with local hotels, the Department of Tourism, and Employment Agencies so our graduates have real opportunities in the industry after completing their training.</p>
-            <p>3A Prime is under the management of Institution Head <strong>Ana Liza M. Augusto</strong> — a Filipino National, Professional Chef, and Culinary Instructor with fifteen years in the Hospitality Industry both locally and abroad, and six years as Culinary Instructor Consultant at the University of San Carlos, Benedicto College, and Magsaysay Careers Training.</p>
+            <p>3A Prime is under the management of Institution Head <strong>Ana Liza M. Augusto</strong> - a Filipino National, Professional Chef, and Culinary Instructor with fifteen years in the Hospitality Industry both locally and abroad, and six years as Culinary Instructor Consultant at the University of San Carlos, Benedicto College, and Magsaysay Careers Training.</p>
             <p>Students are exposed to professional training standards for local hospitality establishments like hotels and restaurants. We also promote OJT (on-the-job training) to enhance skills and increase employment opportunities with our partner companies.</p>
             <p>Since opening in December 2018, we have proudly produced graduates as regular enrollees and scholars from government and non-government organizations including <strong>Plan International, DepEd, TESDA,</strong> and <strong>OWWA</strong>. We also cater National Certification Assessments so trainees receive a TESDA National Certificate.</p>
             {/* Closing statement => styled distinctively via .story-closing in About.css */}
-            <p className="story-closing">In 3A Prime Hospitality — we express and we instill excellence.</p>
+            <p className="story-closing">In 3A Prime Hospitality - we express and we instill excellence.</p>
           </div>
 
         </div>

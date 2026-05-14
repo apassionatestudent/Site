@@ -1,16 +1,49 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from "react";
+import axios from "axios";
+import { Link, useNavigate } from 'react-router-dom';
 import './Login.css';
-
 export default function Login() {
-  const [form, setForm] = useState({ email: '', password: '' });
+  const navigate = useNavigate();
+
+  // => Login form state
+  const [form, setForm] = useState({
+    email: "",
+    password: "",
+  });
+
+  // => Tracks loading state to disable button while request is in flight
+  const [isLoading, setIsLoading] = useState(false);
+
+  // => Holds error message returned from the backend
+  const [error, setError] = useState(null);
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // TODO: connect to backend auth API, let me handle it, design 
-    console.log('Login attempted:', form.email);
+    setIsLoading(true);
+    setError(null); // => clear previous errors on each attempt
+
+    try {
+      // => username in the backend maps to email in the frontend form
+      await axios.post(
+        'http://localhost:5000/api/student-auth/login',
+        { username: form.email, password: form.password },
+        { withCredentials: true } // => required so the cookie is saved in the browser
+      );
+
+      // => redirect to dashboard on successful login
+      localStorage.setItem('isLoggedIn', 'true');
+
+      // => redirect to dashboard on successful login
+      navigate('/dashboard');
+
+    } catch (err) {
+      // => show the error message returned from the backend
+      setError(err.response?.data?.message || 'Something went wrong. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -51,7 +84,12 @@ export default function Login() {
             <Link to="/forgot-password">Forgot password?</Link>
           </div>
 
-          <button type="submit" className="login-btn">Sign In</button>
+          {/* => shows backend error messages such as invalid credentials or deactivated account */}
+          {error && <p className="login-error">{error}</p>}
+
+          <button type="submit" className="login-btn" disabled={isLoading}>
+            {isLoading ? 'Signing in...' : 'Sign In'}
+          </button>
         </form>
 
         <p className="login-footer">
