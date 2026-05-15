@@ -2,6 +2,9 @@ import React, { useState } from "react";
 import axios from "axios";
 import { Link, useNavigate } from 'react-router-dom';
 import './Login.css';
+
+import WarningIcon from '../../../assets/icons/warning.png';
+
 export default function Login() {
   const navigate = useNavigate();
 
@@ -10,12 +13,18 @@ export default function Login() {
     email: "",
     password: "",
   });
-
   // => Tracks loading state to disable button while request is in flight
   const [isLoading, setIsLoading] = useState(false);
 
   // => Holds error message returned from the backend
   const [error, setError] = useState(null);
+
+  // => Remember Me: if true, persist login across browser sessions via localStorage
+  // => if false, login only lasts until the tab is closed via sessionStorage
+  const [rememberMe, setRememberMe] = useState(false);
+
+  // => Controls visibility of the Remember Me warning modal
+  const [showRememberModal, setShowRememberModal] = useState(false);
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
@@ -32,8 +41,13 @@ export default function Login() {
         { withCredentials: true } // => required so the cookie is saved in the browser
       );
 
-      // => redirect to dashboard on successful login
-      localStorage.setItem('isLoggedIn', 'true');
+      // => if rememberMe is checked, persist the flag across browser sessions
+      // => if not, use sessionStorage which clears when the tab is closed
+      if (rememberMe) {
+        localStorage.setItem('isLoggedIn', 'true');
+      } else {
+        sessionStorage.setItem('isLoggedIn', 'true');
+      }
 
       // => redirect to dashboard on successful login
       navigate('/dashboard');
@@ -81,8 +95,67 @@ export default function Login() {
           </div>
 
           <div className="login-forgot">
+            <label className="login-remember">
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => {
+                  // => if the user is checking it (not unchecking), show the warning modal first
+                  // => if unchecking, just uncheck directly without showing the modal
+                  if (e.target.checked) {
+                    setShowRememberModal(true);
+                  } else {
+                    setRememberMe(false);
+                  }
+                }}
+              />
+              Remember me
+            </label>
             <Link to="/forgot-password">Forgot password?</Link>
           </div>
+
+          {/* => Remember Me warning modal */}
+          {showRememberModal && (
+            <div className="remember-modal-overlay">
+              <div className="remember-modal">
+                <div className="remember-modal-icon">
+                  <img src={WarningIcon} alt="Warning" className="remember-modal-icon-img" />
+                </div>
+                <h3>Are you on a private device?</h3>
+                <p>
+                  Enabling <strong>'Remember Me'</strong> keeps you logged in even after closing the browser.
+                  This is convenient on your personal phone or computer, but <strong>poses a serious risk
+                  on shared or public devices</strong> which means anyone who uses this device after you could
+                  access your account without a password.
+                </p>
+                <p className="remember-modal-advice">
+                  Only enable this if you personally own or exclusively use this device.
+                </p>
+                <div className="remember-modal-actions">
+                  <button
+                    className="remember-modal-btn remember-modal-btn--confirm"
+                    onClick={() => {
+                      // => user confirmed they're on a private device, enable remember me
+                      setRememberMe(true);
+                      setShowRememberModal(false);
+                    }}
+                  >
+                    Yes, this is my private device
+                  </button>
+                  <button
+                    className="remember-modal-btn remember-modal-btn--cancel"
+                    onClick={() => {
+                      // => user cancelled, keep remember me unchecked
+                      setRememberMe(false);
+                      setShowRememberModal(false);
+                    }}
+                  >
+                    No, keep me safe
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* => shows backend error messages such as invalid credentials or deactivated account */}
           {error && <p className="login-error">{error}</p>}

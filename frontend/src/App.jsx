@@ -60,7 +60,7 @@ function App() {
           <Route
             path="/dashboard/*"
             element={
-              localStorage.getItem('isLoggedIn') === 'true'
+              localStorage.getItem('isLoggedIn') === 'true' || sessionStorage.getItem('isLoggedIn') === 'true'
                 ? (
                   <Routes>
                     <Route index element={<Announcements />} />
