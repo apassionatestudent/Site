@@ -85,7 +85,7 @@
   border-color: var(--accent);
 }
 
-.login-forgot {
+/* .login-forgot {
   text-align: right;
   margin-top: -0.2rem;
 }
@@ -98,6 +98,62 @@
 
 .login-forgot a:hover {
   text-decoration: underline;
+} */
+
+.login-forgot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: -0.2rem;
+}
+.login-forgot a {
+  color: var(--accent-span);
+  font-size: 0.95rem;
+  text-decoration: none;
+}
+.login-forgot a:hover {
+  text-decoration: underline;
+}
+/* => Remember Me checkbox + label */
+.login-remember {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  user-select: none;
+}
+.login-remember input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 1rem;
+  height: 1rem;
+  border: 1.5px solid var(--border);
+  border-radius: 0.25rem;
+  background: var(--bg-secondary);
+  cursor: pointer;
+  position: relative;
+  transition: background 0.2s, border-color 0.2s;
+  flex-shrink: 0;
+}
+.login-remember input[type="checkbox"]:checked {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+/* => checkmark inside the checkbox when checked */
+.login-remember input[type="checkbox"]:checked::after {
+  content: '';
+  position: absolute;
+  left: 0.18rem;
+  top: 0.02rem;
+  width: 0.35rem;
+  height: 0.6rem;
+  border: 2px solid #fff;
+  border-top: none;
+  border-left: none;
+  transform: rotate(45deg);
 }
 
 .login-btn {
@@ -141,4 +197,117 @@
   font-size: 0.875rem;
   text-align: center;
   margin-bottom: 0.5rem;
+}
+
+
+/* => Remember Me modal overlay: covers the entire screen */
+.remember-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  padding: 1.5rem;
+  backdrop-filter: blur(2px);
+}
+
+/* => Modal card */
+.remember-modal {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 1.25rem;
+  padding: 2rem;
+  max-width: 420px;
+  width: 100%;
+  box-shadow: var(--card-glow);
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+/* => Warning icon */
+.remember-modal-icon {
+  font-size: 2rem;
+  text-align: center;
+}
+
+/* => Modal heading */
+.remember-modal h3 {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  text-align: center;
+  margin: 0;
+}
+
+/* => Modal body text */
+.remember-modal p {
+  font-size: 0.92rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* => Highlighted advice line */
+.remember-modal-advice {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  background: var(--tag-bg);
+  border: 1px solid var(--tag-border);
+  border-radius: 0.6rem;
+  padding: 0.65rem 0.9rem;
+}
+
+/* => Button row */
+.remember-modal-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 0.25rem;
+}
+
+/* => Shared button base */
+.remember-modal-btn {
+  width: 100%;
+  padding: 0.8rem;
+  border-radius: 0.6rem;
+  border: none;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.2s, color 0.2s;
+}
+
+/* => Yes button: uses accent color to match the login button style */
+.remember-modal-btn--confirm {
+  background: var(--accent);
+  color: #fff;
+}
+
+.remember-modal-btn--confirm:hover {
+  background: var(--accent-hover);
+}
+
+/* => No button: subtle secondary style */
+.remember-modal-btn--cancel {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+
+.remember-modal-btn--cancel:hover {
+  color: var(--text-primary);
+  border-color: var(--accent);
+}
+
+/* => Warning icon image inside the Remember Me modal */
+.remember-modal-icon-img {
+  width: 3rem;
+  height: 3rem;
+  display: block;
+  margin: 0 auto;
 }

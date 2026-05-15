@@ -9,10 +9,14 @@ import enrollIcon from '../../../assets/icons/enroll.png';
 import contactIcon from '../../../assets/icons/contact.png';
 import loginIcon from '../../../assets/icons/login.png';
 
-// => receives isLoggedIn from App.jsx to conditionally render login or dashboard link
-const NavBar = ( {isLoggedIn } ) => {
+// => receives isLoggedIn from App.jsx to conditionally render login or dashboard link || {isLoggedIn }
+const NavBar = (  ) => {
   const [isOpen, setIsOpen] = useState(false);
   const toggleMenu = () => setIsOpen(!isOpen);
+
+  const isLoggedIn = 
+  localStorage.getItem('isLoggedIn') === 'true' || 
+  sessionStorage.getItem('isLoggedIn') === 'true';
 
   return (
     <nav className="navbar">
@@ -31,10 +35,14 @@ const NavBar = ( {isLoggedIn } ) => {
           <li><NavLink to="/contact"><img src={contactIcon} alt="Contact" className="nav-icon" /> Contact</NavLink></li>
           <li>
             {/* => swap login link to dashboard when student is already logged in */}
-            <NavLink to={isLoggedIn ? '/dashboard' : '/login'}>
+            {/* <NavLink to={isLoggedIn ? '/dashboard' : '/login'}>
               <img src={loginIcon} alt="Login" className="nav-icon" />
               {isLoggedIn ? 'Dashboard' : 'Login'}
-            </NavLink>
+            </NavLink> */}
+            {isLoggedIn 
+              ? <NavLink to="/dashboard">Dashboard</NavLink>
+              : <NavLink to="/login">Login</NavLink>
+            }
           </li>
           <li className="theme-item">
             <ThemeToggle />

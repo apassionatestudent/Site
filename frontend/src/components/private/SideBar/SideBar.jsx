@@ -50,8 +50,9 @@ const Sidebar = ({
       // => Even if the backend call fails, still clear the frontend state
       console.error('Logout error:', error);
     } finally {
-      // => Always clear the localStorage flag and redirect regardless of backend response
+      // => Clear both storages on logout regardless of which one was used on login
       localStorage.removeItem('isLoggedIn');
+      sessionStorage.removeItem('isLoggedIn');
       navigate('/login');
     }
   };
