@@ -2,12 +2,16 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { Student } from '../models/Student.js';
 
+// => for sending login notification emails and such
+import { sendEmail } from '../utils/sendEmail.js';
+import { loginNotificationTemplate } from '../utils/emailTemplates.js';
+
 // => Cookie options for security
 const cookieOptions = {
     httpOnly: true, // => cookie is only accessible by the web server, not by JavaScript on the client side
     secure: process.env.NODE_ENV === 'production', // => only sent over HTTPS in production
     sameSite: 'Strict', // => prevents CSRF attacks
-    maxAge: 30 * 24 * 60 * 60 * 1000, // => 30 days
+    maxAge: 30 * 24 * 60 * 60 * 1000, // => 30 days but I may change it later on, if God willing 
 };
 
 // => Generates a JWT token carrying essential student identity info
@@ -62,7 +66,7 @@ export const registerStudent = async (req, res) => {
 
 // => POST /api/student-auth/login
 export const loginStudent = async (req, res) => {
-    const { username, password } = req.body;
+    const { username, password, rememberMe } = req.body;
 
     if (!username || !password) {
         return res.status(400).json({ message: 'Please provide a username (email) and password' });
@@ -99,8 +103,23 @@ export const loginStudent = async (req, res) => {
         // => Update last_login_at on successful login
         await Student.updateLastLogin(student.student_id);
 
+        // => Send login notification email to the student
+        // => Runs after login succeeds - failure won't affect the login response
+        const { subject, html } = loginNotificationTemplate({
+            username: student.username,
+            loginTime: new Date().toLocaleString('en-PH', { timeZone: 'Asia/Manila' }),
+        });
+        sendEmail({ to: student.username, subject, html });
+        // => Note: not awaited intentionally - email sending runs in the background
+        // => so a slow email server never delays the login response to the student
+
+        // => cookie duration depends on whether the student chose "Remember Me"
+        const loginCookieOptions = rememberMe
+            ? cookieOptions  // => 30 days if "Remember Me" was checked
+            : { ...cookieOptions, maxAge: undefined }; // => session cookie if not checked (gone on browser close)
+
         const token = generateStudentToken(student);
-        res.cookie('token', token, cookieOptions);
+        res.cookie('token', token, loginCookieOptions);
 
         return res.status(200).json({
             student: {
