@@ -116,7 +116,7 @@ export const loginStudent = async (req, res) => {
         // => cookie duration depends on whether the student chose "Remember Me"
         const loginCookieOptions = rememberMe
             ? cookieOptions  // => 30 days if "Remember Me" was checked
-            : { ...cookieOptions, maxAge: undefined }; // => session cookie if not checked (gone on browser close)
+            : { ...cookieOptions, maxAge: 8 * 60 * 60 * 1000 }; // => 8 hours if not checked
 
         const token = generateStudentToken(student);
         res.cookie('token', token, loginCookieOptions);
