@@ -13,6 +13,18 @@ const Enroll = () => {
     // ============================================================
     // ALL useState declarations
     // ============================================================
+
+    // => Personal Information — Step 1 Full Name
+    const [lastName, setLastName] = useState('');
+    const [firstName, setFirstName] = useState('');
+    const [middleName, setMiddleName] = useState('');
+    const [sex, setSex] = useState('');
+
+    // => Birth Information
+    const [motherName, setMotherName] = useState('');
+    const [fatherName, setFatherName] = useState('');
+
+    const [showStepErrors, setShowStepErrors] = useState(false); 
     const [loadingProvinces, setLoadingProvinces] = useState(false);
     const [loadingCities, setLoadingCities] = useState(false);
     const [activeStep, setActiveStep] = useState(1);
@@ -64,12 +76,46 @@ const Enroll = () => {
 
     const stepTabsRef = useRef(null); // ref for the tabs container or the target element
 
+    // const goNext = () => {
+    //   if (activeStep === 3 && step3SubStep === 1) {
+    //     // From Step 3.1 to Step 3.2
+    //     setStep3SubStep(2);
+    //     return;
+    //   }
+    //   const next = (activeStep || 1) < 3 ? (activeStep || 1) + 1 : 3;
+    //   handleTabClick(next);
+    // };
     const goNext = () => {
+      // => Validate Step 1 before moving to Step 2
+      // if (activeStep === 1) {
+      //   if (!validateStep1()) {
+      //     setShowStepErrors(true);
+      //     return;
+      //   }
+      //   setShowStepErrors(false);
+      // }
+      if (activeStep === 1) {
+        if (validateStep1() !== 'valid') {
+          setShowStepErrors(true);
+          return;
+        }
+        setShowStepErrors(false);
+      }
+
+      // => Validate Step 2 before moving to Step 3
+      if (activeStep === 2) {
+        if (!validateStep2()) {
+          setShowStepErrors(true);
+          return;
+        }
+        setShowStepErrors(false);
+      }
+
       if (activeStep === 3 && step3SubStep === 1) {
-        // From Step 3.1 to Step 3.2
         setStep3SubStep(2);
         return;
       }
+
       const next = (activeStep || 1) < 3 ? (activeStep || 1) + 1 : 3;
       handleTabClick(next);
     };
@@ -105,6 +151,28 @@ const Enroll = () => {
 
     const handleExpChange = (key, value) => {
       setExpData(prev => ({ ...prev, [key]: value }));
+    };
+
+    // => Validate Step 1 required fields before allowing next
+    const validateStep1 = () => {
+      if (!lastName || !firstName || !middleName) return 'missing';
+      if (!region || !municipality) return 'missing';
+      if (!dob) return 'missing';
+      if (dobError) return 'error'; // => field filled but has a validation error
+      if (!sex) return 'missing';
+      if (!motherName || !fatherName) return 'missing';
+      if (!civilStatus || !educAttainment || !employmentStatus) return 'missing';
+      if (educAttainment === 'others' && !educOther) return 'missing';
+      return 'valid';
+    };
+
+    // => Validate Step 2 required fields before allowing next
+    const validateStep2 = () => {
+      if (!email || emailError) return false;
+      if (!mobile || mobileError) return false;
+      if (!mailRegion || !mailCity || !mailBarangay || !mailStreet) return false;
+      if (isMinor && !guardianName) return false;
+      return true;
     };
     
     // => NCR has no provinces, goes directly to cities
@@ -243,6 +311,16 @@ const Enroll = () => {
       } else {
         setActiveStep(step);
       }
+    };
+
+    // => Auto-capitalize first letter of each word, letters only
+    // => Blocks numbers and special characters - they simply won't appear
+    const formatName = (value) => {
+      return value
+        .replace(/[^a-zA-Z\s]/g, '') // => Remove anything that is not a letter or space
+        .replace(/\s{2,}/g, ' ') // => Replace multiple spaces with a single space
+        .replace(/^\s+/, '') // => Remove spaces at the beginning of the string
+        .replace(/(^\s*\w|(?<=\s)\w)/g, (char) => char.toUpperCase()); // => Capitalize the first letter of each word
     };
 
 
@@ -423,15 +501,18 @@ const Enroll = () => {
             <div className="form-grid g-name-row">
               <div className="field-group">
                 <label className="field-label">Last Name <span className="req">*</span></label>
-                <input type="text" className="field-input" placeholder="e.g. dela Cruz" />
+                <input type="text" className="field-input" placeholder="e.g. dela Cruz"
+                value={lastName} onChange={(e) => setLastName(formatName(e.target.value))} />
               </div>
               <div className="field-group">
                 <label className="field-label">First Name <span className="req">*</span></label>
-                <input type="text" className="field-input" placeholder="e.g. Juan" />
+                <input type="text" className="field-input" placeholder="e.g. Juan" 
+                value={firstName} onChange={(e) => setFirstName(formatName(e.target.value))} />
               </div>
               <div className="field-group">
                 <label className="field-label">Middle Name <span className="req">*</span></label>
-                <input type="text" className="field-input" placeholder="e.g. Santos" />
+                <input type="text" className="field-input" placeholder="e.g. Santos" 
+                value={middleName} onChange={(e) => setMiddleName(formatName(e.target.value))} />
               </div>
               <div className="field-group">
                 <label className="field-label">Ext.</label>
@@ -533,7 +614,7 @@ const Enroll = () => {
               </div>
               <div className="field-group">
                 <label className="field-label">Sex <span className="req">*</span></label>
-                <select className="field-select">
+                <select className="field-select" value={sex} onChange={(e) => setSex(e.target.value)}>
                   <option value="">Select</option>
                   <option value="m">Male</option>
                   <option value="f">Female</option>
@@ -563,10 +644,10 @@ const Enroll = () => {
                   <label className="field-label">Mother's Name <span className="req">*</span>
                     <Info content="As shown in your PSA Birth Certificate" />
                   </label>
-                  <input type="text" className="field-input" placeholder="e.g. Gabriela Silang" />
+                  <input type="text" className="field-input" placeholder="e.g. Gabriela Silang"
+                  value={motherName} onChange={(e) => setMotherName(formatName(e.target.value))} />
                 </div>
-                {/* => Show validation error below the field */}
-                {dobError && <span className="field-error">{dobError}</span>}
+
               </div>
 
               <div className="field-group">
@@ -574,7 +655,8 @@ const Enroll = () => {
                   <label className="field-label">Father's Name <span className="req">*</span>
                     <Info content="As shown in your PSA Birth Certificate" />
                   </label>
-                  <input type="text" className="field-input" placeholder="e.g. Diego Silang" />
+                  <input type="text" className="field-input" placeholder="e.g. Diego Silang"
+                  value={fatherName} onChange={(e) => setFatherName(formatName(e.target.value))} />
                 </div>
               </div>
 
@@ -587,7 +669,11 @@ const Enroll = () => {
 
             <div className="form-grid g-3">
               <div className="field-group">
-                <label className="field-label">Civil Status <span className="req">*</span></label>
+                <label className="field-label">Civil Status <span className="req">*</span>
+                  <Info content="Civil status is based on legal marital status, not current romantic relationships. 
+                  - Having a boyfriend or girlfriend does not change a person’s legal civil status (single).
+                  - A widow/er who is currently in a relationship still retains the civil status of widow/er." />
+                </label>
                 <select
                   className="field-select"
                   value={civilStatus}
@@ -657,6 +743,17 @@ const Enroll = () => {
             )}
 
           </div>
+
+          {/* => Show error banner if user tries to proceed with missing required fields */}
+          {showStepErrors && activeStep === 1 && validateStep1() !== 'valid' && (
+            <div className="step-error-banner">
+              <i className="ti ti-alert-circle" />
+              {validateStep1() === 'error'
+                ? 'Please correct the errors in the form before proceeding.'
+                : "Please fill in all required fields (denoted with ' * ') before proceeding."
+              }
+            </div>
+          )}
 
           <div className="form-actions">
             <button className="btn-next" onClick={goNext}>
@@ -905,6 +1002,12 @@ const Enroll = () => {
             )}
 
           </div>
+
+          {showStepErrors && activeStep === 2 && !validateStep2() && (
+            <div className="step-error-banner">
+              <i className="ti ti-alert-circle" /> Please fill in all required fields (denoted with ' * ') before proceeding.
+            </div>
+          )}
 
           {/* Back + Next navigation */}
           <div className="form-actions form-actions--split">
