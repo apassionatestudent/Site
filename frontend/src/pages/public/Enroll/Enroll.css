@@ -504,6 +504,21 @@
   flex: 1; /* => takes remaining space when visible */
 }
 
+/* => Error banner shown when user tries to advance with missing required fields */
+.step-error-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: rgba(192, 57, 43, 0.08);
+  border: 1px solid #c0392b;
+  border-radius: 6px;
+  color: #c0392b;
+  font-size: 13.5px;
+  font-family: var(--font-body);
+  margin-top: 1rem;
+}
+
 @media (max-width: 700px) {
   .hero-title { font-size: 1.8rem; }
   .step-tabs { flex-direction: column; }

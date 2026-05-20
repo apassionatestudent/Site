@@ -42,6 +42,7 @@
 
 .home-hero-content h1 span {
   color: var(--accent-span);
+  font-family: var(--font-display);
 }
 
 .home-hero-content p {
