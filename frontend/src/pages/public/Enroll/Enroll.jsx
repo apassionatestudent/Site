@@ -71,6 +71,8 @@ const Enroll = () => {
     const [fax, setFax] = useState('');
     const [facebook, setFacebook] = useState('');
     const [otherContact, setOtherContact] = useState('');
+    const [facebookError, setFacebookError] = useState('');
+    const [otherContactError, setOtherContactError] = useState('');
 
     const [step3SubStep, setStep3SubStep] = useState(1); // => 1=3.1, 2=3.2, 3=3.3\
 
@@ -103,8 +105,15 @@ const Enroll = () => {
       }
 
       // => Validate Step 2 before moving to Step 3
+      // if (activeStep === 2) {
+      //   if (!validateStep2()) {
+      //     setShowStepErrors(true);
+      //     return;
+      //   }
+      //   setShowStepErrors(false);
+      // }
       if (activeStep === 2) {
-        if (!validateStep2()) {
+        if (validateStep2() !== 'valid') {
           setShowStepErrors(true);
           return;
         }
@@ -167,14 +176,26 @@ const Enroll = () => {
     };
 
     // => Validate Step 2 required fields before allowing next
+    // const validateStep2 = () => {
+    //   if (!email || emailError) return false;
+    //   if (!mobile || mobileError) return false;
+    //   if (!mailRegion || !mailCity || !mailBarangay || !mailStreet) return false;
+    //   if (isMinor && !guardianName) return false;
+    //   return true;
+    // };
+    // => Validate Step 2 required fields before allowing next
+    // => Returns 'error' if fields are filled but invalid, 'missing' if required fields are empty, 'valid' if all good
     const validateStep2 = () => {
-      if (!email || emailError) return false;
-      if (!mobile || mobileError) return false;
-      if (!mailRegion || !mailCity || !mailBarangay || !mailStreet) return false;
-      if (isMinor && !guardianName) return false;
-      return true;
+      if (emailError || mobileError || facebookError || otherContactError) return 'error'; // => filled but invalid format
+      if (!email || !mobile) return 'missing';
+      if (!mailRegion) return 'missing';
+      // => Province is skipped for NCR since it has none
+      if (!isMailNCR && !mailProvince) return 'missing';
+      if (!mailCity || !mailBarangay || !mailStreet) return 'missing';
+      if (isMinor && !guardianName) return 'missing';
+      return 'valid';
     };
-    
+        
     // => NCR has no provinces, goes directly to cities
     const isNCR = region === '1300000000';
 
@@ -337,6 +358,60 @@ const Enroll = () => {
       setMobile(digits);
       setMobileError(digits && (digits.length < 11 || !digits.startsWith('09'))
         ? 'Mobile number must be 11 digits and start with 09.'
+        : '');
+    };
+
+    // => PH telephone: format as (0XX) XXXX-XXXX, landline starts with 0, 11 digits total
+    // => or trunk-prefixed like (02) 8XXX-XXXX for Metro Manila (10 digits)
+    const formatTelephone = (value) => {
+      const digits = value.replace(/\D/g, '').slice(0, 11);
+      setTelephone(digits);
+    };
+
+    const telephoneDisplay = (value) => {
+      const d = value.replace(/\D/g, '');
+      // => Metro Manila landlines: 02 + 8-digit number = 10 digits
+      if (d.startsWith('02') && d.length <= 10) {
+        if (d.length <= 2) return d;
+        if (d.length <= 6) return `(${d.slice(0,2)}) ${d.slice(2)}`;
+        return `(${d.slice(0,2)}) ${d.slice(2,6)}-${d.slice(6)}`;
+      }
+      // => Provincial/other landlines: 0XX + 7-digit = 10 digits, or 11 digits
+      if (d.length <= 3) return d;
+      if (d.length <= 7) return `(${d.slice(0,3)}) ${d.slice(3)}`;
+      return `(${d.slice(0,3)}) ${d.slice(3,7)}-${d.slice(7)}`;
+    };
+
+    // => PH fax: same format rules as telephone
+    const formatFax = (value) => {
+      const digits = value.replace(/\D/g, '').slice(0, 11);
+      setFax(digits);
+    };
+
+    // => Facebook: must be a valid facebook.com URL
+    const validateFacebook = (value) => {
+      setFacebook(value);
+      if (!value) { setFacebookError(''); return; }
+      const fbRegex = /^https?:\/\/(www\.)?facebook\.com\/[^\s]{1,}$/i;
+      setFacebookError(!fbRegex.test(value.trim())
+        ? 'Please enter a valid Facebook URL (e.g. https://www.facebook.com/yourname).'
+        : '');
+    };
+
+    // => Other contact: must be a valid URL, blocks suspicious patterns
+    const validateOtherContact = (value) => {
+      setOtherContact(value);
+      if (!value) { setOtherContactError(''); return; }
+      // => Must start with https:// and be a recognizable URL structure
+      const urlRegex = /^https:\/\/[a-zA-Z0-9\-._~:/?#[\]@!$&'()*+,;=%]+$/;
+      // => Block suspicious patterns: IP addresses, localhost, encoded tricks
+      const suspicious = /^https?:\/\/(\d{1,3}\.){3}\d{1,3}|localhost|127\.0\.0|0\.0\.0\.0|javascript:|data:/i;
+      if (suspicious.test(value)) {
+        setOtherContactError('This URL does not appear to be a valid contact link.');
+        return;
+      }
+      setOtherContactError(!urlRegex.test(value.trim())
+        ? 'Please enter a valid URL starting with https:// (e.g. https://linkedin.com/in/yourname).'
         : '');
     };
 
@@ -802,9 +877,9 @@ const Enroll = () => {
                 <input
                   type="text"
                   className="field-input"
-                  placeholder="e.g. (02) 8XXX XXXX"
-                  value={telephone}
-                  onChange={(e) => setTelephone(e.target.value)}
+                  placeholder="e.g. (02) 8XXX-XXXX"
+                  value={telephoneDisplay(telephone)}
+                  onChange={(e) => formatTelephone(e.target.value)}
                 />
               </div>
             </div>
@@ -816,30 +891,34 @@ const Enroll = () => {
                 <input
                   type="text"
                   className="field-input"
-                  placeholder="e.g. (02) 8XXX XXXX"
-                  value={fax}
-                  onChange={(e) => setFax(e.target.value)}
+                  placeholder="e.g. (02) 8XXX-XXXX"
+                  value={telephoneDisplay(fax)}
+                  onChange={(e) => formatFax(e.target.value)}
                 />
               </div>
               <div className="field-group">
                 <label className="field-label">Facebook Account</label>
                 <input
                   type="text"
-                  className="field-input"
-                  placeholder="e.g. facebook.com/juandelacruz"
+                  className={`field-input ${facebookError ? 'field-input--error' : ''}`}
+                  placeholder="e.g. https://www.facebook.com/juandelacruz"
                   value={facebook}
-                  onChange={(e) => setFacebook(e.target.value)}
+                  onChange={(e) => validateFacebook(e.target.value)}
                 />
+                {/* => Show inline error when URL doesn't match facebook.com pattern */}
+                {facebookError && <span className="field-error">{facebookError}</span>}
               </div>
               <div className="field-group">
                 <label className="field-label">Other Contact</label>
                 <input
                   type="text"
-                  className="field-input"
-                  placeholder="e.g. Twitter, LinkedIn, etc."
+                  className={`field-input ${otherContactError ? 'field-input--error' : ''}`}
+                  placeholder="e.g. https://linkedin.com/in/yourname, or Twitter, etc."
                   value={otherContact}
-                  onChange={(e) => setOtherContact(e.target.value)}
+                  onChange={(e) => validateOtherContact(e.target.value)}
                 />
+                {/* => Show inline error for invalid or suspicious URLs */}
+                {otherContactError && <span className="field-error">{otherContactError}</span>}
               </div>
             </div>
 
@@ -1001,13 +1080,24 @@ const Enroll = () => {
               </>
             )}
 
+            {/* => Show error banner if user tries to proceed with missing required fields */}
+            {showStepErrors && activeStep === 2 && validateStep2() !== 'valid' && (
+              <div className="step-error-banner">
+                <i className="ti ti-alert-circle" />
+                {validateStep2() === 'error'
+                  ? 'Please correct the errors in the form before proceeding.'
+                  : "Please fill in all required fields (denoted with ' * ') before proceeding."
+                }
+              </div>
+            )}
+
           </div>
 
-          {showStepErrors && activeStep === 2 && !validateStep2() && (
+          {/* {showStepErrors && activeStep === 2 && !validateStep2() && (
             <div className="step-error-banner">
               <i className="ti ti-alert-circle" /> Please fill in all required fields (denoted with ' * ') before proceeding.
             </div>
-          )}
+          )} */}
 
           {/* Back + Next navigation */}
           <div className="form-actions form-actions--split">
