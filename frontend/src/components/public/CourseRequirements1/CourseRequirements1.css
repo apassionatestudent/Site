@@ -249,6 +249,21 @@
   transform: scale(0.98);
 }
 
+/* => Google Maps link shown below the branch dropdown */
+.cr1-maps-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+  font-size: 0.8rem;
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.cr1-maps-link:hover {
+  text-decoration: underline;
+}
+
 /* ============================================================
    Responsive
    ============================================================ */
