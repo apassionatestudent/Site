@@ -23,7 +23,7 @@
   border-bottom: none;
 }
 
-/* => Title uses display font (Cormorant Garamond) — matches rest of enrollment form */
+/* => Title uses display font (Cormorant Garamond) - matches rest of enrollment form */
 .cr2-section-title {
   font-size: 15px;
   font-weight: 500;
@@ -73,7 +73,7 @@
 }
 
 /* ============================================================
-   Grid — mirrors .form-grid in Enroll.css
+   Grid - mirrors .form-grid in Enroll.css
    ============================================================ */
 
 .cr2-grid {
@@ -85,7 +85,7 @@
 .cr2-grid.g-2 { grid-template-columns: 1fr 1fr; }
 
 /* ============================================================
-   Field groups — mirrors .field-group in Enroll.css
+   Field groups - mirrors .field-group in Enroll.css
    ============================================================ */
 
 .cr2-field-group {
@@ -105,7 +105,7 @@
 }
 
 /* ============================================================
-   Inputs and selects — mirrors .field-input / .field-select
+   Inputs and selects - mirrors .field-input / .field-select
    ============================================================ */
 
 .cr2-input,
@@ -139,7 +139,7 @@
   cursor: pointer;
 }
 
-/* => Error state — red border on invalid future date fields */
+/* => Error state - red border on invalid future date fields */
 .cr2-input--error {
   border-color: #c0392b !important;
   box-shadow: 0 0 0 3px rgba(192, 57, 43, 0.12);
@@ -154,7 +154,7 @@
 }
 
 /* ============================================================
-   Inclusive date range — two inputs side by side
+   Inclusive date range - two inputs side by side
    ============================================================ */
 
 .cr2-date-range {
@@ -204,7 +204,7 @@
   font-family: var(--font-body);
 }
 
-/* => Remove button — red on hover */
+/* => Remove button - red on hover */
 .cr2-remove-btn {
   display: flex;
   align-items: center;
@@ -227,7 +227,7 @@
   border-color: #c0392b;
 }
 
-/* => Add entry button — dashed outline style */
+/* => Add entry button - dashed outline style */
 .cr2-add-btn {
   display: inline-flex;
   align-items: center;
@@ -253,16 +253,24 @@
 }
 
 /* 
-   Navigation — Back + Next
+   Navigation - Back + Next
    Mirrors .form-actions--split in Enroll.css */
 
 .cr2-nav {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 1.5rem;
   padding: 1rem 2rem 0.5rem;
-  border-top: 1px solid var(--enroll-actions-border);
-  background: var(--enroll-body-bg);
+  /* border-top: 1px solid var(--enroll-actions-border);
+  background: var(--enroll-body-bg); */
+}
+
+/* => Both nav buttons share full width equally - mirrors cr3-actions */
+.cr2-nav .cr2-btn-back,
+.cr2-nav .cr2-btn-next {
+  flex: 1;
+  justify-content: center;
 }
 
 .cr2-btn-back {
@@ -317,6 +325,25 @@
   color: #6c757d !important;
   cursor: not-allowed !important;
   border-color: #dee2e6 !important;
+}
+
+/* => Wrapper that holds the optional error banner + the nav row together */
+.cr2-nav-wrap {
+  background: var(--enroll-body-bg);
+  border-top: 1px solid var(--enroll-actions-border);
+}
+
+/* => Error banner above nav - mirrors .step-error-banner in Enroll.css */
+.cr2-error-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 2rem;
+  background: rgba(192, 57, 43, 0.08);
+  border-bottom: 1px solid rgba(192, 57, 43, 0.25);
+  color: #c0392b;
+  font-size: 13.5px;
+  font-family: var(--font-body);
 }
 
 /* RWB */

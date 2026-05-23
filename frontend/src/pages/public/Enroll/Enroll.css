@@ -334,6 +334,7 @@
 .form-actions {
   display: flex;
   justify-content: flex-end;
+  gap: 1.5rem;
   padding: 1rem 2rem 0.5rem;
   border-top: 1px solid var(--enroll-actions-border);
   background: var(--enroll-body-bg);
@@ -482,6 +483,19 @@
   transition: background 0.15s, color 0.15s;
   letter-spacing: 0.02em;
 }
+
+.form-actions--split .btn-back,
+.form-actions--split .btn-next {
+  flex: 1;
+  justify-content: center;
+}
+
+/* => Step 1 has only Next, make it full width too */
+.form-actions:not(.form-actions--split) .btn-next {
+  flex: 1;
+  justify-content: center;
+}
+
 
 .btn-back:hover {
   background: var(--enroll-field-border);
