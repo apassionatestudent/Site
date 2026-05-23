@@ -238,6 +238,71 @@ const CourseRequirements2 = ({ data, onChange, isScholar, onBack, onNext }) => {
     return '';
   };
 
+  // => Tracks which fields have been touched (blurred) to show errors only after interaction
+  const [touched, setTouched] = React.useState({});
+
+  // => Controls visibility of the error banner above the nav buttons
+  const [showBanner, setShowBanner] = React.useState(false);
+
+  // => Mark a specific field in a repeatable entry as touched on blur
+  const handleBlur = (field, index, key) => {
+    setTouched(prev => ({ ...prev, [`${field}-${index}-${key}`]: true }));
+  };
+
+  // => Returns true if a field has been touched and is empty
+  const showFieldError = (field, index, key, value) => {
+    return touched[`${field}-${index}-${key}`] && !value?.toString().trim();
+  };
+
+  // => Validates all required fields across Work Experience and Trainings
+  // => Returns true only if every card in both sections is fully filled
+  const validateRequiredSections = () => {
+    if (isScholar) return true; // => Scholars skip both sections entirely
+
+    const workFields = ['company', 'position', 'salary', 'dateFrom', 'dateTo', 'appointmentStatus', 'yearsExp'];
+    const allWorkValid = data.workExperience.every(entry =>
+      workFields.every(f => entry[f]?.toString().trim())
+    );
+
+    const trainingFields = ['title', 'venue', 'hours', 'dateFrom', 'dateTo', 'conductedBy'];
+    const allTrainingValid = data.trainings.every(entry =>
+      trainingFields.every(f => entry[f]?.toString().trim())
+    );
+
+    return allWorkValid && allTrainingValid;
+  };
+
+  // => On Next click: touch all required fields so errors surface, then block or proceed
+  const handleNext = () => {
+    if (isScholar) { onNext(); return; }
+
+    // const newTouched = {};
+
+    // const workFields = ['company', 'position', 'salary', 'dateFrom', 'dateTo', 'appointmentStatus', 'yearsExp'];
+    // data.workExperience.forEach((_, i) =>
+    //   workFields.forEach(f => { newTouched[`workExperience-${i}-${f}`] = true; })
+    // );
+
+    // const trainingFields = ['title', 'venue', 'hours', 'dateFrom', 'dateTo', 'conductedBy'];
+    // data.trainings.forEach((_, i) =>
+    //   trainingFields.forEach(f => { newTouched[`trainings-${i}-${f}`] = true; })
+    // );
+
+    // setTouched(prev => ({ ...prev, ...newTouched }));
+
+    // if (validateRequiredSections()) {
+    //   // => All good — clear banner and proceed
+    //   setShowBanner(false);
+    //   onNext();
+    // } else {
+    //   // => Block navigation and reveal the banner
+    //   setShowBanner(true);
+    // }
+
+    // => Temporarily bypass validation during development
+    onNext();
+  };
+
   return (
     <div className="cr2-wrap">
 
@@ -263,32 +328,45 @@ const CourseRequirements2 = ({ data, onChange, isScholar, onBack, onNext }) => {
                   <label className="cr2-label">Name of Company</label>
                   <input
                     type="text"
-                    className="cr2-input"
+                    className={`cr2-input ${showFieldError('workExperience', index, 'company', entry.company) ? 'cr2-input--error' : ''}`}
                     placeholder="e.g. ABC Corporation"
                     value={entry.company}
                     onChange={(e) => updateEntry('workExperience', index, 'company', e.target.value)}
+                    onBlur={() => handleBlur('workExperience', index, 'company')}
                   />
+                  {/* => Show inline error only after field is touched and still empty */}
+                  {showFieldError('workExperience', index, 'company', entry.company) && (
+                    <span className="cr2-field-error">This field is required.</span>
+                  )}
                 </div>
                 <div className="cr2-field-group">
                   <label className="cr2-label">Position</label>
                   <input
                     type="text"
-                    className="cr2-input"
+                    className={`cr2-input ${showFieldError('workExperience', index, 'position', entry.position) ? 'cr2-input--error' : ''}`}
                     placeholder="e.g. Service Crew"
                     value={entry.position}
                     onChange={(e) => updateEntry('workExperience', index, 'position', e.target.value)}
+                    onBlur={() => handleBlur('workExperience', index, 'position')}
                   />
+                  {showFieldError('workExperience', index, 'position', entry.position) && (
+                    <span className="cr2-field-error">This field is required.</span>
+                  )}
                 </div>
                 <div className="cr2-field-group">
                   <label className="cr2-label">Monthly Salary (in PHP)</label>
                   <input
                     type="text"
-                    className="cr2-input"
+                    className={`cr2-input ${showFieldError('workExperience', index, 'salary', entry.salary) ? 'cr2-input--error' : ''}`}
                     placeholder="e.g. 15000"
                     value={entry.salary}
                     // => Restrict to numbers only
                     onChange={(e) => updateEntry('workExperience', index, 'salary', e.target.value.replace(/\D/g, ''))}
+                    onBlur={() => handleBlur('workExperience', index, 'salary')}
                   />
+                  {showFieldError('workExperience', index, 'salary', entry.salary) && (
+                    <span className="cr2-field-error">This field is required.</span>
+                  )}
                 </div>
               </div>
 
@@ -300,45 +378,60 @@ const CourseRequirements2 = ({ data, onChange, isScholar, onBack, onNext }) => {
                   <div className="cr2-date-range">
                     <input
                       type="text"
-                      className="cr2-input"
+                      className={`cr2-input ${showFieldError('workExperience', index, 'dateFrom', entry.dateFrom) ? 'cr2-input--error' : ''}`}
                       placeholder="From (mm/dd/yyyy)"
                       maxLength={10}
                       value={entry.dateFrom}
                       onChange={(e) => updateEntry('workExperience', index, 'dateFrom', formatFutureDate(e.target.value))}
+                      onBlur={() => handleBlur('workExperience', index, 'dateFrom')}
                     />
                     <span className="cr2-date-sep">to</span>
                     <input
                       type="text"
-                      className="cr2-input"
+                      className={`cr2-input ${showFieldError('workExperience', index, 'dateTo', entry.dateTo) ? 'cr2-input--error' : ''}`}
                       placeholder="To (mm/dd/yyyy)"
                       maxLength={10}
                       value={entry.dateTo}
                       onChange={(e) => updateEntry('workExperience', index, 'dateTo', formatFutureDate(e.target.value))}
+                      onBlur={() => handleBlur('workExperience', index, 'dateTo')}
                     />
                   </div>
+                  {/* => Show one shared error under the date range if either date is missing */}
+                  {(showFieldError('workExperience', index, 'dateFrom', entry.dateFrom) || showFieldError('workExperience', index, 'dateTo', entry.dateTo)) && (
+                    <span className="cr2-field-error">Both dates are required.</span>
+                  )}
                 </div>
                 <div className="cr2-field-group">
                   <label className="cr2-label">Status of Appointment</label>
                   <input
                     type="text"
-                    className="cr2-input"
+                    className={`cr2-input ${showFieldError('workExperience', index, 'appointmentStatus', entry.appointmentStatus) ? 'cr2-input--error' : ''}`}
                     placeholder="e.g. Regular, Contractual"
                     value={entry.appointmentStatus}
                     onChange={(e) => updateEntry('workExperience', index, 'appointmentStatus', e.target.value)}
+                    onBlur={() => handleBlur('workExperience', index, 'appointmentStatus')}
                   />
+                  {showFieldError('workExperience', index, 'appointmentStatus', entry.appointmentStatus) && (
+                    <span className="cr2-field-error">This field is required.</span>
+                  )}
                 </div>
                 <div className="cr2-field-group">
                   <label className="cr2-label">No. of Yrs. Working Experience</label>
                   <input
                     type="text"
-                    className="cr2-input"
+                    className={`cr2-input ${showFieldError('workExperience', index, 'yearsExp', entry.yearsExp) ? 'cr2-input--error' : ''}`}
                     placeholder="e.g. 3"
                     value={entry.yearsExp}
                     // => Restrict to numbers only
                     onChange={(e) => updateEntry('workExperience', index, 'yearsExp', e.target.value.replace(/\D/g, ''))}
+                    onBlur={() => handleBlur('workExperience', index, 'yearsExp')}
                   />
+                  {showFieldError('workExperience', index, 'yearsExp', entry.yearsExp) && (
+                    <span className="cr2-field-error">This field is required.</span>
+                  )}
                 </div>
               </div>
+
             </div>
           ))}
 
@@ -378,32 +471,44 @@ const CourseRequirements2 = ({ data, onChange, isScholar, onBack, onNext }) => {
                   <label className="cr2-label">Title</label>
                   <input
                     type="text"
-                    className="cr2-input"
+                    className={`cr2-input ${showFieldError('trainings', index, 'title', entry.title) ? 'cr2-input--error' : ''}`}
                     placeholder="e.g. Food Safety Seminar"
                     value={entry.title}
                     onChange={(e) => updateEntry('trainings', index, 'title', e.target.value)}
+                    onBlur={() => handleBlur('trainings', index, 'title')}
                   />
+                  {showFieldError('trainings', index, 'title', entry.title) && (
+                    <span className="cr2-field-error">This field is required.</span>
+                  )}
                 </div>
                 <div className="cr2-field-group">
                   <label className="cr2-label">Venue</label>
                   <input
                     type="text"
-                    className="cr2-input"
+                    className={`cr2-input ${showFieldError('trainings', index, 'venue', entry.venue) ? 'cr2-input--error' : ''}`}
                     placeholder="e.g. Cebu City Hall"
                     value={entry.venue}
                     onChange={(e) => updateEntry('trainings', index, 'venue', e.target.value)}
+                    onBlur={() => handleBlur('trainings', index, 'venue')}
                   />
+                  {showFieldError('trainings', index, 'venue', entry.venue) && (
+                    <span className="cr2-field-error">This field is required.</span>
+                  )}
                 </div>
                 <div className="cr2-field-group">
                   <label className="cr2-label">No. of Hours</label>
                   <input
                     type="text"
-                    className="cr2-input"
+                    className={`cr2-input ${showFieldError('trainings', index, 'hours', entry.hours) ? 'cr2-input--error' : ''}`}
                     placeholder="e.g. 8"
                     value={entry.hours}
                     // => Restrict to numbers only
                     onChange={(e) => updateEntry('trainings', index, 'hours', e.target.value.replace(/\D/g, ''))}
+                    onBlur={() => handleBlur('trainings', index, 'hours')}
                   />
+                  {showFieldError('trainings', index, 'hours', entry.hours) && (
+                    <span className="cr2-field-error">This field is required.</span>
+                  )}
                 </div>
               </div>
 
@@ -414,34 +519,44 @@ const CourseRequirements2 = ({ data, onChange, isScholar, onBack, onNext }) => {
                   <div className="cr2-date-range">
                     <input
                       type="text"
-                      className="cr2-input"
+                      className={`cr2-input ${showFieldError('trainings', index, 'dateFrom', entry.dateFrom) ? 'cr2-input--error' : ''}`}
                       placeholder="From (mm/dd/yyyy)"
                       maxLength={10}
                       value={entry.dateFrom}
                       onChange={(e) => updateEntry('trainings', index, 'dateFrom', formatFutureDate(e.target.value))}
+                      onBlur={() => handleBlur('trainings', index, 'dateFrom')}
                     />
                     <span className="cr2-date-sep">to</span>
                     <input
                       type="text"
-                      className="cr2-input"
+                      className={`cr2-input ${showFieldError('trainings', index, 'dateTo', entry.dateTo) ? 'cr2-input--error' : ''}`}
                       placeholder="To (mm/dd/yyyy)"
                       maxLength={10}
                       value={entry.dateTo}
                       onChange={(e) => updateEntry('trainings', index, 'dateTo', formatFutureDate(e.target.value))}
+                      onBlur={() => handleBlur('trainings', index, 'dateTo')}
                     />
                   </div>
+                  {(showFieldError('trainings', index, 'dateFrom', entry.dateFrom) || showFieldError('trainings', index, 'dateTo', entry.dateTo)) && (
+                    <span className="cr2-field-error">Both dates are required.</span>
+                  )}
                 </div>
                 <div className="cr2-field-group">
                   <label className="cr2-label">Conducted By</label>
                   <input
                     type="text"
-                    className="cr2-input"
+                    className={`cr2-input ${showFieldError('trainings', index, 'conductedBy', entry.conductedBy) ? 'cr2-input--error' : ''}`}
                     placeholder="e.g. TESDA Region VII"
                     value={entry.conductedBy}
                     onChange={(e) => updateEntry('trainings', index, 'conductedBy', e.target.value)}
+                    onBlur={() => handleBlur('trainings', index, 'conductedBy')}
                   />
+                  {showFieldError('trainings', index, 'conductedBy', entry.conductedBy) && (
+                    <span className="cr2-field-error">This field is required.</span>
+                  )}
                 </div>
               </div>
+
             </div>
           ))}
 
@@ -710,13 +825,23 @@ const CourseRequirements2 = ({ data, onChange, isScholar, onBack, onNext }) => {
       </section>
 
       {/* Navigation */}
-      <div className="cr2-nav">
-        <button type="button" className="cr2-btn-back" onClick={onBack}>
-          <i className="ti ti-arrow-left" aria-hidden="true" /> Back
-        </button>
-        <button type="button" className="cr2-btn-next" onClick={onNext}>
-          Next <i className="ti ti-arrow-right" aria-hidden="true" />
-        </button>
+      <div className="cr2-nav-wrap">
+        {/* => Error banner — only shown after a failed Next attempt, mirrors step-error-banner in Enroll.css */}
+        {showBanner && !isScholar && !validateRequiredSections() && (
+          <div className="cr2-error-banner">
+            <i className="ti ti-alert-circle" aria-hidden="true" />
+            Please fill in all required fields (denoted with <strong>&nbsp;*&nbsp;</strong>) before proceeding.
+          </div>
+        )}
+
+        <div className="cr2-nav">
+          <button type="button" className="cr2-btn-back" onClick={onBack}>
+            <i className="ti ti-arrow-left" aria-hidden="true" /> Back
+          </button>
+          <button type="button" className="cr2-btn-next" onClick={handleNext}>
+            Next <i className="ti ti-arrow-right" aria-hidden="true" />
+          </button>
+        </div>
       </div>
 
     </div>

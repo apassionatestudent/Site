@@ -11,7 +11,7 @@
   color: var(--text-primary);
 }
 
-/* => Section title — matches .form-section-title in Enroll.css */
+/* => Section title - matches .form-section-title in Enroll.css */
 
 .cr1-section-title {
   font-size: 15px;
@@ -26,7 +26,7 @@
   opacity: 0.85;
 }
 
-/* => Grid — mirrors .form-grid in Enroll.css */
+/* => Grid - mirrors .form-grid in Enroll.css */
 
 .cr1-grid {
   display: grid;
@@ -36,7 +36,7 @@
 .cr1-grid.g-3 { grid-template-columns: 1fr 1fr 1fr; }
 .cr1-grid.g-2 { grid-template-columns: 1fr 1fr; }
 
-/* => Field groups — mirrors .field-group in Enroll.css */
+/* => Field groups - mirrors .field-group in Enroll.css */
 
 .cr1-field-group {
   display: flex;
@@ -72,7 +72,7 @@
 }
 
 /* ============================================================
-   Inputs and selects — mirrors .field-input / .field-select
+   Inputs and selects - mirrors .field-input / .field-select
    ============================================================ */
 
 .cr1-select {
@@ -135,7 +135,7 @@
   line-height: 1.5;
 }
 
-/* => Scholar-specific hint — slightly more prominent */
+/* => Scholar-specific hint - slightly more prominent */
 .cr1-hint-scholar {
   color: var(--accent-span);
   display: flex;
@@ -189,17 +189,23 @@
 }
 
 /* ============================================================
-   Navigation — Back + Next
+   Navigation - Back + Next
    Mirrors .form-actions--split in Enroll.css
    ============================================================ */
 
 .cr1-nav {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 1.5rem;
   padding: 1rem 0 0.5rem;
   margin-top: 0.5rem;
   border-top: 1px solid var(--enroll-actions-border);
+}
+
+.cr1-nav .cr1-btn-back,
+.cr1-nav .cr1-btn-next {
+  flex: 1;
+  justify-content: center;
 }
 
 .cr1-btn-back {
