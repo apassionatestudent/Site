@@ -241,9 +241,6 @@ const CourseRequirements2 = ({ data, onChange, isScholar, onBack, onNext }) => {
   // => Tracks which fields have been touched (blurred) to show errors only after interaction
   const [touched, setTouched] = React.useState({});
 
-  // => Controls visibility of the error banner above the nav buttons
-  const [showBanner, setShowBanner] = React.useState(false);
-
   // => Mark a specific field in a repeatable entry as touched on blur
   const handleBlur = (field, index, key) => {
     setTouched(prev => ({ ...prev, [`${field}-${index}-${key}`]: true }));
@@ -276,31 +273,21 @@ const CourseRequirements2 = ({ data, onChange, isScholar, onBack, onNext }) => {
   const handleNext = () => {
     if (isScholar) { onNext(); return; }
 
-    // const newTouched = {};
+    const newTouched = {};
 
-    // const workFields = ['company', 'position', 'salary', 'dateFrom', 'dateTo', 'appointmentStatus', 'yearsExp'];
-    // data.workExperience.forEach((_, i) =>
-    //   workFields.forEach(f => { newTouched[`workExperience-${i}-${f}`] = true; })
-    // );
+    const workFields = ['company', 'position', 'salary', 'dateFrom', 'dateTo', 'appointmentStatus', 'yearsExp'];
+    data.workExperience.forEach((_, i) =>
+      workFields.forEach(f => { newTouched[`workExperience-${i}-${f}`] = true; })
+    );
 
-    // const trainingFields = ['title', 'venue', 'hours', 'dateFrom', 'dateTo', 'conductedBy'];
-    // data.trainings.forEach((_, i) =>
-    //   trainingFields.forEach(f => { newTouched[`trainings-${i}-${f}`] = true; })
-    // );
+    const trainingFields = ['title', 'venue', 'hours', 'dateFrom', 'dateTo', 'conductedBy'];
+    data.trainings.forEach((_, i) =>
+      trainingFields.forEach(f => { newTouched[`trainings-${i}-${f}`] = true; })
+    );
 
-    // setTouched(prev => ({ ...prev, ...newTouched }));
+    setTouched(prev => ({ ...prev, ...newTouched }));
 
-    // if (validateRequiredSections()) {
-    //   // => All good — clear banner and proceed
-    //   setShowBanner(false);
-    //   onNext();
-    // } else {
-    //   // => Block navigation and reveal the banner
-    //   setShowBanner(true);
-    // }
-
-    // => Temporarily bypass validation during development
-    onNext();
+    if (validateRequiredSections()) onNext();
   };
 
   return (
@@ -825,23 +812,14 @@ const CourseRequirements2 = ({ data, onChange, isScholar, onBack, onNext }) => {
       </section>
 
       {/* Navigation */}
-      <div className="cr2-nav-wrap">
-        {/* => Error banner — only shown after a failed Next attempt, mirrors step-error-banner in Enroll.css */}
-        {showBanner && !isScholar && !validateRequiredSections() && (
-          <div className="cr2-error-banner">
-            <i className="ti ti-alert-circle" aria-hidden="true" />
-            Please fill in all required fields (denoted with <strong>&nbsp;*&nbsp;</strong>) before proceeding.
-          </div>
-        )}
-
-        <div className="cr2-nav">
-          <button type="button" className="cr2-btn-back" onClick={onBack}>
-            <i className="ti ti-arrow-left" aria-hidden="true" /> Back
-          </button>
-          <button type="button" className="cr2-btn-next" onClick={handleNext}>
-            Next <i className="ti ti-arrow-right" aria-hidden="true" />
-          </button>
-        </div>
+      <div className="cr2-nav">
+        <button type="button" className="cr2-btn-back" onClick={onBack}>
+          <i className="ti ti-arrow-left" aria-hidden="true" /> Back
+        </button>
+        {/* <button type="button" className="cr2-btn-next" onClick={onNext}> */}
+        <button type="button" className="cr2-btn-next" onClick={handleNext}>
+          Next <i className="ti ti-arrow-right" aria-hidden="true" />
+        </button>
       </div>
 
     </div>
