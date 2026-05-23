@@ -191,11 +191,10 @@
 /* Full-width Actions */
 .cr3-actions {
   padding: 1.5rem 2rem;
-  border-top: 1px solid var(--enroll-section-border);
+  /* => border-top moved to .cr3-actions-wrap so banner sits between border and buttons */
   background: var(--enroll-body-bg);
   display: flex;
   gap: 1.5rem;
-  margin-top: auto;
 }
 
 /* Button styles matching CourseRequirements2 */
@@ -253,6 +252,31 @@
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+
+/* => Wrapper that holds the optional error banner + action buttons together */
+.cr3-actions-wrap {
+  background: var(--enroll-body-bg);
+  border-top: 1px solid var(--enroll-section-border);
+  margin-top: auto;
+  /* => space between banner and the border-top line */
+  padding-top: 1rem;
+}
+
+/* => Error banner above actions — mirrors .cr2-error-banner */
+.cr3-error-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  margin: 0 2rem 0 2rem;
+  /* => full border on all sides + rounded corners to match Step 2 */
+  background: rgba(192, 57, 43, 0.08);
+  border: 1px solid #c0392b;
+  border-radius: 6px;
+  color: #c0392b;
+  font-size: 13.5px;
+  font-family: var(--font-body);
 }
 
 /* Responsive - Stacks uploads on mobile */

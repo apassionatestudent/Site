@@ -13,6 +13,9 @@ const CourseRequirements3 = ({ onBack, onSubmit }) => {
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // => Controls visibility of the error banner above the action buttons
+  const [showBanner, setShowBanner] = useState(false);
+
   const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
 
   const validateFile = (file, field) => {
@@ -53,8 +56,13 @@ const CourseRequirements3 = ({ onBack, onSubmit }) => {
     
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
+      // => Show banner so user knows why submission was blocked
+      setShowBanner(true);
       return;
     }
+
+// => Clear banner once all files are valid and submission proceeds
+setShowBanner(false);
     
     setIsSubmitting(true);
     
@@ -148,34 +156,45 @@ const CourseRequirements3 = ({ onBack, onSubmit }) => {
             ))}
             </div>
 
-            <div className="cr3-actions">
-            <button 
-                type="button" 
-                className="cr3-btn cr3-btn-back"
-                onClick={onBack}
-                disabled={isSubmitting}
-            >
-                <i className="ti ti-arrow-left"></i>
-                Back
-            </button>
-            <button 
-                type="submit" 
-                className="cr3-btn cr3-btn-submit"
-                disabled={isSubmitting || Object.keys(errors).length > 0}
-            >
-                {isSubmitting ? (
-                <>
-                    <i className="ti ti-loader-2 cr3-spinner"></i>
-                    Submitting...
-                </>
-                ) : (
-                <>
-                    Submit Enrollment
-                    <i className="ti ti-send"></i>
-                </>
-                )}
-            </button>
+            <div className="cr3-actions-wrap">
+              {/* => Error banner — only shown after a failed submit attempt */}
+              {showBanner && Object.values(files).some(f => !f) && (
+                <div className="cr3-error-banner">
+                  <i className="ti ti-alert-circle" aria-hidden="true" />
+                  Please upload all required documents before submitting.
+                </div>
+              )}
+
+              <div className="cr3-actions">
+                <button 
+                  type="button" 
+                  className="cr3-btn cr3-btn-back"
+                  onClick={onBack}
+                  disabled={isSubmitting}
+                >
+                  <i className="ti ti-arrow-left"></i>
+                  Back
+                </button>
+                <button 
+                  type="submit" 
+                  className="cr3-btn cr3-btn-submit"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <i className="ti ti-loader-2 cr3-spinner"></i>
+                      Submitting...
+                    </>
+                  ) : (
+                    <>
+                      Submit Enrollment
+                      <i className="ti ti-send"></i>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
+
         </form>
         </div>
     </div>

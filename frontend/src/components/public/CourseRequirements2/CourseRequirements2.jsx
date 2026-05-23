@@ -302,23 +302,27 @@ const CourseRequirements2 = ({ data, onChange, isScholar, onBack, onNext }) => {
 
   // => On Next click: touch all required fields so errors surface, then block or proceed
   const handleNext = () => {
-    if (isScholar) { onNext(); return; }
+    // => Temporarily bypass validation during development
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    onNext();
 
-    const newTouched = {};
+    // if (isScholar) { onNext(); return; }
 
-    const workFields = ['company', 'position', 'salary', 'dateFrom', 'dateTo', 'appointmentStatus', 'yearsExp'];
-    data.workExperience.forEach((_, i) =>
-      workFields.forEach(f => { newTouched[`workExperience-${i}-${f}`] = true; })
-    );
+    // const newTouched = {};
 
-    const trainingFields = ['title', 'venue', 'hours', 'dateFrom', 'dateTo', 'conductedBy'];
-    data.trainings.forEach((_, i) =>
-      trainingFields.forEach(f => { newTouched[`trainings-${i}-${f}`] = true; })
-    );
+    // const workFields = ['company', 'position', 'salary', 'dateFrom', 'dateTo', 'appointmentStatus', 'yearsExp'];
+    // data.workExperience.forEach((_, i) =>
+    //   workFields.forEach(f => { newTouched[`workExperience-${i}-${f}`] = true; })
+    // );
 
-    setTouched(prev => ({ ...prev, ...newTouched }));
+    // const trainingFields = ['title', 'venue', 'hours', 'dateFrom', 'dateTo', 'conductedBy'];
+    // data.trainings.forEach((_, i) =>
+    //   trainingFields.forEach(f => { newTouched[`trainings-${i}-${f}`] = true; })
+    // );
 
-    if (validateRequiredSections()) onNext();
+    // setTouched(prev => ({ ...prev, ...newTouched }));
+
+    // if (validateRequiredSections()) onNext();
   };
 
   return (
