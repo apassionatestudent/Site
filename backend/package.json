@@ -12,6 +12,7 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1053.0",
     "@neondatabase/serverless": "^1.1.0",
     "axios": "^1.15.2",
     "bcryptjs": "^3.0.3",
@@ -22,6 +23,7 @@
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.3",
     "morgan": "^1.10.1",
+    "multer": "^2.1.1",
     "openai": "^6.35.0",
     "pg": "^8.20.0",
     "resend": "^6.12.3"
