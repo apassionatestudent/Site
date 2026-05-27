@@ -159,8 +159,93 @@ const Enroll = () => {
     });
 
     const handleExpChange = (key, value) => {
-      setExpData(prev => ({ ...prev, [key]: value }));
-    };
+  setExpData(prev => ({ ...prev, [key]: value }));
+};
+
+// => Document uploads state for Step 3: Part 3 (sub-step 3)
+// => Lifted here from CourseRequirements3 so that handleFinalSubmit can access all files
+const [docFiles, setDocFiles] = useState({
+  birthCert: null,
+  schoolDoc: null,
+  validId: null,
+});
+
+// => useCallback stabilizes the function reference across renders
+// => without this, CourseRequirements3 may receive a stale or undefined onFileChange
+const handleDocChange = useCallback((key, file) => {
+  setDocFiles(prev => ({ ...prev, [key]: file }));
+}, []);
+
+// => Assembles ALL form data from Steps 1, 2, and 3 into a single FormData object
+// => FormData is used (not JSON) because Step 3.3 has file uploads
+const handleFinalSubmit = async () => {
+  const formData = new FormData();
+
+  // => Step 1: Personal Information
+  formData.append('lastName', lastName);
+  formData.append('firstName', firstName);
+  formData.append('middleName', middleName);
+  formData.append('nameExt', nameExt);
+  formData.append('sex', sex);
+  formData.append('dob', dob);
+  formData.append('motherName', motherName);
+  formData.append('fatherName', fatherName);
+  formData.append('civilStatus', civilStatus);
+  formData.append('educAttainment', educAttainment);
+  formData.append('educOther', educOther);
+  formData.append('employmentStatus', employmentStatus);
+  formData.append('nationality', nationality);
+  formData.append('region', region);
+  formData.append('province', province);
+  formData.append('municipality', municipality);
+
+  // => Step 2: Contact and Mailing Address
+  formData.append('email', email);
+  formData.append('mobile', mobile);
+  formData.append('telephone', telephone);
+  formData.append('fax', fax);
+  formData.append('facebook', facebook);
+  formData.append('otherContact', otherContact);
+  formData.append('mailRegion', mailRegion);
+  formData.append('mailProvince', mailProvince);
+  formData.append('mailCity', mailCity);
+  formData.append('mailBarangay', mailBarangay);
+  formData.append('mailZip', mailZip);
+  formData.append('mailDistrict', mailDistrict);
+  formData.append('mailStreet', mailStreet);
+  formData.append('guardianName', guardianName);
+
+  // => Step 3.1: Course Selection
+  // => JSON.stringify for nested objects since FormData only accepts strings/files
+  formData.append('courseData', JSON.stringify(courseData));
+
+  // => Step 3.2: Work Experience, Trainings, Licensures, Competencies
+  formData.append('expData', JSON.stringify(expData));
+
+  // => Step 3.3: Document uploads — appended as actual File objects
+  if (docFiles.birthCert) formData.append('birthCert', docFiles.birthCert);
+  if (docFiles.schoolDoc) formData.append('schoolDoc', docFiles.schoolDoc);
+  if (docFiles.validId)   formData.append('validId', docFiles.validId);
+
+  try {
+    const res = await fetch('/api/enrollment/submit', {
+      method: 'POST',
+      // => Do NOT set Content-Type manually — fetch sets it automatically with the boundary for FormData
+      body: formData,
+    });
+
+    if (!res.ok) throw new Error(`Server responded with ${res.status}`);
+
+    const result = await res.json();
+    console.log('Enrollment submitted:', result);
+
+    // => TODO: Replace alert with a proper success page or redirect
+    alert('Enrollment submitted successfully!');
+  } catch (err) {
+    console.error('Submission failed:', err);
+    alert('Submission failed. Please try again.');
+  }
+};
 
     // => Validate Step 1 required fields before allowing next
     const validateStep1 = () => {
@@ -1133,12 +1218,10 @@ const Enroll = () => {
           
           {step3SubStep === 3 && (
             <CourseRequirements3
+              files={docFiles}
+              onFileChange={handleDocChange}
               onBack={() => setStep3SubStep(2)}
-              onSubmit={() => {
-                // Handle final submission - redirect, show success, etc.
-                alert('Enrollment submitted successfully!');
-                // Or navigate to success page, reset form, etc.
-              }}
+              onSubmit={handleFinalSubmit}
             />
           )}
         </div>

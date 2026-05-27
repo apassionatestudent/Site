@@ -18,6 +18,8 @@ import studentAuthRouter from './routes/studentAuth.js';
 import branchesRouter from "./routes/branches.js"; 
 import coursesRouter from "./routes/courses.js";
 import classRouter from "./routes/classes.js";
+import enrollmentRoutes from './routes/enrollmentRoutes.js';
+import documentRoutes from './routes/documentRoutes.js';
 
 import path from "path";
 
@@ -52,12 +54,20 @@ app.use("/api/courses", coursesRouter);
 app.use("/api/classes", classRouter);
 
 
+// => Enrollment submission route
+app.use('/api/enrollment', enrollmentRoutes);
+
+// => Document proxy route - serves R2 files through auth-gated Express endpoint
+// => Raw R2 URLs are never exposed to the browser
+app.use('/api/documents', documentRoutes);
+
+
 
 async function initDB () {
   try {
 
     await sql`
-      CREATE TABLE IF NOT EXISTS students (
+      CREATE TABLE IF NOT EXISTS student_accounts (
         -- => Internal DB key: auto-increments (1, 2, 3...), never exposed outside the server
         student_id          BIGSERIAL PRIMARY KEY,
 
@@ -104,10 +114,10 @@ async function initDB () {
       -- => Attach the trigger to the students table only if it doesn't already exist
       DO $$ BEGIN
         IF NOT EXISTS (
-          SELECT 1 FROM pg_trigger WHERE tgname = 'students_set_updated_at'
+          SELECT 1 FROM pg_trigger WHERE tgname = 'student_accounts_set_updated_at'
         ) THEN
-          CREATE TRIGGER students_set_updated_at
-          BEFORE UPDATE ON students
+          CREATE TRIGGER student_accounts_set_updated_at
+          BEFORE UPDATE ON student_accounts
           FOR EACH ROW
           EXECUTE FUNCTION set_updated_at();
         END IF;
@@ -122,7 +132,7 @@ async function initDB () {
           SELECT 1 FROM pg_constraint 
           WHERE conname = 'chk_password_requires_confirmed_email'
         ) THEN
-          ALTER TABLE students
+          ALTER TABLE student_accounts
           ADD CONSTRAINT chk_password_requires_confirmed_email
           CHECK (
             password_hash IS NULL OR is_email_confirmed = TRUE
@@ -270,7 +280,7 @@ async function initDB () {
     -- => Minimum students required before class can begin
     required_number_of_students INT         NOT NULL,
 
-    -- => Maximum slots available — remaining slots computed from this minus enrolled count
+    -- => Maximum slots available - remaining slots computed from this minus enrolled count
     max_students              INT           NOT NULL,
 
     -- => Which admin created this class
@@ -282,7 +292,165 @@ async function initDB () {
     remarks                   TEXT          DEFAULT NULL
   );`
 
-  ;
+  await sql`
+    CREATE TABLE IF NOT EXISTS student_profile (
+      profile_id                      BIGSERIAL PRIMARY KEY,
+      student_id                      BIGINT        NOT NULL REFERENCES student_accounts(student_id) ON DELETE CASCADE,
+      uli                             VARCHAR(50)   NULL,
+      surname                         VARCHAR(100)  NOT NULL,
+      first_name                      VARCHAR(100)  NOT NULL,
+      middle_name                     VARCHAR(100)  NULL,
+      name_extension                  VARCHAR(20)   NULL,
+      mother_name                     VARCHAR(150)  NOT NULL,
+      father_name                     VARCHAR(150)  NOT NULL,
+      birthdate                       DATE          NOT NULL,
+      birthplace_region               VARCHAR(20)   NOT NULL,
+      birthplace_province             VARCHAR(20)   NULL,
+      birthplace_city_or_municipality VARCHAR(20)   NOT NULL,
+      nationality                     VARCHAR(100)  NOT NULL,
+      sex                             VARCHAR(10)   NOT NULL CHECK (sex IN ('m', 'f')),
+      civil_status                    VARCHAR(30)   NOT NULL,
+      highest_educational_attainment  TEXT          NOT NULL,
+      employment_status               VARCHAR(30)   NOT NULL,
+      client_type                     VARCHAR(50)   NULL
+    )
+  `;
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS student_address (
+      address_id    BIGSERIAL PRIMARY KEY,
+      profile_id    BIGINT       NOT NULL REFERENCES student_profile(profile_id) ON DELETE CASCADE,
+      street        TEXT         NOT NULL,
+      barangay_code VARCHAR(20)  NULL,
+      district_code VARCHAR(20)  NULL,
+      city_code     VARCHAR(20)  NULL,
+      province_code VARCHAR(20)  NULL,
+      region_code   VARCHAR(20)  NOT NULL,
+      zip_code      VARCHAR(10)  NULL
+    )
+  `;
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS contact_numbers (
+      contact_id    BIGSERIAL PRIMARY KEY,
+      profile_id    BIGINT       NOT NULL REFERENCES student_profile(profile_id) ON DELETE CASCADE,
+      contact_type  VARCHAR(20)  NOT NULL,
+      contact_value VARCHAR(50)  NOT NULL
+    )
+  `;
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS contact_person (
+      contact_person_id   BIGSERIAL PRIMARY KEY,
+      profile_id          BIGINT       NOT NULL REFERENCES student_profile(profile_id) ON DELETE CASCADE,
+      contact_person_name VARCHAR(150) NOT NULL,
+      contact_number      VARCHAR(20)  NULL
+    )
+  `;
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS licensure_examination (
+      licensure_id      BIGSERIAL PRIMARY KEY,
+      profile_id        BIGINT       NOT NULL REFERENCES student_profile(profile_id) ON DELETE CASCADE,
+      title             VARCHAR(255) NOT NULL,
+      year_taken        INT          NULL,
+      examination_venue TEXT         NULL,
+      rating            VARCHAR(50)  NULL,
+      remarks           TEXT         NULL,
+      expiry_date       DATE         NULL
+    )
+  `;
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS competency_assessment (
+      competency_id       BIGSERIAL PRIMARY KEY,
+      profile_id          BIGINT       NOT NULL REFERENCES student_profile(profile_id) ON DELETE CASCADE,
+      title               VARCHAR(255) NOT NULL,
+      qualification_level VARCHAR(50)  NULL,
+      industry_sector     VARCHAR(100) NULL,
+      certificate_number  VARCHAR(100) NULL,
+      date_of_issuance    DATE         NULL,
+      expiration_date     DATE         NULL
+    )
+  `;
+
+  await sql`
+    -- => status uses 'Pending' as default matching the service insert
+    -- => fee_at_enrollment frozen at submission time - never updated after
+    CREATE TABLE IF NOT EXISTS enrollment (
+      enrollment_id     BIGSERIAL PRIMARY KEY,
+      public_id         UUID          NOT NULL DEFAULT gen_random_uuid() UNIQUE,
+      student_id        BIGINT        NOT NULL REFERENCES student_accounts(student_id) ON DELETE RESTRICT,
+      course_id         INT           NULL REFERENCES courses(course_id) ON DELETE SET NULL,
+      class_id          INT           NULL REFERENCES classes(class_id) ON DELETE SET NULL,
+      assessment_type   VARCHAR(50)   NULL,
+      fee_at_enrollment NUMERIC(10,2) NULL,
+      is_shs            BOOLEAN       NOT NULL DEFAULT FALSE,
+      is_tesda_scholar  BOOLEAN       NOT NULL DEFAULT FALSE,
+      status            VARCHAR(30)   NOT NULL DEFAULT 'Pending'
+                        CHECK (status IN ('Pending','Approved','Needs Clarification','Rejected','Dropped','Completed','Reserved')),
+      submitted_at      TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+      updated_at        TIMESTAMPTZ   NOT NULL DEFAULT NOW()
+    )
+  `;
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS work_experience (
+      work_id            BIGSERIAL PRIMARY KEY,
+      enrollment_id      BIGINT        NOT NULL REFERENCES enrollment(enrollment_id) ON DELETE CASCADE,
+      company            VARCHAR(255)  NOT NULL,
+      position           VARCHAR(150)  NULL,
+      salary             NUMERIC(10,2) NULL,
+      date_from          DATE          NULL,
+      date_to            DATE          NULL,
+      appointment_status VARCHAR(50)   NULL,
+      years_exp          INT           NULL
+    )
+  `;
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS training_seminar (
+      training_id   BIGSERIAL PRIMARY KEY,
+      enrollment_id BIGINT       NOT NULL REFERENCES enrollment(enrollment_id) ON DELETE CASCADE,
+      title         VARCHAR(255) NOT NULL,
+      venue         TEXT         NULL,
+      date_from     DATE         NULL,
+      date_to       DATE         NULL,
+      hours         INT          NULL,
+      conducted_by  VARCHAR(255) NULL
+    )
+  `;
+
+  await sql`
+    -- => enrollment_requirements holds the general required doc types (e.g. PSA, Valid ID)
+    CREATE TABLE IF NOT EXISTS enrollment_requirements (
+      enrollment_requirement_id SERIAL PRIMARY KEY,
+      enrollment_requirement    VARCHAR(255) NOT NULL
+    )
+  `;
+
+  await sql`
+    -- => document_key stores the R2 object key (e.g. primeenroll/student-docs/birthCert_123.jpg)
+    -- => Never stores a public URL - the proxy route resolves the key on demand
+    CREATE TABLE IF NOT EXISTS enrollment_documents (
+      document_id   BIGSERIAL PRIMARY KEY,
+      enrollment_id BIGINT       NOT NULL REFERENCES enrollment(enrollment_id) ON DELETE CASCADE,
+      document_type VARCHAR(100) NOT NULL,
+      document_key  TEXT         NOT NULL,
+      uploaded_at   TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+    )
+  `;
+
+  await sql`
+    -- => document_key stores the R2 object key - same pattern as enrollment_documents
+    CREATE TABLE IF NOT EXISTS student_docs (
+      document_id   BIGSERIAL PRIMARY KEY,
+      student_id    BIGINT       NOT NULL REFERENCES student_accounts(student_id) ON DELETE CASCADE,
+      document_type VARCHAR(100) NOT NULL,
+      document_key  TEXT         NOT NULL,
+      uploaded_at   TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+    )
+  `;
 
     console.log("Database initialized successfully");
   } catch (error) {

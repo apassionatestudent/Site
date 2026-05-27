@@ -4,12 +4,13 @@ import './CourseRequirements3.css';
 // => Info tooltip component used for additional explanations in the form
 import Info from '../../../components/Info.jsx';
 
-const CourseRequirements3 = ({ onBack, onSubmit }) => {
-  const [files, setFiles] = useState({
-    birthCert: null,
-    schoolDoc: null,
-    validId: null
-  });
+const CourseRequirements3 = ({ files = {}, onFileChange, onBack, onSubmit }) => {
+  // const [files, setFiles] = useState({
+  //   birthCert: null,
+  //   schoolDoc: null,
+  //   validId: null
+  // });
+  
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -31,25 +32,32 @@ const CourseRequirements3 = ({ onBack, onSubmit }) => {
 
   const handleFileChange = useCallback((e, field) => {
     const file = e.target.files[0];
-    const error = validateFile(file, field);
-    
-    setFiles(prev => ({
-      ...prev,
-      [field]: file
-    }));
-    
+
+    // => Delegate file storage up to Enroll.jsx via onFileChange prop
+    onFileChange(field, file);
+
+    // => Validate inline to avoid stale closure on allowedTypes
+    let error = null;
+    if (!file) {
+      error = 'This field is required.';
+    } else if (!['image/jpeg', 'image/jpg', 'image/png'].includes(file.type)) {
+      error = 'Only JPG and PNG files are allowed.';
+    } else if (file.size > 5 * 1024 * 1024) {
+      error = 'File size must be less than 5MB.';
+    }
+
     setErrors(prev => ({
       ...prev,
       [field]: error
     }));
-  }, []);
+  }, [onFileChange]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Validate all files
+    // => Always validate all 3 required fields regardless of what's in files
     const newErrors = {};
-    Object.keys(files).forEach(field => {
+    ['birthCert', 'schoolDoc', 'validId'].forEach(field => {
       const error = validateFile(files[field], field);
       if (error) newErrors[field] = error;
     });
@@ -68,10 +76,7 @@ setShowBanner(false);
     
     // => Simulate form submission for now
     try {
-      // => typically upload files to your backend
-      console.log('Submitting files:', files);
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate API call
-      onSubmit?.();
+      await onSubmit?.();
     } catch (error) {
       console.error('Submission failed:', error);
     } finally {
