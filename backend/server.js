@@ -148,16 +148,19 @@ async function initDB () {
       -- => address: full address string
       -- => office_hours: JSONB so you can store structured per-day schedules
       -- => is_active: soft toggle to hide/show branches without deleting
-      -- => created_at: audit timestamp
+      -- => maps_url: Google Maps or any map URL to guide students to the branch
+      -- => created_at / updated_at: audit timestamps
 
       CREATE TABLE IF NOT EXISTS branches (
-        branch_id   SERIAL PRIMARY KEY,
-        branch_name VARCHAR(150)  NOT NULL,
-        address     TEXT          NOT NULL,
-        office_hours JSONB        NOT NULL DEFAULT '{}',
-        is_active   BOOLEAN       NOT NULL DEFAULT TRUE,
-        created_at  TIMESTAMPTZ   NOT NULL DEFAULT NOW()
-    );
+        branch_id    SERIAL PRIMARY KEY,
+        branch_name  VARCHAR(150)  NOT NULL,
+        address      TEXT          NOT NULL,
+        office_hours JSONB         NOT NULL DEFAULT '{}',
+        is_active    BOOLEAN       NOT NULL DEFAULT TRUE,
+        maps_url     TEXT          DEFAULT NULL,
+        created_at   TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+        updated_at   TIMESTAMPTZ   NOT NULL DEFAULT NOW()
+        );
     `
     // courses parts 
     await sql `
@@ -377,12 +380,14 @@ async function initDB () {
   await sql`
     -- => status uses 'Pending' as default matching the service insert
     -- => fee_at_enrollment frozen at submission time - never updated after
+    -- => branch_id stored directly so branch is always available even when class_id is NULL
     CREATE TABLE IF NOT EXISTS enrollment (
       enrollment_id     BIGSERIAL PRIMARY KEY,
       public_id         UUID          NOT NULL DEFAULT gen_random_uuid() UNIQUE,
       student_id        BIGINT        NOT NULL REFERENCES student_accounts(student_id) ON DELETE RESTRICT,
       course_id         INT           NULL REFERENCES courses(course_id) ON DELETE SET NULL,
       class_id          INT           NULL REFERENCES classes(class_id) ON DELETE SET NULL,
+      branch_id         INT           NULL REFERENCES branches(branch_id) ON DELETE SET NULL,
       assessment_type   VARCHAR(50)   NULL,
       fee_at_enrollment NUMERIC(10,2) NULL,
       is_shs            BOOLEAN       NOT NULL DEFAULT FALSE,

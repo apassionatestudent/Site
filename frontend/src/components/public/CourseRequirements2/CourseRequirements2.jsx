@@ -753,10 +753,10 @@ const CourseRequirements2 = ({ data, onChange, isScholar, onBack, onNext }) => {
               onRemove={() => removeEntry('competencies', index)}
             />
 
-            {/* Row A — Qualification Level FIRST (Title depends on it), then Title, then Industry Sector */}
+            {/* Row A - Qualification Level FIRST (Title depends on it), then Title, then Industry Sector */}
             <div className="cr2-grid g-3">
 
-              {/* => Qualification Level — must be selected before Title becomes available */}
+              {/* => Qualification Level - must be selected before Title becomes available */}
               <div className="cr2-field-group">
                 <label className="cr2-label">Qualification Level</label>
                 <select
@@ -779,7 +779,7 @@ const CourseRequirements2 = ({ data, onChange, isScholar, onBack, onNext }) => {
                 </select>
               </div>
 
-              {/* => Title — filtered by selected level, disabled until level is chosen */}
+              {/* => Title - filtered by selected level, disabled until level is chosen */}
               <div className="cr2-field-group">
                 <label className="cr2-label">Title</label>
                 <select
@@ -797,7 +797,7 @@ const CourseRequirements2 = ({ data, onChange, isScholar, onBack, onNext }) => {
                   disabled={!entry.qualificationLevel}
                 >
                   <option value="">
-                    {entry.qualificationLevel ? 'Select Course' : '— Select Level first —'}
+                    {entry.qualificationLevel ? 'Select Course' : '- Select Level first -'}
                   </option>
                   {getCoursesByLevel(entry.qualificationLevel || '').map(({ title }) => (
                     <option key={title} value={title}>{title}</option>
@@ -805,7 +805,7 @@ const CourseRequirements2 = ({ data, onChange, isScholar, onBack, onNext }) => {
                 </select>
               </div>
 
-              {/* => Industry Sector — auto-filled when course is selected, read-only */}
+              {/* => Industry Sector - auto-filled when course is selected, read-only */}
               <div className="cr2-field-group">
                 <label className="cr2-label">
                   <span className="cr2-label-row">
@@ -816,9 +816,9 @@ const CourseRequirements2 = ({ data, onChange, isScholar, onBack, onNext }) => {
                 <input
                   type="text"
                   className="cr2-input"
-                  value={entry.industrySector || (entry.title ? 'Unknown Sector' : '—')}
+                  value={entry.industrySector || (entry.title ? 'Unknown Sector' : '-')}
                   readOnly
-                  title="Industry Sector — auto-filled based on selected course"
+                  title="Industry Sector - auto-filled based on selected course"
                   style={{ background: 'var(--bg-secondary)', cursor: 'default', color: 'var(--text-secondary)' }}
                 />
               </div>

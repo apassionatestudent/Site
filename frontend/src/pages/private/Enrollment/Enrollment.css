@@ -1,0 +1,227 @@
+/* 
+   ENROLLMENT PAGE (List View)
+   Inherits theme variables from index.css (:root[data-theme])
+   No local variable redeclarations - uses --bg-primary, --border, --accent, etc.
+*/
+
+/*  PAGE WRAPPER  */
+
+.enroll-page {
+  font-family: var(--font-body);
+  color: var(--text-primary);
+  padding: 2.5rem 2rem;
+  min-height: 100vh;
+}
+
+/*  HEADER  */
+
+.enroll-header {
+  margin-bottom: 2rem;
+}
+
+.enroll-title {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 400;
+  color: var(--text-primary);
+  margin: 0 0 0.35rem;
+  letter-spacing: -0.02em;
+}
+
+.enroll-subtitle {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+/*  EMPTY STATE  */
+
+.enroll-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 4rem;
+  color: var(--text-muted);
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+}
+
+.enroll-empty-icon {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+}
+
+/*  LIST  */
+
+.enroll-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+/*  CARD  */
+
+.enroll-card {
+  display: flex;
+  align-items: stretch;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+
+  /* => Staggered fade-in on mount */
+  animation: cardFadeIn 0.35s ease both;
+}
+
+@keyframes cardFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.enroll-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--card-border-hover);
+  box-shadow: var(--card-glow);
+}
+
+/* => Left colored accent bar */
+.enroll-card-bar {
+  width: 5px;
+  flex-shrink: 0;
+  background: var(--text-muted);
+}
+
+.enroll-card-body {
+  flex: 1;
+  padding: 1.1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.enroll-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.enroll-card-course {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.3;
+}
+
+.enroll-card-sector {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 0.2rem 0 0;
+}
+
+.enroll-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+/* => Meta icons (calendar, building, money) */
+.enroll-card-meta-icon {
+  width: 14px;
+  height: 14px;
+  vertical-align: middle;
+  margin-right: 0.35rem;
+  object-fit: contain;
+}
+
+.enroll-card-arrow {
+  display: flex;
+  align-items: center;
+  padding: 0 1.1rem;
+  color: var(--text-muted);
+  font-size: 1.4rem;
+  transition: color 0.18s ease, transform 0.18s ease;
+}
+
+.enroll-card:hover .enroll-card-arrow {
+  color: var(--accent-hover);
+  transform: translateX(3px);
+}
+
+/*  BADGE  */
+
+.enroll-card-badge {
+  display: inline-block;
+  padding: 0.28rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  flex-shrink: 0;
+  background: rgba(255,255,255,0.06);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+
+/*  STATUS COLOR VARIANTS
+    => These are self-contained and don't rely on theme variables
+    => because status colors are fixed regardless of light/dark mode        */
+
+.status--pending .enroll-card-bar,
+.status--pending.enroll-card-bar         { background: #f59e0b; }
+.status--pending.enroll-card-badge       { background: rgba(245,158,11,0.12);  color: #f59e0b; border-color: rgba(245,158,11,0.3); }
+
+.status--approved .enroll-card-bar,
+.status--approved.enroll-card-bar        { background: #22c55e; }
+.status--approved.enroll-card-badge      { background: rgba(34,197,94,0.12);   color: #22c55e; border-color: rgba(34,197,94,0.3); }
+
+.status--clarification .enroll-card-bar,
+.status--clarification.enroll-card-bar   { background: #f97316; }
+.status--clarification.enroll-card-badge { background: rgba(249,115,22,0.12);  color: #f97316; border-color: rgba(249,115,22,0.3); }
+
+.status--rejected .enroll-card-bar,
+.status--rejected.enroll-card-bar        { background: #ef4444; }
+.status--rejected.enroll-card-badge      { background: rgba(239,68,68,0.12);   color: #ef4444; border-color: rgba(239,68,68,0.3); }
+
+.status--dropped .enroll-card-bar,
+.status--dropped.enroll-card-bar         { background: #6b7280; }
+.status--dropped.enroll-card-badge       { background: rgba(107,114,128,0.12); color: #6b7280; border-color: rgba(107,114,128,0.3); }
+
+.status--completed .enroll-card-bar,
+.status--completed.enroll-card-bar       { background: #3b82f6; }
+.status--completed.enroll-card-badge     { background: rgba(59,130,246,0.12);  color: #3b82f6; border-color: rgba(59,130,246,0.3); }
+
+.status--reserved .enroll-card-bar,
+.status--reserved.enroll-card-bar        { background: #a855f7; }
+.status--reserved.enroll-card-badge      { background: rgba(168,85,247,0.12);  color: #a855f7; border-color: rgba(168,85,247,0.3); }
+
+/*  RWD  */
+
+@media (max-width: 480px) {
+  .enroll-page {
+    padding: 1.5rem 1rem;
+  }
+
+  .enroll-card-meta {
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+}

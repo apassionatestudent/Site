@@ -263,7 +263,7 @@
   padding-top: 1rem;
 }
 
-/* => Error banner above actions — mirrors .cr2-error-banner */
+/* => Error banner above actions - mirrors .cr2-error-banner */
 .cr3-error-banner {
   display: flex;
   align-items: center;

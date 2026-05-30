@@ -28,7 +28,7 @@
 
 /* Sidebar Shell  */
 .sidebar {
-  /* Position — sits on the left, full viewport height */
+  /* Position - sits on the left, full viewport height */
   position: fixed;
   top: 0;
   left: 0;
@@ -180,7 +180,7 @@
 
 /*  Nav Icon  */
 .sidebar-nav-icon {
-  /* Fixed size — replace icon source without breaking layout */
+  /* Fixed size - replace icon source without breaking layout */
   width: var(--sidebar-icon-size);
   height: var(--sidebar-icon-size);
   object-fit: contain;
@@ -253,7 +253,7 @@
   margin-left: var(--sidebar-width);
 }
 
-/* Responsive — collapse sidebar on small screens */
+/* Responsive - collapse sidebar on small screens */
 @media (max-width: 768px) {
   .sidebar {
     /* Icon-only collapsed mode on mobile */

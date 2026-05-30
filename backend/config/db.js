@@ -35,7 +35,7 @@ export const sql = neon(connectionString, {
   arrayMode:   false  // => Object mode (not array mode)
 });
 
-// => pool uses WebSockets instead of HTTP — required for multi-step transactions
+// => pool uses WebSockets instead of HTTP - required for multi-step transactions
 // => sql.transaction() uses HTTP and has a strict timeout that 12 sequential inserts can exceed
 // => Pool from @neondatabase/serverless is the same package, no extra dependencies needed
 export const pool = new Pool({ connectionString });
