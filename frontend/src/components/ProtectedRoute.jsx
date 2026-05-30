@@ -19,11 +19,11 @@
 import { Navigate } from 'react-router-dom';
 
 // => Checks if a student is logged in via the localStorage flag
-// => The actual JWT is in an httpOnly cookie — JavaScript cannot read it directly
+// => The actual JWT is in an httpOnly cookie - JavaScript cannot read it directly
 // => Real security is still enforced by protectStudent middleware on every API call
 const ProtectedRoute = ({ children }) => {
     // => We check for the token cookie on the client side as a lightweight gate
-    // => The real security is on the backend — every API call still requires a valid JWT
+    // => The real security is on the backend - every API call still requires a valid JWT
     const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
 
     // => replace: true removes the dashboard URL from browser history

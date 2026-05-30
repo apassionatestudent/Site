@@ -20,7 +20,7 @@ export const getCoursesByBranch = async (req, res) => {
     ORDER BY c.title ASC
     `;
 
-    // => Neon returns { rows: [...] } — we only want the rows array
+    // => Neon returns { rows: [...] } - we only want the rows array
     res.json(result.rows);
   } catch (err) {
     console.error('Error fetching courses:', err.message);

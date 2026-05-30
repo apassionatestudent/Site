@@ -49,11 +49,11 @@
 //   res.json(filtered);
 // });
 
-// // => Load barangays — kept separate due to large file size (10MB+), kept at the bottom to prevent unnecessary loading. 
+// // => Load barangays - kept separate due to large file size (10MB+), kept at the bottom to prevent unnecessary loading. 
 // const barangays = JSON.parse(readFileSync(join(__dirname, '../barangays.json'), 'utf-8')); 
 
 // // GET /barangays/:cityCode => returns barangays under a specific city/municipality
-// // => barangays.json uses cityCode for cities and municipalityCode for municipalities — never both
+// // => barangays.json uses cityCode for cities and municipalityCode for municipalities - never both
 // // => so we check both fields against the incoming code to cover all cases
 // router.get('/barangays/:cityCode', (req, res) => {
 //   const code = req.params.cityCode;
@@ -66,7 +66,7 @@
 // export default router;
 
 /**
- * Location routes — uses psgc.cloud hierarchy endpoints.
+ * Location routes - uses psgc.cloud hierarchy endpoints.
  * These are cleaner and more reliable than bulk + prefix matching.
  *
  * Endpoint pattern:
@@ -85,7 +85,7 @@ const BASE_V1 = 'https://psgc.cloud/api/v1';
 const BASE_V2 = 'https://psgc.cloud/api/v2';
 
 
-// => In-memory cache — regions cached on startup, others cached on first request
+// => In-memory cache - regions cached on startup, others cached on first request
 let cache = {
   regions: [],
   provincesByRegion: {},    // => keyed by regionCode
@@ -94,13 +94,13 @@ let cache = {
   barangaysByParent: {},
 };
 
-// => Fetch only regions on startup — small list, stable
+// => Fetch only regions on startup - small list, stable
 export const loadLocationCache = async () => {
   try {
     console.log('Loading regions from psgc.cloud...');
     const regions = await fetch(`${BASE}/regions`).then(r => r.json());
     cache.regions = regions;
-    console.log(`Regions loaded — ${regions.length} regions`);
+    console.log(`Regions loaded - ${regions.length} regions`);
   } catch (err) {
     console.error('Failed to load regions from psgc.cloud:', err);
   }
@@ -237,7 +237,7 @@ router.get('/cities-by-region/:regionCode', async (req, res) => {
 
 // GET /barangays/:cityCode
 // => Uses psgc.cloud hierarchy: /api/cities/{code}/barangays or /api/municipalities/{code}/barangays
-// => psgc.cloud codes are 10 digits — no conversion needed, use them directly
+// => psgc.cloud codes are 10 digits - no conversion needed, use them directly
 router.get('/barangays/:cityCode', async (req, res) => {
   const code = req.params.cityCode;
 
@@ -276,7 +276,7 @@ router.get('/barangays/:cityCode', async (req, res) => {
 });
 
 // GET /barangays/:cityCode
-// => psgc.cloud separates city_code and municipality_code — try both in parallel
+// => psgc.cloud separates city_code and municipality_code - try both in parallel
 // => whichever returns data wins; the other will be empty
 // router.get('/barangays/:cityCode', async (req, res) => {
 //   const code = req.params.cityCode;

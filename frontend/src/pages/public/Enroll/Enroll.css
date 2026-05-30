@@ -230,7 +230,7 @@
   font-family: var(--font-body);
 }
 
-/* => Subtle hint text below a field — used for auto-filled fields */
+/* => Subtle hint text below a field - used for auto-filled fields */
 .field-hint {
   font-size: 12px;
   color: var(--text-muted);
@@ -394,7 +394,7 @@
   border: 0;
 }
 
-/* => Hide all tab content by default — applies on ALL screen sizes */
+/* => Hide all tab content by default - applies on ALL screen sizes */
 .tab-content {
   display: none;
 }
@@ -502,7 +502,7 @@
   color: var(--text-primary);
 }
 
-/* => Educational attainment row — select + optional text input side by side */
+/* => Educational attainment row - select + optional text input side by side */
 .educ-row {
   display: flex;
   gap: 1rem;

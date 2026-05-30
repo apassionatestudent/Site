@@ -162,7 +162,7 @@ setShowBanner(false);
             </div>
 
             <div className="cr3-actions-wrap">
-              {/* => Error banner — only shown after a failed submit attempt */}
+              {/* => Error banner - only shown after a failed submit attempt */}
               {showBanner && Object.values(files).some(f => !f) && (
                 <div className="cr3-error-banner">
                   <i className="ti ti-alert-circle" aria-hidden="true" />

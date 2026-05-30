@@ -6,6 +6,7 @@ import Footer from './components/public/Footer/Footer.jsx';
 import NotFound from './components/NotFound.jsx';
 // => import private components
 import Sidebar from './components/private/SideBar/SideBar.jsx';
+import EnrollmentDetail from './components/private/EnrollmentDetail/EnrollmentDetail.jsx';
 // => import public pages
 import Home from './pages/public/Home/Home.jsx';
 import About from './pages/public/About/About.jsx';
@@ -44,7 +45,7 @@ function App() {
       {!isDashboard && <NavBar isLoggedIn={isLoggedIn} />}
       {/* => show Sidebar only on dashboard pages */}
       {isDashboard && <Sidebar />}
-      <main className={isDashboard ? 'app-main app-main--dashboard' : 'app-main'}>
+      <main className={isDashboard ? 'app-main app-main-dashboard' : 'app-main'}>
         <Routes>
           {/* => public routes */}
           <Route path="/" element={<Home />} />
@@ -66,7 +67,11 @@ function App() {
                     <Route index element={<Announcements />} />
                     <Route path="account" element={<Account />} />
                     <Route path="documents" element={<Documents />} />
+
                     <Route path="enrollment" element={<Enrollment />} />
+                    {/* => Detail view - :publicId is the UUID from the enrollment.public_id column */}
+                    <Route path="enrollment/:publicId" element={<EnrollmentDetail />} />
+
                     <Route path="supporttickets" element={<SupportTickets />} />
                   </Routes>
                 )

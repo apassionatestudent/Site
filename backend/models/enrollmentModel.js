@@ -169,14 +169,17 @@ export const insertCompetencies = async (client, { profileId, competencies }) =>
 export const insertEnrollment = async (client, { studentId, courseData }) => {
   const result = await client.query(
     `INSERT INTO enrollment
-       (student_id, course_id, class_id, assessment_type, fee_at_enrollment,
+       (student_id, course_id, class_id, branch_id, assessment_type, fee_at_enrollment,
         is_shs, is_tesda_scholar, status, submitted_at)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,'Pending', NOW())
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'Pending', NOW())
      RETURNING enrollment_id`,
     [
       studentId,
       courseData.course         || null,
       courseData.courseClass    || null,
+      // => branch_id submitted from the enrollment form directly
+      // => stored here so branch is resolvable even before a class is assigned
+      courseData.branch         || null,
       courseData.assessmentType || null,
       courseData.courseFee      || null,
       courseData.isSHS === 'yes',
@@ -270,4 +273,67 @@ export const insertStudentDocs = async (client, { studentId, docs }) => {
       [studentId, doc.type, doc.key]
     );
   }
+};
+
+
+// => Fetches all enrollments belonging to a student, joined with course, sector, branch, and class
+// => Uses student_id (internal BIGINT) from the JWT - never exposed to the browser
+// => branch resolved via COALESCE: direct branch_id first, class's branch as fallback
+export const getEnrollmentsByStudentId = async (pool, studentId) => {
+  const result = await pool.query(
+    `SELECT
+        e.public_id,
+        c.title           AS course_name,
+        s.sector          AS sector,
+        e.assessment_type,
+        e.status,
+        e.submitted_at,
+        e.fee_at_enrollment,
+        COALESCE(b_direct.branch_name, b_class.branch_name) AS branch_name,
+        cl.start_date,
+        cl.end_date,
+        e.is_shs,
+        e.is_tesda_scholar
+      FROM enrollment e
+      LEFT JOIN courses     c         ON e.course_id  = c.course_id
+      LEFT JOIN sectors     s         ON c.sector_id  = s.sector_id
+      LEFT JOIN classes     cl        ON e.class_id   = cl.class_id
+      LEFT JOIN branches    b_direct  ON e.branch_id  = b_direct.branch_id
+      LEFT JOIN branches    b_class   ON cl.branch_id = b_class.branch_id
+      WHERE e.student_id = $1
+      ORDER BY e.submitted_at DESC`,
+    [studentId]
+  );
+  return result.rows;
+};
+
+// => Fetches a single enrollment by its public UUID
+// => Also verifies it belongs to the requesting student to prevent IDOR
+// => branch resolved via COALESCE: direct branch_id first, class's branch as fallback
+export const getEnrollmentByPublicId = async (pool, publicId, studentId) => {
+  const result = await pool.query(
+    `SELECT
+        e.public_id,
+        c.title           AS course_name,
+        s.sector          AS sector,
+        e.assessment_type,
+        e.status,
+        e.submitted_at,
+        e.fee_at_enrollment,
+        COALESCE(b_direct.branch_name, b_class.branch_name) AS branch_name,
+        cl.start_date,
+        cl.end_date,
+        e.is_shs,
+        e.is_tesda_scholar
+      FROM enrollment e
+      LEFT JOIN courses     c         ON e.course_id  = c.course_id
+      LEFT JOIN sectors     s         ON c.sector_id  = s.sector_id
+      LEFT JOIN classes     cl        ON e.class_id   = cl.class_id
+      LEFT JOIN branches    b_direct  ON e.branch_id  = b_direct.branch_id
+      LEFT JOIN branches    b_class   ON cl.branch_id = b_class.branch_id
+      WHERE e.public_id  = $1
+        AND e.student_id = $2`,
+    [publicId, studentId]
+  );
+  return result.rows[0];
 };

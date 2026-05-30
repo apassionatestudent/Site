@@ -1,6 +1,8 @@
 import { pool } from '../config/db.js';
 import { uploadToR2 } from '../middleware/upload.js';
 
+import { getEnrollmentsByStudentId, getEnrollmentByPublicId } from '../models/enrollmentModel.js';
+
 // => Import every model function - each handles exactly one table
 import {
   insertStudentAccount,
@@ -91,4 +93,16 @@ export const processEnrollmentSubmission = async (body, files) => {
     // => Always release back to the pool whether it succeeded or failed
     client.release();
   }
+};
+
+// => Calls the model to get all enrollments for the logged-in student
+// => Uses the pool imported at the top of this file - no need to pass it as a param
+export const getStudentEnrollments = async (studentId) => {
+  return await getEnrollmentsByStudentId(pool, studentId);
+};
+
+// => Calls the model to get one enrollment by UUID, ownership-checked
+// => Uses the pool imported at the top of this file - no need to pass it as a param
+export const getStudentEnrollmentDetail = async (publicId, studentId) => {
+  return await getEnrollmentByPublicId(pool, publicId, studentId);
 };

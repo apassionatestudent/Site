@@ -14,7 +14,7 @@ const Enroll = () => {
     // ALL useState declarations
     // ============================================================
 
-    // => Personal Information — Step 1 Full Name
+    // => Personal Information - Step 1 Full Name
     const [lastName, setLastName] = useState('');
     const [firstName, setFirstName] = useState('');
     const [middleName, setMiddleName] = useState('');
@@ -222,7 +222,7 @@ const handleFinalSubmit = async () => {
   // => Step 3.2: Work Experience, Trainings, Licensures, Competencies
   formData.append('expData', JSON.stringify(expData));
 
-  // => Step 3.3: Document uploads — appended as actual File objects
+  // => Step 3.3: Document uploads - appended as actual File objects
   if (docFiles.birthCert) formData.append('birthCert', docFiles.birthCert);
   if (docFiles.schoolDoc) formData.append('schoolDoc', docFiles.schoolDoc);
   if (docFiles.validId)   formData.append('validId', docFiles.validId);
@@ -230,7 +230,7 @@ const handleFinalSubmit = async () => {
   try {
     const res = await fetch('/api/enrollment/submit', {
       method: 'POST',
-      // => Do NOT set Content-Type manually — fetch sets it automatically with the boundary for FormData
+      // => Do NOT set Content-Type manually - fetch sets it automatically with the boundary for FormData
       body: formData,
     });
 
