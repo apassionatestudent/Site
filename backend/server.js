@@ -451,6 +451,7 @@ async function initDB () {
     CREATE TABLE IF NOT EXISTS student_docs (
       document_id   BIGSERIAL PRIMARY KEY,
       student_id    BIGINT       NOT NULL REFERENCES student_accounts(student_id) ON DELETE CASCADE,
+      public_id           UUID NOT NULL DEFAULT gen_random_uuid() UNIQUE,
       document_type VARCHAR(100) NOT NULL,
       document_key  TEXT         NOT NULL,
       uploaded_at   TIMESTAMPTZ  NOT NULL DEFAULT NOW()
