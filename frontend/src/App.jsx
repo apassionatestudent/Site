@@ -1,12 +1,16 @@
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import './App.css'
+
 // => import public components
 import NavBar from './components/public/Navbar/NavBar.jsx';
 import Footer from './components/public/Footer/Footer.jsx';
 import NotFound from './components/NotFound.jsx';
+
 // => import private components
 import Sidebar from './components/private/SideBar/SideBar.jsx';
 import EnrollmentDetail from './components/private/EnrollmentDetail/EnrollmentDetail.jsx';
+import DocumentDetail from './components/private/DocumentDetail/DocumentDetail.jsx';
+
 // => import public pages
 import Home from './pages/public/Home/Home.jsx';
 import About from './pages/public/About/About.jsx';
@@ -14,6 +18,7 @@ import Courses from './pages/public/Courses/Courses.jsx';
 import Enroll from './pages/public/Enroll/Enroll.jsx';
 import Contact from './pages/public/Contact/Contact.jsx';
 import Login from './pages/public/Login/Login.jsx';
+
 // => import private (dashboard) pages
 import Dashboard from './pages/private/Dashboard/Dashboard.jsx';
 import Account from './pages/private/Account/Account.jsx';
@@ -21,6 +26,7 @@ import Documents from './pages/private/Documents/Documents.jsx';
 import Enrollment from './pages/private/Enrollment/Enrollment.jsx';
 import SupportTickets from './pages/private/SupportTickets/SupportTickets.jsx';
 import Announcements from './pages/private/Announcements/Announcements.jsx';
+
 // => all routes that belong to the student dashboard
 const DASHBOARD_ROUTES = [
   '/dashboard',
@@ -30,6 +36,7 @@ const DASHBOARD_ROUTES = [
   '/dashboard/support',
   '/dashboard/announcements',
 ];
+
 function App() {
   const location = useLocation();
   // => true when the user is on any dashboard route
@@ -67,6 +74,7 @@ function App() {
                     <Route index element={<Announcements />} />
                     <Route path="account" element={<Account />} />
                     <Route path="documents" element={<Documents />} />
+                    <Route path="documents/:publicId" element={<DocumentDetail />} />
 
                     <Route path="enrollment" element={<Enrollment />} />
                     {/* => Detail view - :publicId is the UUID from the enrollment.public_id column */}

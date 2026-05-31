@@ -1,0 +1,231 @@
+/*
+   DOCUMENT DETAIL COMPONENT
+   Inherits theme variables from index.css (:root[data-theme])
+   No local variable redeclarations - uses --bg-primary, --border, --accent, etc.
+   Mirrors the structure of EnrollmentDetail.css with document-specific class names
+*/
+
+/*  PAGE WRAPPER  */
+
+.doc-detail-page {
+  font-family: var(--font-body);
+  color: var(--text-primary);
+  padding: 2.5rem 2rem;
+  min-height: 100vh;
+}
+
+/*  BACK BUTTON  */
+
+.doc-back {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  padding: 0.45rem 1rem;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  cursor: pointer;
+  font-family: var(--font-body);
+  transition: border-color 0.18s ease, color 0.18s ease;
+  margin-bottom: 1.75rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.doc-back:hover {
+  border-color: var(--accent-hover);
+  color: var(--text-primary);
+}
+
+/*  EMPTY / LOADING STATE  */
+
+.doc-detail-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 4rem;
+  color: var(--text-muted);
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+}
+
+.doc-detail-empty-icon {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+}
+
+/*  DETAIL WRAPPER  */
+
+.doc-detail {
+  animation: docDetailFadeIn 0.3s ease both;
+}
+
+@keyframes docDetailFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/*  DETAIL HEADER  */
+
+.doc-detail-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.doc-detail-title {
+  font-family: var(--font-display);
+  font-size: 1.7rem;
+  font-weight: 400;
+  color: var(--text-primary);
+  margin: 0 0 0.3rem;
+  letter-spacing: -0.02em;
+}
+
+.doc-detail-sub {
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  margin: 0;
+}
+
+/*  BADGE  */
+
+.doc-detail-badge {
+  display: inline-block;
+  padding: 0.4rem 1rem;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  flex-shrink: 0;
+  background: rgba(255,255,255,0.06);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+
+/*  SOURCE COLOR VARIANTS
+    => Duplicated here intentionally - DocumentDetail is a standalone component
+    => and should not depend on Documents.css being loaded                       */
+
+.source--enrollment.doc-detail-badge { background: rgba(59,130,246,0.12);  color: #3b82f6; border-color: rgba(59,130,246,0.3); }
+.source--profile.doc-detail-badge    { background: rgba(20,184,166,0.12);  color: #14b8a6; border-color: rgba(20,184,166,0.3); }
+
+/*  INFO GRID - 3 columns on desktop, 2 on tablet, 1 on mobile  */
+
+.doc-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.75rem;
+}
+
+.doc-detail-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 10px;
+  padding: 1rem 1.15rem;
+}
+
+.doc-detail-label {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin: 0 0 0.35rem;
+}
+
+.doc-detail-value {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+/*  PREVIEW SECTION  */
+
+.doc-preview-section {
+  margin-top: 0.5rem;
+}
+
+.doc-preview-label {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  margin: 0 0 0.85rem;
+}
+
+/* => Loading and error states inside the preview area */
+.doc-preview-loading,
+.doc-preview-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 3rem;
+  color: var(--text-muted);
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  font-size: 0.88rem;
+}
+
+/* => PDF preview — full width, tall enough to read without scrolling */
+.doc-preview-iframe {
+  width: 100%;
+  height: 75vh;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--card-bg);
+}
+
+/* => Image preview — constrained width, preserves aspect ratio */
+.doc-preview-img {
+  max-width: 100%;
+  max-height: 75vh;
+  object-fit: contain;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  display: block;
+}
+
+/*  RWD  */
+
+@media (max-width: 768px) {
+  .doc-detail-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .doc-detail-page {
+    padding: 1.5rem 1rem;
+  }
+
+  .doc-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .doc-detail-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .doc-preview-iframe {
+    height: 60vh;
+  }
+}
