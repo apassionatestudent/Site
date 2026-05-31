@@ -116,7 +116,7 @@ function EnrollmentDetail() {
               <p className="enroll-detail-label">Class Period</p>
               <p className="enroll-detail-value">
                 {detail.start_date
-                  ? `${formatDate(detail.start_date)} — ${formatDate(detail.end_date)}`
+                  ? `${formatDate(detail.start_date)} - ${formatDate(detail.end_date)}`
                   : '-'}
               </p>
             </div>

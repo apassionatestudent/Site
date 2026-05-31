@@ -1,0 +1,221 @@
+/*
+   DOCUMENTS PAGE (List View)
+   Inherits theme variables from index.css (:root[data-theme])
+   No local variable redeclarations - uses --bg-primary, --border, --accent, etc.
+   Mirrors the structure of Enrollment.css with document-specific class names
+*/
+
+/*  PAGE WRAPPER  */
+
+.docs-page {
+  font-family: var(--font-body);
+  color: var(--text-primary);
+  padding: 2.5rem 2rem;
+  min-height: 100vh;
+}
+
+/*  HEADER  */
+
+.docs-header {
+  margin-bottom: 2rem;
+}
+
+.docs-title {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 400;
+  color: var(--text-primary);
+  margin: 0 0 0.35rem;
+  letter-spacing: -0.02em;
+}
+
+.docs-subtitle {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+/*  EMPTY STATE  */
+
+.docs-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 4rem;
+  color: var(--text-muted);
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+}
+
+.docs-empty-icon {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+}
+
+/*  SECTION (enrollment vs profile grouping)  */
+
+.docs-section {
+  margin-bottom: 2.25rem;
+}
+
+.docs-section-title {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin: 0 0 0.85rem;
+}
+
+/*  LIST  */
+
+.docs-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+/*  CARD  */
+
+.docs-card {
+  display: flex;
+  align-items: stretch;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+
+  /* => Staggered fade-in on mount */
+  animation: docsCardFadeIn 0.35s ease both;
+}
+
+@keyframes docsCardFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.docs-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--card-border-hover);
+  box-shadow: var(--card-glow);
+}
+
+/* => Left colored accent bar */
+.docs-card-bar {
+  width: 5px;
+  flex-shrink: 0;
+  background: var(--text-muted);
+}
+
+.docs-card-body {
+  flex: 1;
+  padding: 1.1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.docs-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.docs-card-type {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.3;
+}
+
+.docs-card-course {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 0.2rem 0 0;
+}
+
+.docs-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.docs-card-meta-icon {
+  width: 14px;
+  height: 14px;
+  vertical-align: middle;
+  margin-right: 0.35rem;
+  object-fit: contain;
+}
+
+.docs-card-arrow {
+  display: flex;
+  align-items: center;
+  padding: 0 1.1rem;
+  color: var(--text-muted);
+  font-size: 1.4rem;
+  transition: color 0.18s ease, transform 0.18s ease;
+}
+
+.docs-card:hover .docs-card-arrow {
+  color: var(--accent-hover);
+  transform: translateX(3px);
+}
+
+/*  BADGE  */
+
+.docs-card-badge {
+  display: inline-block;
+  padding: 0.28rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  flex-shrink: 0;
+  background: rgba(255,255,255,0.06);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+
+/*  SOURCE COLOR VARIANTS
+    => enrollment: blue tone  - documents tied to a specific enrollment submission
+    => profile:    teal tone  - standalone documents tied to the student account   */
+
+.source--enrollment.docs-card-bar    { background: #3b82f6; }
+.source--enrollment.docs-card-badge  { background: rgba(59,130,246,0.12); color: #3b82f6; border-color: rgba(59,130,246,0.3); }
+
+.source--profile.docs-card-bar       { background: #14b8a6; }
+.source--profile.docs-card-badge     { background: rgba(20,184,166,0.12); color: #14b8a6; border-color: rgba(20,184,166,0.3); }
+
+/*  RWD  */
+
+@media (max-width: 480px) {
+  .docs-page {
+    padding: 1.5rem 1rem;
+  }
+
+  .docs-card-meta {
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+}
