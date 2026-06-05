@@ -53,7 +53,8 @@ export const getClasses = async (req, res) => {
     LEFT JOIN instructors i ON cl.instructor_id = i.instructor_id
     WHERE cl.course_id = ${course_id}
         AND cl.branch_id = ${branch_id}
-        AND cl.status IN ('upcoming', 'ongoing')
+        AND cl.status IN ('Planned', 'Ongoing')
+        -- TODO: I need to check if they'd allow enrollments to ongoing classes or not. 
     ORDER BY cl.start_date ASC
     `;
 
