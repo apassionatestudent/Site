@@ -1,9 +1,7 @@
 // => All functions receive `txn` - the scoped query function from sql.transaction()
 // => This ensures every insert runs inside the same atomic transaction
 
-// ─────────────────────────────────────────
 // STUDENT ACCOUNT
-// ─────────────────────────────────────────
 export const insertStudentAccount = async (client, { email }) => {
   // => password_hash is NULL until student confirms email (per schema decision)
   const result = await client.query(
@@ -15,9 +13,7 @@ export const insertStudentAccount = async (client, { email }) => {
   return result.rows[0].student_id;
 };
 
-// ─────────────────────────────────────────
 // STUDENT PROFILE
-// ─────────────────────────────────────────
 export const insertStudentProfile = async (client, { studentId, body, courseData }) => {
   const result = await client.query(
     `INSERT INTO student_profile
@@ -52,9 +48,7 @@ export const insertStudentProfile = async (client, { studentId, body, courseData
   return result.rows[0].profile_id;
 };
 
-// ─────────────────────────────────────────
 // STUDENT ADDRESS
-// ─────────────────────────────────────────
 export const insertStudentAddress = async (client, { profileId, body }) => {
   await client.query(
     `INSERT INTO student_address
@@ -72,10 +66,8 @@ export const insertStudentAddress = async (client, { profileId, body }) => {
   );
 };
 
-// ─────────────────────────────────────────
 // CONTACT NUMBERS
 // => Inserts one row per contact type that has a value
-// ─────────────────────────────────────────
 export const insertContactNumbers = async (client, { profileId, body }) => {
   const contacts = [
     { type: 'Mobile', value: body.mobile },
@@ -93,10 +85,8 @@ export const insertContactNumbers = async (client, { profileId, body }) => {
   }
 };
 
-// ─────────────────────────────────────────
 // CONTACT PERSON (GUARDIAN)
 // => Only inserted if guardianName was provided
-// ─────────────────────────────────────────
 export const insertContactPerson = async (client, { profileId, body }) => {
   if (!body.guardianName) return; // => skip if not a minor or not provided
 
@@ -108,10 +98,8 @@ export const insertContactPerson = async (client, { profileId, body }) => {
   );
 };
 
-// ─────────────────────────────────────────
 // LICENSURE EXAMINATIONS
 // => FK to profile_id - permanent student credential, not per-enrollment
-// ─────────────────────────────────────────
 export const insertLicensures = async (client, { profileId, licensures }) => {
   if (!Array.isArray(licensures)) return;
 
@@ -135,10 +123,8 @@ export const insertLicensures = async (client, { profileId, licensures }) => {
   }
 };
 
-// ─────────────────────────────────────────
 // COMPETENCY ASSESSMENTS
 // => FK to profile_id - permanent student credential, not per-enrollment
-// ─────────────────────────────────────────
 export const insertCompetencies = async (client, { profileId, competencies }) => {
   if (!Array.isArray(competencies)) return;
 
@@ -163,9 +149,7 @@ export const insertCompetencies = async (client, { profileId, competencies }) =>
   }
 };
 
-// ─────────────────────────────────────────
 // ENROLLMENT
-// ─────────────────────────────────────────
 export const insertEnrollment = async (client, { studentId, courseData }) => {
   const result = await client.query(
     `INSERT INTO enrollment
@@ -189,10 +173,8 @@ export const insertEnrollment = async (client, { studentId, courseData }) => {
   return result.rows[0].enrollment_id;
 };
 
-// ─────────────────────────────────────────
 // WORK EXPERIENCE
 // => FK to enrollment_id - tied to this specific enrollment
-// ─────────────────────────────────────────
 export const insertWorkExperience = async (client, { enrollmentId, workExperience }) => {
   if (!Array.isArray(workExperience)) return;
 
