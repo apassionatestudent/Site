@@ -103,7 +103,7 @@ const CourseRequirements1 = ({ data, onChange, onBack, onNext }) => {
     if (!data.branch) return 'missing';
     if (!data.course) return 'missing';
     // => 'reserve' is a valid class selection when no classes are available
-    if (!data.class) return 'missing';
+    if (!data.courseClass) return 'missing';
     if (!data.isSHS) return 'missing';
     if (!data.isScholar) return 'missing';
     return 'valid';
@@ -284,7 +284,7 @@ const CourseRequirements1 = ({ data, onChange, onBack, onNext }) => {
             onChange={(e) => {
               onChange('course', e.target.value);
               // => Reset class when course changes
-              onChange('class', '');
+              onChange('courseClass', '');
               setClasses([]);
               // => Find and store the full course object to display the fee
               const found = courses.find((c) => c.course_id === parseInt(e.target.value));
@@ -325,13 +325,13 @@ const CourseRequirements1 = ({ data, onChange, onBack, onNext }) => {
           <select
             className="cr1-select"
             value={data.class}
-            onChange={(e) => onChange('class', e.target.value)}
+            onChange={(e) => onChange('courseClass', e.target.value)}
             disabled={!data.course || classesLoading}
           >
             <option value="">
               {!data.course ? '- Select a course first -' : classesLoading ? 'Loading...' : '- Select Class -'}
             </option>
-            {/* => Show Reserve option only when no classes are available */}
+            {/* => Show Reserve option only  when no classes are available */}
             {data.course && !classesLoading && classes.length === 0 && (
               <option value="reserve">Reserve a Slot</option>
             )}
