@@ -7,11 +7,11 @@ const studentAuthRouter = express.Router();
 
 // => Public routes: no token required
 studentAuthRouter.post('/register', authLimiter, registerStudent);
-studentAuthRouter.post('/login', loginStudent);
+studentAuthRouter.post('/login', authLimiter, loginStudent);
 studentAuthRouter.post('/logout', logoutStudent);
 
 // => Protected route: token required
-// => readLimiter runs first, then protectStudent, then getMe
+// => floodLimiter (IP, pre-auth) => protectStudent (auth) => readLimiter (per-student, post-auth)
 studentAuthRouter.get('/me', floodLimiter, protectStudent, readLimiter, getMe);
 
 export default studentAuthRouter;
