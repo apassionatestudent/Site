@@ -84,6 +84,20 @@ const Barangays = 'https://psgc.gitlab.io/api/';
 const BASE_V1 = 'https://psgc.cloud/api/v1';
 const BASE_V2 = 'https://psgc.cloud/api/v2';
 
+// => Validates that a PSGC code is digits-only before it's ever used to
+// => build an outbound URL or as a cache key. Closes off cache-key
+// => pollution and guarantees only well-formed values reach fetch().
+// => Adjust {2,10} if psgc.cloud's actual code lengths differ from this.
+const isValidPsgcCode = (code) => typeof code === 'string' && /^\d{2,10}$/.test(code);
+
+// => Plain string concatenation - NOT the URL constructor. new URL(path, base)
+// => was tried here first, but a leading "/" in `path` causes it to silently
+// => drop the "/api" segment from BASE (resolves to psgc.cloud/regions/...
+// => instead of psgc.cloud/api/regions/...). Concatenation is safe here
+// => because BASE is a hardcoded constant (no SSRF risk) and the code
+// => segment is already regex-validated as digits-only by isValidPsgcCode()
+// => before this function is ever called.
+const buildPsgcUrl = (base, path) => `${base}${path}`;
 
 // => In-memory cache - regions cached on startup, others cached on first request
 let cache = {
@@ -116,13 +130,18 @@ router.get('/regions', (req, res) => {
 router.get('/provinces/:regionCode', async (req, res) => {
   const regionCode = req.params.regionCode;
 
+  // => SECURITY: reject malformed codes before cache lookup or network call
+  if (!isValidPsgcCode(regionCode)) {
+    return res.status(400).json({ error: 'Invalid region code format' });
+  }
+
   // => Return from cache if already fetched
   if (cache.provincesByRegion[regionCode]) {
     return res.json(cache.provincesByRegion[regionCode]);
   }
 
   try {
-    const data = await fetch(`${BASE}/regions/${regionCode}/provinces`)
+    const data = await fetch(buildPsgcUrl(BASE, `/regions/${regionCode}/provinces`))
       .then(r => r.json());
 
     const mapped = (Array.isArray(data) ? data : [])
@@ -143,12 +162,18 @@ router.get('/provinces/:regionCode', async (req, res) => {
 router.get('/cities/:provinceCode', async (req, res) => {
   const provinceCode = req.params.provinceCode;
 
+  // => SECURITY: reject malformed codes before cache lookup or network call
+  // => (closes CodeQL SSRF alert #9)
+  if (!isValidPsgcCode(provinceCode)) {
+    return res.status(400).json({ error: 'Invalid province code format' });
+  }
+
   if (cache.citiesByProvince[provinceCode]) {
     return res.json(cache.citiesByProvince[provinceCode]);
   }
 
   try {
-    const data = await fetch(`${BASE}/provinces/${provinceCode}/cities-municipalities`)
+    const data = await fetch(buildPsgcUrl(BASE, `/provinces/${provinceCode}/cities-municipalities`))
       .then(r => r.json());
 
     const mapped = (Array.isArray(data) ? data : [])
@@ -173,12 +198,17 @@ router.get('/cities/:provinceCode', async (req, res) => {
 router.get('/cities-by-region/:regionCode', async (req, res) => {
   const regionCode = req.params.regionCode;
 
+  // => SECURITY: reject malformed codes before cache lookup or network call
+  if (!isValidPsgcCode(regionCode)) {
+    return res.status(400).json({ error: 'Invalid region code format' });
+  }
+
   if (cache.citiesByRegion[regionCode]) {
     return res.json(cache.citiesByRegion[regionCode]);
   }
 
   try {
-    const data = await fetch(`${BASE}/regions/${regionCode}/cities-municipalities`)
+    const data = await fetch(buildPsgcUrl(BASE, `/regions/${regionCode}/cities-municipalities`))
       .then(r => r.json());
 
     const mapped = (Array.isArray(data) ? data : [])
@@ -241,6 +271,12 @@ router.get('/cities-by-region/:regionCode', async (req, res) => {
 router.get('/barangays/:cityCode', async (req, res) => {
   const code = req.params.cityCode;
 
+  // => SECURITY: reject malformed codes before cache lookup or network call
+  // => (closes CodeQL SSRF alerts #11 and #12)
+  if (!isValidPsgcCode(code)) {
+    return res.status(400).json({ error: 'Invalid city/municipality code format' });
+  }
+
   // => Return from cache if already fetched
   if (cache.barangaysByParent[code]) {
     return res.json(cache.barangaysByParent[code]);
@@ -248,15 +284,17 @@ router.get('/barangays/:cityCode', async (req, res) => {
 
   try {
     // => Try city endpoint first
-    let response = await fetch(`${BASE}/cities/${code}/barangays`);
+    let response = await fetch(buildPsgcUrl(BASE, `/cities/${code}/barangays`));
 
     // => Fallback to municipality endpoint if city returns 404 or empty
     if (!response.ok) {
-      response = await fetch(`${BASE}/municipalities/${code}/barangays`);
+      response = await fetch(buildPsgcUrl(BASE, `/municipalities/${code}/barangays`));
     }
 
     if (!response.ok) {
-      console.warn(`Barangays not found on psgc.cloud for code ${code}`);
+      // => SECURITY: code is now a separate arg, not embedded in the
+      // => format-string position (closes CodeQL alert #13 - format string)
+      console.warn('Barangays not found on psgc.cloud for code:', code);
       return res.json([]);
     }
 
@@ -270,7 +308,9 @@ router.get('/barangays/:cityCode', async (req, res) => {
     res.json(mapped);
 
   } catch (err) {
-    console.error(`Failed to fetch barangays for ${code}:`, err);
+    // => SECURITY: code passed as a separate arg, never inside the
+    // => format-string position (closes CodeQL alert #13)
+    console.error('Failed to fetch barangays for code:', code, err);
     res.json([]);
   }
 });
