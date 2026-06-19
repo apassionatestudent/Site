@@ -11,7 +11,7 @@ studentAuthRouter.post('/login', loginStudent);
 studentAuthRouter.post('/logout', logoutStudent);
 
 // => Protected route: token required
-// => protectStudent middleware runs first, then getMe
-studentAuthRouter.get('/me', protectStudent, readLimiter, getMe);
+// => readLimiter runs first, then protectStudent, then getMe
+studentAuthRouter.get('/me', readLimiter, protectStudent, getMe);
 
 export default studentAuthRouter;
