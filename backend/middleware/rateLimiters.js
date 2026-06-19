@@ -1,6 +1,8 @@
 // => Centralized rate limiters, reused across route files so the config
 // => lives in one place instead of being duplicated per-file.
-import rateLimit from 'express-rate-limit';
+// => ipKeyGenerator normalizes IPv6 addresses into a stable subnet-based
+// => key, so rotating IPv6 addresses can't be used to dodge IP-based limits.
+import { rateLimit, ipKeyGenerator } from 'express-rate-limit';
 
 // => Shared handler used by all limiters below. Replaces the default
 // => plain-text 429 with structured JSON, so the frontend can read
@@ -51,7 +53,9 @@ export const readLimiter = rateLimit({
   // => ever runs AFTER protectStudent (see documentRoutes.js, etc.), so
   // => req.student is guaranteed to exist here. Falls back to req.ip just
   // => in case it's ever mounted on a route without protectStudent first.
-  keyGenerator: (req) => req.student?.student_id?.toString() ?? req.ip,
+// => ipKeyGenerator() wraps the fallback path - the student_id path
+  // => above doesn't need wrapping since it's never an IP address.
+  keyGenerator: (req) => req.student?.student_id?.toString() ?? ipKeyGenerator(req.ip),
   handler: rateLimitHandler,
   standardHeaders: true,
   legacyHeaders: false,
@@ -66,7 +70,7 @@ export const readLimiter = rateLimit({
 export const floodLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: process.env.NODE_ENV === 'production' ? 300 : 3000,
-  keyGenerator: (req) => req.ip,
+  keyGenerator: (req) => ipKeyGenerator(req.ip),
   handler: rateLimitHandler,
   standardHeaders: true,
   legacyHeaders: false,
