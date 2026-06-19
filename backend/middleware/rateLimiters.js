@@ -56,3 +56,18 @@ export const readLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
+
+// => Lightweight, IP-based limiter applied BEFORE authentication on every
+// => protected route. Exists purely to stop raw request flooding (e.g. a
+// => script hammering an endpoint with garbage/expired tokens) before any
+// => auth work happens - this is what CodeQL's "missing rate limiting"
+// => check actually wants satisfied. Intentionally loose: per-student
+// => fairness is still handled separately by readLimiter, AFTER auth.
+export const floodLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: process.env.NODE_ENV === 'production' ? 300 : 3000,
+  keyGenerator: (req) => req.ip,
+  handler: rateLimitHandler,
+  standardHeaders: true,
+  legacyHeaders: false,
+});

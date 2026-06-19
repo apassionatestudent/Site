@@ -14,7 +14,7 @@ import express from 'express';
 import { submitEnrollment, getMyEnrollments, getMyEnrollmentDetail } from '../controllers/enrollmentController.js';
 import { upload } from '../middleware/upload.js';
 import { protectStudent } from '../middleware/studentAuth.js';
-import { readLimiter, submissionLimiter } from '../middleware/rateLimiters.js';
+import { readLimiter, submissionLimiter, floodLimiter } from '../middleware/rateLimiters.js';
 
 const router = express.Router();
 
@@ -23,10 +23,10 @@ const router = express.Router();
 router.post('/submit', submissionLimiter, upload, submitEnrollment);
 
 // => Protected: only logged-in students can fetch their own enrollments
-router.get('/my-enrollments', readLimiter, protectStudent, getMyEnrollments);
+router.get('/my-enrollments', floodLimiter, protectStudent, readLimiter, getMyEnrollments);
 
 // => Protected: fetch a single enrollment by its public UUID
 // => protectStudent ensures the enrollment belongs to the requesting student
-router.get('/:publicId', readLimiter, protectStudent, getMyEnrollmentDetail);
+router.get('/:publicId', floodLimiter, protectStudent, readLimiter, getMyEnrollmentDetail);
 
 export default router;
