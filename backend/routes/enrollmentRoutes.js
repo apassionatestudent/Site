@@ -23,10 +23,10 @@ const router = express.Router();
 router.post('/submit', submissionLimiter, upload, submitEnrollment);
 
 // => Protected: only logged-in students can fetch their own enrollments
-router.get('/my-enrollments', protectStudent, readLimiter, getMyEnrollments);
+router.get('/my-enrollments', readLimiter, protectStudent, getMyEnrollments);
 
 // => Protected: fetch a single enrollment by its public UUID
 // => protectStudent ensures the enrollment belongs to the requesting student
-router.get('/:publicId', protectStudent, readLimiter, getMyEnrollmentDetail);
+router.get('/:publicId', readLimiter, protectStudent, getMyEnrollmentDetail);
 
 export default router;
