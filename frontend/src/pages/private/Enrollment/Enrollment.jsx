@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import './Enrollment.css';
+import { apiFetch, RateLimitError } from '../../../utils/api.js';
+import RateLimitNotice from '../../../components/RateLimitNotice.jsx';
 
 // icons
 import loadingIcon    from "../../../assets/icons/loading.png";
@@ -42,28 +44,35 @@ function Enrollment() {
   const [enrollments, setEnrollments] = useState([]);
   const [listLoading, setListLoading] = useState(false);
   const [listError,   setListError]   = useState(null);
+  const [rateLimitInfo, setRateLimitInfo] = useState(null); // => seconds remaining, null if not rate limited
+
+  // => Wrapped in useCallback so RateLimitNotice can call this exact same
+  // => function again once its countdown finishes, instead of duplicating
+  // => the fetch logic in a separate "retry" function.
+  const fetchEnrollments = useCallback(async () => {
+    setListLoading(true);
+    setListError(null);
+    setRateLimitInfo(null);
+    try {
+      const data = await apiFetch('/api/enrollment/my-enrollments', {
+        credentials: 'include', // => sends the httpOnly JWT cookie
+      });
+      setEnrollments(data.enrollments);
+    } catch (err) {
+      if (err instanceof RateLimitError) {
+        setRateLimitInfo(err.retryAfter);
+      } else {
+        setListError('Failed to fetch enrollments.');
+      }
+    } finally {
+      setListLoading(false);
+    }
+  }, []);
 
   // => Fetch the enrollment list on mount
   useEffect(() => {
-    const fetchEnrollments = async () => {
-      setListLoading(true);
-      setListError(null);
-      try {
-        const res = await fetch('/api/enrollment/my-enrollments', {
-          credentials: 'include', // => sends the httpOnly JWT cookie
-        });
-        if (!res.ok) throw new Error('Failed to fetch enrollments.');
-        const data = await res.json();
-        setEnrollments(data.enrollments);
-      } catch (err) {
-        setListError(err.message);
-      } finally {
-        setListLoading(false);
-      }
-    };
-
     fetchEnrollments();
-  }, []);
+  }, [fetchEnrollments]);
 
   const handleCardClick = (enrollmentPublicId) => {
     // => Navigate to the detail page using the enrollment's public UUID
@@ -79,28 +88,35 @@ function Enrollment() {
         </p>
       </div>
 
-      {listLoading && (
+      {rateLimitInfo && (
+        <div className="enroll-empty">
+          <img src={errorIcon} alt="" className="enroll-empty-icon" />
+          <RateLimitNotice retryAfter={rateLimitInfo} onRetry={fetchEnrollments} />
+        </div>
+      )}
+
+      {!rateLimitInfo && listLoading && (
         <div className="enroll-empty">
           <img src={loadingIcon} alt="loading..." className="enroll-empty-icon" />
           <p>Loading your enrollments...</p>
         </div>
       )}
 
-      {listError && (
+      {!rateLimitInfo && listError && (
         <div className="enroll-empty">
           <img src={errorIcon} alt="" className="enroll-empty-icon" />
           <p>{listError}</p>
         </div>
       )}
 
-      {!listLoading && !listError && enrollments.length === 0 && (
+      {!rateLimitInfo && !listLoading && !listError && enrollments.length === 0 && (
         <div className="enroll-empty">
           <img src={clipboardIcon} alt="" className="enroll-empty-icon" />
           <p>You have no enrollments yet.</p>
         </div>
       )}
 
-      {!listLoading && !listError && enrollments.length > 0 && (
+      {!rateLimitInfo && !listLoading && !listError && enrollments.length > 0 && (
         <ul className="enroll-list">
           {enrollments.map((enrollment, index) => (
             <li

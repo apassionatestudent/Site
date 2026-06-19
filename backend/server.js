@@ -61,6 +61,11 @@ app.use('/api/enrollment', enrollmentRoutes);
 // => Raw R2 URLs are never exposed to the browser
 app.use('/api/documents', documentRoutes);
 
+// => Required when deployed behind a reverse proxy (Render, Railway, etc.)
+// => so req.ip reflects the real client IP from X-Forwarded-For, not the
+// => proxy's own IP. Without this, ALL visitors share one rate-limit bucket.
+// app.set('trust proxy', 1); => not to be used just yet since I'm still testing locally without a proxy, but will be needed in production for rate limiting to work correctly.
+
 
 
 async function initDB () {
