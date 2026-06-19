@@ -1,7 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import './Documents.css';
+
+import { apiFetch, RateLimitError } from '../../../utils/api.js';
+import RateLimitNotice from '../../../components/RateLimitNotice.jsx';
 
 // icons
 import loadingIcon   from "../../../assets/icons/loading.png";
@@ -35,28 +38,35 @@ function Documents() {
   const [documents,   setDocuments]   = useState([]);
   const [listLoading, setListLoading] = useState(false);
   const [listError,   setListError]   = useState(null);
+  const [rateLimitInfo, setRateLimitInfo] = useState(null); // => seconds remaining, null if not rate limited
+
+  // => Wrapped in useCallback so RateLimitNotice can call this exact same
+  // => function again once its countdown finishes, instead of duplicating
+  // => the fetch logic in a separate "retry" function.
+  const fetchDocuments = useCallback(async () => {
+    setListLoading(true);
+    setListError(null);
+    setRateLimitInfo(null);
+    try {
+      const data = await apiFetch('/api/documents/my-documents', {
+        credentials: 'include', // => sends the httpOnly JWT cookie
+      });
+      setDocuments(data.documents);
+    } catch (err) {
+      if (err instanceof RateLimitError) {
+        setRateLimitInfo(err.retryAfter);
+      } else {
+        setListError('Failed to fetch documents.');
+      }
+    } finally {
+      setListLoading(false);
+    }
+  }, []);
 
   // => Fetch all documents for the logged-in student on mount
   useEffect(() => {
-    const fetchDocuments = async () => {
-      setListLoading(true);
-      setListError(null);
-      try {
-        const res = await fetch('/api/documents/my-documents', {
-          credentials: 'include', // => sends the httpOnly JWT cookie
-        });
-        if (!res.ok) throw new Error('Failed to fetch documents.');
-        const data = await res.json();
-        setDocuments(data.documents);
-      } catch (err) {
-        setListError(err.message);
-      } finally {
-        setListLoading(false);
-      }
-    };
-
     fetchDocuments();
-  }, []);
+  }, [fetchDocuments]);
 
   const handleCardClick = (publicId) => {
     // => Navigate to the detail page using the document's public UUID
@@ -76,28 +86,35 @@ function Documents() {
         </p>
       </div>
 
-      {listLoading && (
+      {rateLimitInfo && (
+        <div className="docs-empty">
+          <img src={errorIcon} alt="" className="docs-empty-icon" />
+          <RateLimitNotice retryAfter={rateLimitInfo} onRetry={fetchDocuments} />
+        </div>
+      )}
+
+      {!rateLimitInfo && listLoading && (
         <div className="docs-empty">
           <img src={loadingIcon} alt="loading..." className="docs-empty-icon" />
           <p>Loading your documents...</p>
         </div>
       )}
 
-      {listError && (
+      {!rateLimitInfo && listError && (
         <div className="docs-empty">
           <img src={errorIcon} alt="" className="docs-empty-icon" />
           <p>{listError}</p>
         </div>
       )}
 
-      {!listLoading && !listError && documents.length === 0 && (
+      {!rateLimitInfo && !listLoading && !listError && documents.length === 0 && (
         <div className="docs-empty">
           <img src={clipboardIcon} alt="" className="docs-empty-icon" />
           <p>No documents found.</p>
         </div>
       )}
 
-      {!listLoading && !listError && documents.length > 0 && (
+      {!rateLimitInfo && !listLoading && !listError && documents.length > 0 && (
         <>
           {/* => Enrollment documents section */}
           {enrollmentDocs.length > 0 && (
