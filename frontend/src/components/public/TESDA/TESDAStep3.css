@@ -1,0 +1,167 @@
+/* ============================================================
+   TESDAStep3.css - Client Classification
+   Follows Enroll.css token system
+   ============================================================ */
+
+.ts3-wrap {
+  font-family: var(--font-body);
+  padding: 1.8rem 2rem 1rem;
+  background: var(--enroll-body-bg);
+  color: var(--text-primary);
+}
+
+.ts3-section-title {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--enroll-section-title-color);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 0.6rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--enroll-section-border);
+  font-family: var(--font-body);
+  opacity: 0.85;
+}
+
+.ts3-hint {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 1.4rem;
+  font-family: var(--font-body);
+}
+
+/* => 3-column checkbox grid */
+.ts3-checkbox-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0.8rem 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.ts3-checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  cursor: pointer;
+  line-height: 1.5;
+}
+
+.ts3-checkbox {
+  width: 16px;
+  height: 16px;
+  margin-top: 3px;
+  accent-color: var(--accent);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* => Others text input */
+.ts3-others-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 1.2rem;
+  max-width: 400px;
+}
+
+.ts3-others-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--enroll-label-color);
+  font-family: var(--font-body);
+}
+
+.ts3-req {
+  color: var(--req-asterisk);
+  font-size: 14px;
+}
+
+.ts3-others-input {
+  height: 40px;
+  border: 1px solid var(--enroll-field-border);
+  border-radius: 6px;
+  padding: 0 12px;
+  font-size: 15px;
+  font-family: var(--font-body);
+  background: var(--card-bg);
+  color: var(--text-primary);
+  outline: none;
+  width: 100%;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.ts3-others-input:focus {
+  border-color: var(--enroll-field-focus);
+  box-shadow: 0 0 0 3px rgba(139, 26, 26, 0.1);
+}
+
+.ts3-error-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: rgba(192, 57, 43, 0.08);
+  border: 1px solid #c0392b;
+  border-radius: 6px;
+  color: #c0392b;
+  font-size: 13.5px;
+  font-family: var(--font-body);
+  margin-top: 1rem;
+}
+
+.ts3-nav {
+  display: flex;
+  gap: 1.5rem;
+  padding: 1rem 0 0.5rem;
+  margin-top: 0.5rem;
+  border-top: 1px solid var(--enroll-actions-border);
+}
+
+.ts3-btn-back,
+.ts3-btn-next {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 24px;
+  border-radius: 6px;
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  transition: background 0.15s, color 0.15s, transform 0.1s;
+}
+
+.ts3-btn-back {
+  background: transparent;
+  color: var(--enroll-label-color);
+  border: 1px solid var(--enroll-field-border);
+}
+
+.ts3-btn-back:hover {
+  background: var(--enroll-field-border);
+  color: var(--text-primary);
+}
+
+.ts3-btn-next {
+  background: var(--enroll-btn-bg);
+  color: #fff;
+  border: none;
+}
+
+.ts3-btn-next:hover { background: var(--enroll-btn-hover); }
+.ts3-btn-next:active { transform: scale(0.98); }
+
+@media (max-width: 700px) {
+  .ts3-wrap { padding: 1.2rem; }
+  .ts3-checkbox-grid { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 420px) {
+  .ts3-checkbox-grid { grid-template-columns: 1fr; }
+}

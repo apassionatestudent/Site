@@ -121,8 +121,12 @@ export const loadLocationCache = async () => {
 };
 
 // GET /regions
+// => psgc.cloud returns regionName, not name - handle both just in case
 router.get('/regions', (req, res) => {
-  res.json(cache.regions.map(r => ({ code: r.code, name: r.name })));
+  res.json(cache.regions.map(r => ({ 
+    code: r.code, 
+    name: r.name || r.regionName || r.label || ''
+  })));
 });
 
 // GET /provinces/:regionCode
