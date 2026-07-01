@@ -7,7 +7,7 @@
 // => Each row tagged with source: 'enrollment' or 'profile' so the frontend can group them
 // => Ownership enforced via student_id on both tables - no IDOR possible
 export const getDocumentsByStudentId = async (pool, studentId) => {
-  const result = await pool.query(
+    const result = await pool.query(
     `SELECT
         ed.public_id,
         ed.document_type,
@@ -20,21 +20,7 @@ export const getDocumentsByStudentId = async (pool, studentId) => {
       JOIN tesda_enrollments e ON ed.enrollment_id = e.enrollment_id
       LEFT JOIN courses c ON e.course_id = c.course_id
       WHERE e.student_id = $1
-
-    UNION ALL
-
-    SELECT
-        sd.public_id,
-        sd.document_type,
-        sd.document_key,
-        sd.uploaded_at,
-        'profile'             AS source,
-        NULL                  AS enrollment_public_id,
-        NULL                  AS course_name
-      FROM student_docs sd
-      WHERE sd.student_id = $1
-
-    ORDER BY uploaded_at DESC`,
+      ORDER BY ed.uploaded_at DESC`,
     [studentId]
   );
   return result.rows;

@@ -7,7 +7,7 @@
 // => password_hash stays NULL until student sets up their account post-enrollment
 
 
-// => Month name to index map — mirrors TESDAStep2's MONTHS array
+// => Month name to index map - mirrors TESDAStep2's MONTHS array
 // => TESDAStep2 sends birthMonth as a name (e.g. 'August'), not a number
 const MONTHS = [
   'January', 'February', 'March', 'April',
@@ -206,6 +206,9 @@ export const getEnrollmentsByStudentId = async (pool, studentId) => {
   const result = await pool.query(
     `SELECT
         e.public_id,
+        -- => Hardcoded for now - SHS enrollment will come from a separate table/route
+        -- => When SHS is added, this becomes a UNION ALL of tesda_enrollments + shs_enrollments
+        'TESDA'               AS enrollment_type,
         c.title               AS course_name,
         s.sector              AS sector,
         e.status,
@@ -240,6 +243,9 @@ export const getEnrollmentByPublicId = async (pool, publicId, studentId) => {
   const result = await pool.query(
     `SELECT
         e.public_id,
+        -- => Hardcoded for now - SHS enrollment will come from a separate table/route
+        -- => When SHS is added, this becomes a UNION ALL of tesda_enrollments + shs_enrollments
+        'TESDA'               AS enrollment_type,
         c.title               AS course_name,
         s.sector              AS sector,
         e.status,

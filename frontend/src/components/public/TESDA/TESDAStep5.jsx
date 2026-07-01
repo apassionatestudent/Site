@@ -293,7 +293,7 @@ const TESDAStep5 = ({
           >
             <option value="">
               {!data.branch
-                ? '— Select Branch first —'
+                ? '- Select Branch first -'
                 : coursesLoading
                 ? 'Loading...'
                 : 'Select a Course'}
@@ -328,7 +328,7 @@ const TESDAStep5 = ({
           >
             <option value="">
               {!data.course
-                ? '— Select Course first —'
+                ? '- Select Course first -'
                 : classesLoading
                 ? 'Loading...'
                 : 'Select a Class'}

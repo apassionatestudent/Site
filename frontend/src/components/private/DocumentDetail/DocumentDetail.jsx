@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import BackButton from '../BackButton/BackButton.jsx';
 
 import './DocumentDetail.css';
 
@@ -108,9 +109,9 @@ function DocumentDetail() {
 
   return (
     <div className="doc-detail-page">
-      <button className="doc-back" onClick={handleBack}>
-        ← Back to Documents
-      </button>
+      {/*  Back button  */}
+      <BackButton destination="Documents" onClick={() => navigate('/dashboard/documents')} />
+
 
       {detailLoading && (
         <div className="doc-detail-empty">

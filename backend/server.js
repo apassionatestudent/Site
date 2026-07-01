@@ -359,10 +359,10 @@ async function initDB () {
         civil_status             VARCHAR(30)  NOT NULL,
         employment_status        VARCHAR(30)  NOT NULL,
 
-        -- => Step 2: Birthdate — stored as a proper DATE for age queries
+        -- => Step 2: Birthdate - stored as a proper DATE for age queries
         birth_date                          DATE         NOT NULL,
 
-        -- => Step 2: Birthplace — PSGC codes, province nullable for NCR
+        -- => Step 2: Birthplace - PSGC codes, province nullable for NCR
         birthplace_region        VARCHAR(20)  NOT NULL,
         birthplace_province      VARCHAR(20)  NULL,
         birthplace_city          VARCHAR(20)  NOT NULL,
@@ -390,7 +390,7 @@ async function initDB () {
 
     await sql`
       -- => student_address: Step 1 address fields
-      -- => Stores PSGC codes — names resolved on read via location API
+      -- => Stores PSGC codes - names resolved on read via location API
       -- => district_code auto-filled from city selection, may be null if not in PSGC
       -- => province_code nullable to handle NCR (no province level)
       CREATE TABLE IF NOT EXISTS student_address (
@@ -420,7 +420,7 @@ async function initDB () {
     await sql`
       -- => tesda_enrollments: core TESDA enrollment transaction record
       -- => One row per enrollment submission
-      -- => fee_at_enrollment frozen at submit time — never updated after
+      -- => fee_at_enrollment frozen at submit time - never updated after
       -- => ncae_* fields from Step 4; nullable since ncae_taken can be 'no'
       -- => scholarship fields from Step 5
       CREATE TABLE IF NOT EXISTS tesda_enrollments (
@@ -493,6 +493,7 @@ async function initDB () {
       -- => Wired to tesda_enrollments instead of the old enrollment table
       CREATE TABLE IF NOT EXISTS enrollment_documents (
         document_id     SERIAL       PRIMARY KEY,
+        public_id          UUID         NOT NULL DEFAULT gen_random_uuid() UNIQUE,
         enrollment_id   INT          NOT NULL REFERENCES tesda_enrollments(enrollment_id) ON DELETE CASCADE,
         document_type   VARCHAR(100) NOT NULL,
         document_key    TEXT         NOT NULL,

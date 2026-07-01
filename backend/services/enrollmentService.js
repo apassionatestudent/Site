@@ -24,7 +24,7 @@ export const processEnrollmentSubmission = async (body, files) => {
   const othersText       = body.othersText || null;           // => Step 3: 'others' free text if applicable
 
   // => Upload files to R2 BEFORE the DB transaction
-  // => R2 uploads are external HTTP calls — they cannot be rolled back
+  // => R2 uploads are external HTTP calls - they cannot be rolled back
   // => If the DB transaction fails later, orphaned R2 files are acceptable
   // => (much better than a committed DB row with no file)
   const uploadFile = async (fileArray, fieldName) => {
@@ -44,7 +44,7 @@ export const processEnrollmentSubmission = async (body, files) => {
   const schoolDocKey = await uploadFile(files?.schoolDoc, 'schoolDoc');
   const validIdKey   = await uploadFile(files?.validId,   'validId');
 
-  // => Build docs array once — reused for both enrollment_documents and student_docs
+  // => Build docs array once - reused for both enrollment_documents and student_docs
   // => filter() drops any that weren't uploaded
   const docs = [
     { type: 'PSA Birth Certificate',    key: birthCertKey },
@@ -59,7 +59,7 @@ export const processEnrollmentSubmission = async (body, files) => {
   try {
     await client.query('BEGIN');
 
-    // => Step order matters — each insert returns an ID the next one needs
+    // => Step order matters - each insert returns an ID the next one needs
     // => 1. Create account (nullable username if no email provided)
     const studentId = await insertStudentAccount(client, { email: body.email });
 
@@ -69,7 +69,7 @@ export const processEnrollmentSubmission = async (body, files) => {
     // => 3. Address (Step 1)
     await insertStudentAddress(client, { studentId, body });
 
-    // => 4. Guardian (Step 2 — only inserted if student is a minor)
+    // => 4. Guardian (Step 2 - only inserted if student is a minor)
     await insertStudentGuardian(client, { studentId, body });
 
     // => 5. Core enrollment record (Step 4 + Step 5)
@@ -80,22 +80,23 @@ export const processEnrollmentSubmission = async (body, files) => {
       scholarshipData,
     });
 
-    // => 6. Client classifications (Step 3 — one row per checked box)
+    // => 6. Client classifications (Step 3 - one row per checked box)
     await insertClientClassifications(client, {
       enrollmentId,
       classifications,
       othersText,
     });
 
-    // => 7. Documents (Step 5 — inserted last, depend on both IDs)
+    // => 7. Documents (Step 5 - inserted last, depend on enrollmentId)
+    // => student_docs intentionally skipped - enrollment documents are the single source of truth
+    // => profile-level doc storage deferred until a separate document upload flow is built
     await insertEnrollmentDocuments(client, { enrollmentId, docs });
-    await insertStudentDocs(client,         { studentId,    docs });
 
     await client.query('COMMIT');
     return { enrollmentId };
 
   } catch (err) {
-    // => Any failure rolls back ALL inserts — no partial records ever persist
+    // => Any failure rolls back ALL inserts - no partial records ever persist
     await client.query('ROLLBACK');
     throw err;
   } finally {
