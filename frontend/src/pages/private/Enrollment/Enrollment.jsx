@@ -133,12 +133,18 @@ function Enrollment() {
                   <div>
                     <p className="enroll-card-course">{enrollment.course_name}</p>
                     <p className="enroll-card-sector">
-                      {enrollment.sector} · {enrollment.assessment_type}
+                      {enrollment.sector}
                     </p>
                   </div>
-                  <span className={`enroll-card-badge ${statusClass[enrollment.status] || ''}`}>
-                    {enrollment.status}
-                  </span>
+                  <div className="enroll-card-top-right">
+                    {/* => Enrollment type tag: TESDA or SHS - determined by enrollment_type field */}
+                    <span className={`enroll-card-type-tag type--${enrollment.enrollment_type?.toLowerCase() ?? 'tesda'}`}>
+                      {enrollment.enrollment_type ?? 'TESDA'}
+                    </span>
+                    <span className={`enroll-card-badge ${statusClass[enrollment.status] || ''}`}>
+                      {enrollment.status}
+                    </span>
+                  </div>
                 </div>
 
                 <div className="enroll-card-meta">
@@ -156,8 +162,6 @@ function Enrollment() {
                   </span>
                 </div>
               </div>
-
-              <div className="enroll-card-arrow">›</div>
             </li>
           ))}
         </ul>

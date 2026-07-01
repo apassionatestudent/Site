@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import BackButton from '../BackButton/BackButton.jsx';
 
 import './EnrollmentDetail.css';
 
@@ -73,9 +74,9 @@ function EnrollmentDetail() {
 
   return (
     <div className="enroll-detail-page">
-      <button className="enroll-back" onClick={handleBack}>
-        ← Back to Enrollments
-      </button>
+
+      {/*  Back button  */}
+      <BackButton destination="Enrollment" onClick={() => navigate('/dashboard/enrollment')} />
 
       {detailLoading && (
         <div className="enroll-detail-empty">
@@ -95,9 +96,13 @@ function EnrollmentDetail() {
         <div className="enroll-detail">
           <div className="enroll-detail-header">
             <div>
+              {/* => Enrollment type tag shown above the course name for immediate context */}
+              <span className={`enroll-detail-type-tag type--${detail.enrollment_type?.toLowerCase() ?? 'tesda'}`}>
+                {detail.enrollment_type ?? 'TESDA'}
+              </span>
               <h2 className="enroll-detail-title">{detail.course_name}</h2>
               <p className="enroll-detail-sub">
-                {detail.sector} · {detail.assessment_type}
+                {detail.sector}
               </p>
             </div>
             <span className={`enroll-detail-badge ${statusClass[detail.status] || ''}`}>
@@ -131,17 +136,43 @@ function EnrollmentDetail() {
               <p className="enroll-detail-value">{formatDate(detail.submitted_at)}</p>
             </div>
 
-            <div className="enroll-detail-card">
-              <p className="enroll-detail-label">SHS Graduate</p>
-              <p className="enroll-detail-value">{detail.is_shs ? 'Yes' : 'No'}</p>
-            </div>
+            {/* => Only shown for TESDA enrollments - ncae_taken is a TESDA-specific field */}
+            {detail.enrollment_type !== 'SHS' && (
+              <div className="enroll-detail-card">
+                <p className="enroll-detail-label">Took NCAE / YP4SC</p>
+                <p className="enroll-detail-value">{detail.ncae_taken ? 'Yes' : 'No'}</p>
+              </div>
+            )}
 
             <div className="enroll-detail-card">
               <p className="enroll-detail-label">TESDA Scholar</p>
-              <p className="enroll-detail-value">{detail.is_tesda_scholar ? 'Yes' : 'No'}</p>
+              <p className="enroll-detail-value">
+                {detail.is_tesda_scholar
+                  ? (detail.scholarship_type ?? 'Yes')
+                  : 'No'}
+              </p>
             </div>
 
+            {/* => Groupchat link - only shown once the admin has added it to the class */}
+            {detail.groupchat_link && (
+              <div className="enroll-detail-card enroll-detail-card--groupchat">
+                <p className="enroll-detail-label">Class Groupchat</p>
+                <a
+                  href={detail.groupchat_link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="enroll-detail-link"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <i className="ti ti-brand-messenger" /> Join Groupchat
+                </a>
+              </div>
+            )}
+
+            
+
           </div>
+          
 
           {/* => Status-specific notice banners for the student */}
           {detail.status === 'Pending' && (

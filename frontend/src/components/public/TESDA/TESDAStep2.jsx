@@ -473,7 +473,7 @@ const TESDAStep2 = ({ data, onChange, onBack, onNext }) => {
         <>
           <div className="ts2-section-title" style={{ marginTop: '1.4rem' }}>
             Parent / Guardian
-            <span className="ts2-section-note"> — Required for students under 18</span>
+            <span className="ts2-section-note"> - Required for students under 18</span>
           </div>
           <div className="ts2-grid ts2-g2">
             <div className="ts2-field-group">

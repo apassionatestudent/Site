@@ -73,9 +73,8 @@ function Documents() {
     navigate(`/dashboard/documents/${publicId}`);
   };
 
-  // => Group documents: enrollment docs first, then profile docs
+// => Only enrollment documents are shown - profile-level docs deferred to a future upload flow
   const enrollmentDocs = documents.filter(d => d.source === 'enrollment');
-  const profileDocs    = documents.filter(d => d.source === 'profile');
 
   return (
     <div className="docs-page">
@@ -159,44 +158,7 @@ function Documents() {
             </section>
           )}
 
-          {/* => Profile documents section */}
-          {profileDocs.length > 0 && (
-            <section className="docs-section">
-              <h2 className="docs-section-title">Profile Documents</h2>
-              <ul className="docs-list">
-                {profileDocs.map((doc, index) => (
-                  <li
-                    key={doc.public_id}
-                    className="docs-card"
-                    style={{ animationDelay: `${index * 80}ms` }}
-                    onClick={() => handleCardClick(doc.public_id)}
-                  >
-                    <div className={`docs-card-bar ${sourceClass[doc.source] || ''}`} />
-
-                    <div className="docs-card-body">
-                      <div className="docs-card-top">
-                        <div>
-                          <p className="docs-card-type">{doc.document_type}</p>
-                        </div>
-                        <span className={`docs-card-badge ${sourceClass[doc.source] || ''}`}>
-                          {sourceLabel[doc.source]}
-                        </span>
-                      </div>
-
-                      <div className="docs-card-meta">
-                        <span>
-                          <img src={calendarIcon} alt="" className="docs-card-meta-icon" />
-                          Uploaded {formatDate(doc.uploaded_at)}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="docs-card-arrow">›</div>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
+          
         </>
       )}
     </div>

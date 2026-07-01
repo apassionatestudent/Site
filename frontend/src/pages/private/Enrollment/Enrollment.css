@@ -107,10 +107,10 @@
 
 .enroll-card-body {
   flex: 1;
-  padding: 1.1rem 1.25rem;
+  padding: 0.75rem 1.25rem;
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  gap: 0.4rem;
 }
 
 .enroll-card-top {
@@ -149,20 +149,6 @@
   vertical-align: middle;
   margin-right: 0.35rem;
   object-fit: contain;
-}
-
-.enroll-card-arrow {
-  display: flex;
-  align-items: center;
-  padding: 0 1.1rem;
-  color: var(--text-muted);
-  font-size: 1.4rem;
-  transition: color 0.18s ease, transform 0.18s ease;
-}
-
-.enroll-card:hover .enroll-card-arrow {
-  color: var(--accent-hover);
-  transform: translateX(3px);
 }
 
 /*  BADGE  */
@@ -212,6 +198,45 @@
 .status--reserved .enroll-card-bar,
 .status--reserved.enroll-card-bar        { background: #a855f7; }
 .status--reserved.enroll-card-badge      { background: rgba(168,85,247,0.12);  color: #a855f7; border-color: rgba(168,85,247,0.3); }
+
+
+/*  TOP-RIGHT CLUSTER (type tag + status badge)
+    => Displayed in a row so both tags are visible at a glance  */
+
+.enroll-card-top-right {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+/*  ENROLLMENT TYPE TAG
+    => TESDA: maroon tone - matches 3A Prime's brand color
+    => SHS:   blue tone   - distinct from TESDA, matches DepEd association  */
+
+.enroll-card-type-tag {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.type--tesda {
+  background: rgba(127, 29, 29, 0.15);
+  color: #f87171;
+  border: 1px solid rgba(127, 29, 29, 0.35);
+}
+
+.type--shs {
+  background: rgba(59, 130, 246, 0.12);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
 
 /*  RWD  */
 

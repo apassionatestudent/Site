@@ -289,7 +289,7 @@ const handleTesdaSubmit = async () => {
   Object.entries(tesdaPersonal).forEach(([k, v]) => formData.append(k, v));
 
   // => Step 3: Classifications (array)
-  // => Send as a single JSON string — service parses it with JSON.parse()
+  // => Send as a single JSON string - service parses it with JSON.parse()
   formData.append('classifications', JSON.stringify(tesdaClassifications));
 
   // => Step 4: NCAE 
@@ -315,7 +315,7 @@ const handleTesdaSubmit = async () => {
   try {
     const res = await fetch('/api/enrollment/submit', {
       method: 'POST',
-      // => Do NOT set Content-Type manually — fetch sets it automatically with the boundary for FormData
+      // => Do NOT set Content-Type manually - fetch sets it automatically with the boundary for FormData
       body: formData,
     });
 
