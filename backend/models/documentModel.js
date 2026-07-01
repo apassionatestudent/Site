@@ -2,12 +2,10 @@
 // => Mirrors the same query style as enrollmentModel.js
 // => All queries receive `pool` as a param - no module-level pool import needed
 
-// ─────────────────────────────────────────
 // GET ALL DOCUMENTS FOR A STUDENT
 // => Returns both enrollment_documents and student_docs for the logged-in student
 // => Each row tagged with source: 'enrollment' or 'profile' so the frontend can group them
 // => Ownership enforced via student_id on both tables - no IDOR possible
-// ─────────────────────────────────────────
 export const getDocumentsByStudentId = async (pool, studentId) => {
   const result = await pool.query(
     `SELECT
@@ -19,7 +17,7 @@ export const getDocumentsByStudentId = async (pool, studentId) => {
         e.public_id           AS enrollment_public_id,
         c.title               AS course_name
       FROM enrollment_documents ed
-      JOIN enrollment e ON ed.enrollment_id = e.enrollment_id
+      JOIN tesda_enrollments e ON ed.enrollment_id = e.enrollment_id
       LEFT JOIN courses c ON e.course_id = c.course_id
       WHERE e.student_id = $1
 
@@ -42,12 +40,10 @@ export const getDocumentsByStudentId = async (pool, studentId) => {
   return result.rows;
 };
 
-// ─────────────────────────────────────────
 // GET ONE DOCUMENT BY PUBLIC UUID
 // => Checks enrollment_documents first, then student_docs
 // => In both cases, ownership is verified against the requesting student_id
 // => Returns null if not found or if it belongs to a different student - prevents IDOR
-// ─────────────────────────────────────────
 export const getDocumentByPublicId = async (pool, publicId, studentId) => {
   // => Try enrollment_documents first
   const enrollmentDoc = await pool.query(
@@ -63,11 +59,11 @@ export const getDocumentByPublicId = async (pool, publicId, studentId) => {
         e.status              AS enrollment_status,
         e.submitted_at        AS enrollment_submitted_at
       FROM enrollment_documents ed
-      JOIN enrollment e  ON ed.enrollment_id = e.enrollment_id
+      JOIN tesda_enrollments e  ON ed.enrollment_id = e.enrollment_id
       LEFT JOIN courses c ON e.course_id = c.course_id
       LEFT JOIN sectors s ON c.sector_id  = s.sector_id
       WHERE ed.public_id   = $1
-        AND e.student_id   = $2`,
+      AND e.student_id   = $2`,
     [publicId, studentId]
   );
 

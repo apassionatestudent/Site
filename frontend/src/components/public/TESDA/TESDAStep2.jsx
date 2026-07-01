@@ -60,9 +60,9 @@ const TESDAStep2 = ({ data, onChange, onBack, onNext }) => {
     birthMonth: false,
     birthDay: false,
     birthYear: false,
-    birthRegion: false,
-    birthProvince: false,
-    birthCity: false,
+    birthplaceRegion: false,
+    birthplaceProvince: false,
+    birthplaceCity: false,
     educAttainment: false,
     guardianName: false,
   });
@@ -71,7 +71,7 @@ const TESDAStep2 = ({ data, onChange, onBack, onNext }) => {
   const [computedAge, setComputedAge] = useState('');
 
   // => Track if birthplace region is NCR (no province level)
-  const isBirthNCR = data.birthRegion === '1300000000';
+  const isBirthNCR = data.birthplaceRegion === '1300000000';
 
   // => Whether guardian fields should show (minor = under 18)
   const isMinor = (() => {
@@ -119,7 +119,7 @@ const TESDAStep2 = ({ data, onChange, onBack, onNext }) => {
 
   // => Fetch provinces or cities depending on birthplace region
   useEffect(() => {
-    if (!data.birthRegion) {
+    if (!data.birthplaceRegion) {
       setProvinces([]);
       setCities([]);
       return;
@@ -127,31 +127,31 @@ const TESDAStep2 = ({ data, onChange, onBack, onNext }) => {
     if (isBirthNCR) {
       setLoadingCities(true);
       // => NCR has no provinces, fetch cities directly by region
-      fetch(`/api/location/cities-by-region/${data.birthRegion}`)
+      fetch(`/api/location/cities-by-region/${data.birthplaceRegion}`)
         .then(r => r.json())
         .then(d => setCities(d))
         .catch(err => console.error('Failed to fetch NCR cities:', err))
         .finally(() => setLoadingCities(false));
     } else {
       setLoadingProvinces(true);
-      fetch(`/api/location/provinces/${data.birthRegion}`)
+      fetch(`/api/location/provinces/${data.birthplaceRegion}`)
         .then(r => r.json())
         .then(d => setProvinces(d))
         .catch(err => console.error('Failed to fetch provinces:', err))
         .finally(() => setLoadingProvinces(false));
     }
-  }, [data.birthRegion]);
+  }, [data.birthplaceRegion]);
 
   // => Fetch cities when birthplace province changes
   useEffect(() => {
-    if (!data.birthProvince || isBirthNCR) return;
+    if (!data.birthplaceProvince || isBirthNCR) return;
     setLoadingCities(true);
-    fetch(`/api/location/cities/${data.birthProvince}`)
+    fetch(`/api/location/cities/${data.birthplaceProvince}`)
       .then(r => r.json())
       .then(d => setCities(d))
       .catch(err => console.error('Failed to fetch cities:', err))
       .finally(() => setLoadingCities(false));
-  }, [data.birthProvince]);
+  }, [data.birthplaceProvince]);
 
   // => Generate days array based on selected month and year
   const getDays = () => {
@@ -175,9 +175,9 @@ const TESDAStep2 = ({ data, onChange, onBack, onNext }) => {
     if (!data.birthMonth) return 'missing';
     if (!data.birthDay) return 'missing';
     if (!data.birthYear) return 'missing';
-    if (!data.birthRegion) return 'missing';
-    if (!isBirthNCR && !data.birthProvince) return 'missing';
-    if (!data.birthCity) return 'missing';
+    if (!data.birthplaceRegion) return 'missing';
+    if (!isBirthNCR && !data.birthplaceProvince) return 'missing';
+    if (!data.birthplaceCity) return 'missing';
     if (!data.educAttainment) return 'missing';
     // => Guardian name required if student is a minor
     if (isMinor && !data.guardianName) return 'missing';
@@ -193,9 +193,9 @@ const TESDAStep2 = ({ data, onChange, onBack, onNext }) => {
       birthMonth: !data.birthMonth,
       birthDay: !data.birthDay,
       birthYear: !data.birthYear,
-      birthRegion: !data.birthRegion,
-      birthProvince: !isBirthNCR && !data.birthProvince,
-      birthCity: !data.birthCity,
+      birthplaceRegion: !data.birthplaceRegion,
+      birthplaceProvince: !isBirthNCR && !data.birthplaceProvince,
+      birthplaceCity: !data.birthplaceCity,
       educAttainment: !data.educAttainment,
       guardianName: isMinor && !data.guardianName,
     });
@@ -213,9 +213,9 @@ const TESDAStep2 = ({ data, onChange, onBack, onNext }) => {
       birthMonth: false,
       birthDay: false,
       birthYear: false,
-      birthRegion: false,
-      birthProvince: false,
-      birthCity: false,
+      birthplaceRegion: false,
+      birthplaceProvince: false,
+      birthplaceCity: false,
       educAttainment: false,
       guardianName: false,
     });
@@ -380,15 +380,15 @@ const TESDAStep2 = ({ data, onChange, onBack, onNext }) => {
         <div className="ts2-field-group">
           <label className="ts2-label">Region <span className="ts2-req">*</span></label>
           <select
-            className={`ts2-select ${fieldErrors.birthRegion ? 'ts2-input--error' : ''}`}
-            value={data.birthRegion}
+            className={`ts2-select ${fieldErrors.birthplaceRegion ? 'ts2-input--error' : ''}`}
+            value={data.birthplaceRegion}
             onChange={(e) => {
-              onChange('birthRegion', e.target.value);
-              onChange('birthProvince', '');
-              onChange('birthCity', '');
+              onChange('birthplaceRegion', e.target.value);
+              onChange('birthplaceProvince', '');
+              onChange('birthplaceCity', '');
               setProvinces([]);
               setCities([]);
-              clearError('birthRegion');
+              clearError('birthplaceRegion');
             }}
           >
             <option value="">Select Region</option>
@@ -403,18 +403,18 @@ const TESDAStep2 = ({ data, onChange, onBack, onNext }) => {
           <div className="ts2-field-group">
             <label className="ts2-label">Province <span className="ts2-req">*</span></label>
             <select
-              className={`ts2-select ${fieldErrors.birthProvince ? 'ts2-input--error' : ''}`}
-              value={data.birthProvince}
+              className={`ts2-select ${fieldErrors.birthplaceProvince ? 'ts2-input--error' : ''}`}
+              value={data.birthplaceProvince}
               onChange={(e) => {
-                onChange('birthProvince', e.target.value);
-                onChange('birthCity', '');
+                onChange('birthplaceProvince', e.target.value);
+                onChange('birthplaceCity', '');
                 setCities([]);
-                clearError('birthProvince');
+                clearError('birthplaceProvince');
               }}
-              disabled={!data.birthRegion || loadingProvinces}
+              disabled={!data.birthplaceRegion || loadingProvinces}
             >
               <option value="">
-                {loadingProvinces ? 'Loading...' : !data.birthRegion ? '- Select Region first -' : 'Select Province'}
+                {loadingProvinces ? 'Loading...' : !data.birthplaceRegion ? '- Select Region first -' : 'Select Province'}
               </option>
               {provinces.map(p => (
                 <option key={p.code} value={p.code}>{p.name}</option>
@@ -426,13 +426,13 @@ const TESDAStep2 = ({ data, onChange, onBack, onNext }) => {
         <div className="ts2-field-group">
           <label className="ts2-label">City / Municipality <span className="ts2-req">*</span></label>
           <select
-            className={`ts2-select ${fieldErrors.birthCity ? 'ts2-input--error' : ''}`}
-            value={data.birthCity}
+            className={`ts2-select ${fieldErrors.birthplaceCity ? 'ts2-input--error' : ''}`}
+            value={data.birthplaceCity}
             onChange={(e) => {
-              onChange('birthCity', e.target.value);
-              clearError('birthCity');
+              onChange('birthplaceCity', e.target.value);
+              clearError('birthplaceCity');
             }}
-            disabled={(!data.birthProvince && !isBirthNCR) || loadingCities}
+            disabled={(!data.birthplaceProvince && !isBirthNCR) || loadingCities}
           >
             <option value="">
               {loadingCities ? 'Loading...' : 'Select City / Municipality'}

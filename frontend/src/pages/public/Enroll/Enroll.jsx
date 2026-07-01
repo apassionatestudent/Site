@@ -195,6 +195,7 @@ const [tesdaProfile, setTesdaProfile] = useState({
   province: '',
   region: '',
   email: '',
+  facebookLink: '', 
   contactNo: '',
   nationality: 'Filipino',
 });
@@ -208,9 +209,9 @@ const [tesdaPersonal, setTesdaPersonal] = useState({
   birthMonth: '',
   birthDay: '',
   birthYear: '',
-  birthCity: '',
-  birthProvince: '',
-  birthRegion: '',
+  birthplaceCity: '',      
+  birthplaceProvince: '',  
+  birthplaceRegion: '',    
   educAttainment: '',
   guardianName: '',
   guardianAddress: '',
@@ -218,6 +219,8 @@ const [tesdaPersonal, setTesdaPersonal] = useState({
 
 // => TESDA form data - Client Classification (Step 3)
 const [tesdaClassifications, setTesdaClassifications] = useState([]);
+// => Free-text value when 'others' is checked in Step 3
+const [tesdaOthersText, setTesdaOthersText] = useState('');
 
 // => TESDA form data - NCAE/YP4SC (Step 4)
 const [tesdaNcae, setTesdaNcae] = useState({
@@ -286,13 +289,15 @@ const handleTesdaSubmit = async () => {
   Object.entries(tesdaPersonal).forEach(([k, v]) => formData.append(k, v));
 
   // => Step 3: Classifications (array)
-  tesdaClassifications.forEach(c => formData.append('classifications[]', c));
+  // => Send as a single JSON string — service parses it with JSON.parse()
+  formData.append('classifications', JSON.stringify(tesdaClassifications));
 
-  // => Step 4: NCAE
-  Object.entries(tesdaNcae).forEach(([k, v]) => formData.append(k, v));
+  // => Step 4: NCAE 
+  formData.append('ncaeData', JSON.stringify(tesdaNcae));
 
   // => Step 5: Course
-  Object.entries(tesdaCourse).forEach(([k, v]) => formData.append(k, v));
+  formData.append('courseData', JSON.stringify(tesdaCourse));
+  formData.append('scholarshipData', JSON.stringify(tesdaScholarship)); // scholarship
 
   // => Step 5b: Files
   Object.entries(tesdaFiles).forEach(([k, file]) => {
@@ -302,11 +307,29 @@ const handleTesdaSubmit = async () => {
   // => Step 6: Scholarship
   Object.entries(tesdaScholarship).forEach(([k, v]) => formData.append(k, v));
 
+  formData.append('othersText', tesdaOthersText); 
+
   // => Step 7: Privacy
   formData.append('privacyAgreed', tesdaPrivacy.agreed);
 
-  // => TODO: wire up to actual API endpoint
-  console.log('TESDA form submitted');
+  try {
+    const res = await fetch('/api/enrollment/submit', {
+      method: 'POST',
+      // => Do NOT set Content-Type manually — fetch sets it automatically with the boundary for FormData
+      body: formData,
+    });
+
+    if (!res.ok) throw new Error(`Server responded with ${res.status}`);
+
+    const result = await res.json();
+    console.log('Enrollment submitted:', result);
+
+    // => alert popup for now as of 01JUN26
+    alert('Enrollment submitted successfully!');
+  } catch (err) {
+    console.error('Submission failed:', err);
+    alert('Submission failed. Please try again.');
+  }
 };
 
 // => useCallback stabilizes the function reference across renders
@@ -863,6 +886,8 @@ const handleFinalSubmit = async () => {
             <TESDAStep3
               selected={tesdaClassifications}
               onChange={setTesdaClassifications}
+              othersText={tesdaOthersText}
+              onOthersTextChange={setTesdaOthersText}
               onBack={tesdaGoBack}
               onNext={tesdaGoNext}
             />

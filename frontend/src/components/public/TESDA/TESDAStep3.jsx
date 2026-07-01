@@ -29,11 +29,19 @@ const CLASSIFICATIONS = [
   { value: 'wounded_afp_pnp', label: 'Wounded-in-Action AFP & PNP Personnel' },
 ];
 
-const TESDAStep3 = ({ selected, onChange, onBack, onNext }) => {
+const TESDAStep3 = ({ selected, onChange, othersText, onOthersTextChange, onBack, onNext }) => {
 
   const [showErrors, setShowErrors] = useState(false);
-  // => 'others' text input value
-  const [othersText, setOthersText] = useState('');
+  const [localOthersText, setLocalOthersText] = useState('');
+  const effectiveOthersText = typeof othersText === 'string' ? othersText : localOthersText;
+
+  const handleOthersTextChange = (value) => {
+    if (typeof onOthersTextChange === 'function') {
+      onOthersTextChange(value);
+    } else {
+      setLocalOthersText(value);
+    }
+  };
 
   // => Toggle a classification in/out of the selected array
   const handleToggle = (value) => {
