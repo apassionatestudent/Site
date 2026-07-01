@@ -1,39 +1,39 @@
 import { pool } from '../config/db.js';
 import { uploadToR2 } from '../middleware/upload.js';
 
-import { getEnrollmentsByStudentId, getEnrollmentByPublicId } from '../models/enrollmentModel.js';
-
-// => Import every model function - each handles exactly one table
 import {
   insertStudentAccount,
   insertStudentProfile,
   insertStudentAddress,
-  insertContactNumbers,
-  insertContactPerson,
-  insertLicensures,
-  insertCompetencies,
-  insertEnrollment,
-  insertWorkExperience,
-  insertTrainingSeminars,
+  insertStudentGuardian,
+  insertTesdaEnrollment,
+  insertClientClassifications,
   insertEnrollmentDocuments,
   insertStudentDocs,
+  getEnrollmentsByStudentId,
+  getEnrollmentByPublicId,
 } from '../models/enrollmentModel.js';
 
 export const processEnrollmentSubmission = async (body, files) => {
-  // => Parse the JSON strings that arrived via FormData
-  const courseData = JSON.parse(body.courseData);
-  const expData    = JSON.parse(body.expData);
+  // => Parse the JSON blobs sent via FormData
+  // => Each step's data is stringified on the frontend before appending to FormData
+  const courseData       = JSON.parse(body.courseData);       // => Step 5: branch/course/class/fee
+  const ncaeData         = JSON.parse(body.ncaeData);         // => Step 4: takenBefore/where/when
+  const scholarshipData  = JSON.parse(body.scholarshipData);  // => Step 5: isScholar/type/other
+  const classifications  = JSON.parse(body.classifications);  // => Step 3: array of selected values
+  const othersText       = body.othersText || null;           // => Step 3: 'others' free text if applicable
 
-  // => Upload files to R2 first, before the transaction
-  // => R2 uploads are external HTTP calls - they can't be rolled back
-  // => so we do them before entering the DB transaction
+  // => Upload files to R2 BEFORE the DB transaction
+  // => R2 uploads are external HTTP calls — they cannot be rolled back
+  // => If the DB transaction fails later, orphaned R2 files are acceptable
+  // => (much better than a committed DB row with no file)
   const uploadFile = async (fileArray, fieldName) => {
     if (!fileArray?.[0]) return null;
 
     const file = fileArray[0];
 
     // => Key format: folder/fieldName_timestamp.ext
-    // => Deterministic enough to avoid collisions without a UUID dependency
+    // => Timestamp is enough to avoid collisions at this scale
     const ext = file.mimetype === 'application/pdf' ? 'pdf' : 'jpg';
     const key = `primeenroll/student-docs/${fieldName}_${Date.now()}.${ext}`;
 
@@ -44,41 +44,50 @@ export const processEnrollmentSubmission = async (body, files) => {
   const schoolDocKey = await uploadFile(files?.schoolDoc, 'schoolDoc');
   const validIdKey   = await uploadFile(files?.validId,   'validId');
 
-  // => Build the docs array once - reused for both enrollment_documents and student_docs
-  // => Stores keys, not URLs - proxy route resolves them on demand
+  // => Build docs array once — reused for both enrollment_documents and student_docs
+  // => filter() drops any that weren't uploaded
   const docs = [
     { type: 'PSA Birth Certificate',    key: birthCertKey },
     { type: 'Form 137 / Diploma / TOR', key: schoolDocKey },
     { type: 'Valid ID',                 key: validIdKey   },
   ].filter(d => d.key);
 
-  // => Get a dedicated WebSocket client from the pool for the transaction
+  // => Get a dedicated client from the pool for the transaction
   // => pool.connect() gives a persistent client that supports BEGIN/COMMIT/ROLLBACK
-  // => without the HTTP timeout that sql.transaction() has
   const client = await pool.connect();
 
   try {
     await client.query('BEGIN');
 
-    // => Steps must follow this exact order - each returns an ID the next step needs
-    const studentId    = await insertStudentAccount(client, { email: body.email });
-    const profileId    = await insertStudentProfile(client, { studentId, body, courseData });
+    // => Step order matters — each insert returns an ID the next one needs
+    // => 1. Create account (nullable username if no email provided)
+    const studentId = await insertStudentAccount(client, { email: body.email });
 
-    await insertStudentAddress(client, { profileId, body });
-    await insertContactNumbers(client, { profileId, body });
-    await insertContactPerson(client,  { profileId, body });
+    // => 2. Profile (Steps 1 + 2 personal info)
+    await insertStudentProfile(client, { studentId, body });
 
-    // => Licensure and competency go to profile (permanent), not enrollment
-    await insertLicensures(client,   { profileId, licensures:   expData.licensures   });
-    await insertCompetencies(client, { profileId, competencies: expData.competencies });
+    // => 3. Address (Step 1)
+    await insertStudentAddress(client, { studentId, body });
 
-    const enrollmentId = await insertEnrollment(client, { studentId, courseData });
+    // => 4. Guardian (Step 2 — only inserted if student is a minor)
+    await insertStudentGuardian(client, { studentId, body });
 
-    // => Work experience and trainings go to enrollment (per-submission snapshot)
-    await insertWorkExperience(client,   { enrollmentId, workExperience: expData.workExperience });
-    await insertTrainingSeminars(client, { enrollmentId, trainings:      expData.trainings      });
+    // => 5. Core enrollment record (Step 4 + Step 5)
+    const enrollmentId = await insertTesdaEnrollment(client, {
+      studentId,
+      courseData,
+      ncaeData,
+      scholarshipData,
+    });
 
-    // => Documents inserted last - depend on both enrollmentId and studentId
+    // => 6. Client classifications (Step 3 — one row per checked box)
+    await insertClientClassifications(client, {
+      enrollmentId,
+      classifications,
+      othersText,
+    });
+
+    // => 7. Documents (Step 5 — inserted last, depend on both IDs)
     await insertEnrollmentDocuments(client, { enrollmentId, docs });
     await insertStudentDocs(client,         { studentId,    docs });
 
@@ -86,7 +95,7 @@ export const processEnrollmentSubmission = async (body, files) => {
     return { enrollmentId };
 
   } catch (err) {
-    // => Any failure rolls back ALL inserts - no partial records ever persist
+    // => Any failure rolls back ALL inserts — no partial records ever persist
     await client.query('ROLLBACK');
     throw err;
   } finally {
@@ -96,13 +105,11 @@ export const processEnrollmentSubmission = async (body, files) => {
 };
 
 // => Calls the model to get all enrollments for the logged-in student
-// => Uses the pool imported at the top of this file - no need to pass it as a param
 export const getStudentEnrollments = async (studentId) => {
   return await getEnrollmentsByStudentId(pool, studentId);
 };
 
 // => Calls the model to get one enrollment by UUID, ownership-checked
-// => Uses the pool imported at the top of this file - no need to pass it as a param
 export const getStudentEnrollmentDetail = async (publicId, studentId) => {
   return await getEnrollmentByPublicId(pool, publicId, studentId);
 };

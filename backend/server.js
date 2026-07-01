@@ -80,7 +80,7 @@ async function initDB () {
         public_id           UUID NOT NULL DEFAULT gen_random_uuid() UNIQUE,
 
         -- => Username is the student's email address; must be unique across all accounts
-        username            VARCHAR(255) NOT NULL UNIQUE,
+        username            VARCHAR(255) UNIQUE,
 
         -- => NULL by default: only gets filled once the student sets a password after confirming email
         password_hash       TEXT NULL,
@@ -102,6 +102,21 @@ async function initDB () {
         -- => Nullable: stays NULL until the student logs in for the first time
         last_login_at       TIMESTAMPTZ NULL
       )
+    `;
+
+    // => username made nullable to support enrollees without email
+    // => A student account is only created if the enrollee provides an email and opts in
+    // => Safe to run repeatedly: only fires if the column is still NOT NULL
+    await sql`
+      DO $$ BEGIN
+        IF EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_name = 'student_accounts' AND column_name = 'username'
+          AND is_nullable = 'NO'
+        ) THEN
+          ALTER TABLE student_accounts ALTER COLUMN username DROP NOT NULL;
+        END IF;
+      END $$
     `;
 
     await sql`
@@ -305,155 +320,160 @@ async function initDB () {
 
         updated_at                  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
+        -- => Messenger groupchat link for this batch/class
+        -- => NULL on class creation; admin updates this once the groupchat is set up
+        -- => Pulling this via the class relationship covers all enrolled students automatically
+        groupchat_link               TEXT        DEFAULT NULL,
+
         -- => Admin notes, delays, announcements, etc.
         remarks                     TEXT        DEFAULT NULL
       )
     `;
 
     await sql`
-      -- => profile_id downsized from BIGSERIAL to SERIAL
-      -- => 1-to-1 with student_accounts but will never realistically hit 2B students      
-      -- => surname/first_name/middle_name tightened from VARCHAR(100) to VARCHAR(70) - safe for all PH names
-      -- => mother_name/father_name tightened from VARCHAR(150) to VARCHAR(100)
-      -- => nationality tightened from VARCHAR(100) to VARCHAR(60) - longest country name is ~56 chars
-      -- => civil_status, employment_status, highest_educational_attainment: no CHECK constraints
-      -- => values are enforced by the frontend dropdowns, not the DB
+      -- => student_profile: personal info from Step 1 + Step 2
+      -- => Stores one profile per student account (1-to-1 with student_accounts)
+      -- => birth_date stored as DATE for proper age computation in queries
+      -- => facebook_link / email replace the old single email_or_facebook approach
+      -- => birthplace stored as PSGC codes same as address fields
       CREATE TABLE IF NOT EXISTS student_profile (
-        profile_id                      BIGSERIAL    PRIMARY KEY,
-        student_id                      BIGINT       NOT NULL REFERENCES student_accounts(student_id) ON DELETE CASCADE,
-        uli                             VARCHAR(50)  NULL,
-        surname                         VARCHAR(70)  NOT NULL,
-        first_name                      VARCHAR(70)  NOT NULL,
-        middle_name                     VARCHAR(70)  NULL,
-        name_extension                  VARCHAR(20)  NULL,
-        mother_name                     VARCHAR(100) NOT NULL,
-        father_name                     VARCHAR(100) NOT NULL,
-        birthdate                       DATE         NOT NULL,
-        birthplace_region               VARCHAR(20)  NOT NULL,
-        birthplace_province             VARCHAR(20)  NULL,
-        birthplace_city_or_municipality VARCHAR(20)  NOT NULL,
-        nationality                     VARCHAR(60)  NOT NULL,
-        sex                             VARCHAR(10)  NOT NULL CHECK (sex IN ('m', 'f')),
-        civil_status                    VARCHAR(30)  NOT NULL,
-        highest_educational_attainment  VARCHAR(50)  NOT NULL,
-        employment_status               VARCHAR(30)  NOT NULL,
-        client_type                     VARCHAR(50)  NULL
+        profile_id               SERIAL       PRIMARY KEY,
+        student_id               BIGINT       NOT NULL REFERENCES student_accounts(student_id) ON DELETE CASCADE UNIQUE,
+
+        -- => Step 1: Name fields
+        last_name                VARCHAR(70)  NOT NULL,
+        first_name               VARCHAR(70)  NOT NULL,
+        middle_name              VARCHAR(70)  NULL,
+        name_extension           VARCHAR(20)  NULL,
+
+        -- => Step 1: Contact
+        -- => facebook_link: used for groupchat coordination, required since even non-tech users typically have FB
+        -- => email: optional; if provided, can be used to create a student dashboard account later
+        contact_no               VARCHAR(11)  NOT NULL,
+        facebook_link            TEXT         NULL,
+        email                    VARCHAR(255) NULL,
+        nationality              VARCHAR(60)  NOT NULL,
+
+        -- => Step 2: Demographics
+        sex                      VARCHAR(10)  NOT NULL CHECK (sex IN ('Male', 'Female')),
+        civil_status             VARCHAR(30)  NOT NULL,
+        employment_status        VARCHAR(30)  NOT NULL,
+
+        -- => Step 2: Birthdate — stored as a proper DATE for age queries
+        birth_date                          DATE         NOT NULL,
+
+        -- => Step 2: Birthplace — PSGC codes, province nullable for NCR
+        birthplace_region        VARCHAR(20)  NOT NULL,
+        birthplace_province      VARCHAR(20)  NULL,
+        birthplace_city          VARCHAR(20)  NOT NULL,
+
+        -- => Step 2: Education
+        highest_educ_attainment  VARCHAR(60)  NOT NULL,
+
+        created_at               TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+        updated_at               TIMESTAMPTZ  NOT NULL DEFAULT NOW()
       )
     `;
 
     await sql`
-      -- => address_id downsized from BIGSERIAL to SERIAL - one address per student, will never hit 2B rows
+      -- => Attach updated_at trigger to student_profile
+      DO $$ BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_trigger WHERE tgname = 'student_profile_set_updated_at'
+        ) THEN
+          CREATE TRIGGER student_profile_set_updated_at
+          BEFORE UPDATE ON student_profile
+          FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+        END IF;
+      END $$
+    `;
+
+    await sql`
+      -- => student_address: Step 1 address fields
+      -- => Stores PSGC codes — names resolved on read via location API
+      -- => district_code auto-filled from city selection, may be null if not in PSGC
+      -- => province_code nullable to handle NCR (no province level)
       CREATE TABLE IF NOT EXISTS student_address (
-        address_id    SERIAL      PRIMARY KEY,
-        profile_id    BIGINT      NOT NULL REFERENCES student_profile(profile_id) ON DELETE CASCADE,
-        street        TEXT        NOT NULL,
-        barangay_code VARCHAR(20) NULL,
-        district_code VARCHAR(20) NULL,
-        city_code     VARCHAR(20) NULL,
-        province_code VARCHAR(20) NULL,
-        region_code   VARCHAR(20) NOT NULL,
-        zip_code      VARCHAR(10) NULL
+        address_id        SERIAL      PRIMARY KEY,
+        student_id        BIGINT      NOT NULL REFERENCES student_accounts(student_id) ON DELETE CASCADE UNIQUE,
+        street            TEXT        NOT NULL,
+        barangay_code     VARCHAR(20) NOT NULL,
+        city_code         VARCHAR(20) NOT NULL,
+        province_code     VARCHAR(20) NULL,
+        district_code     VARCHAR(20) NULL,
+        region_code       VARCHAR(20) NOT NULL
       )
     `;
 
     await sql`
-      -- => contact_id downsized from BIGSERIAL to SERIAL - max 4 contact rows per student
-      CREATE TABLE IF NOT EXISTS contact_numbers (
-        contact_id    SERIAL      PRIMARY KEY,
-        profile_id    BIGINT      NOT NULL REFERENCES student_profile(profile_id) ON DELETE CASCADE,
-        contact_type  VARCHAR(20) NOT NULL,
-        contact_value VARCHAR(50) NOT NULL
+      -- => student_guardian: Step 2 parent/guardian fields
+      -- => Only inserted when the student is a minor (under 18) at time of enrollment
+      -- => guardian_address is optional per MIS 03-01 2018
+      CREATE TABLE IF NOT EXISTS student_guardian (
+        guardian_id        SERIAL       PRIMARY KEY,
+        student_id         BIGINT       NOT NULL REFERENCES student_accounts(student_id) ON DELETE CASCADE UNIQUE,
+        guardian_name      VARCHAR(150) NOT NULL,
+        guardian_address   TEXT         NULL
       )
     `;
 
     await sql`
-      -- => contact_person_id downsized from BIGSERIAL to SERIAL - one guardian per student at most
-      CREATE TABLE IF NOT EXISTS contact_person (
-        contact_person_id   SERIAL       PRIMARY KEY,
-        profile_id          BIGINT       NOT NULL REFERENCES student_profile(profile_id) ON DELETE CASCADE,
-        contact_person_name VARCHAR(150) NOT NULL,
-        contact_number      VARCHAR(20)  NULL
+      -- => tesda_enrollments: core TESDA enrollment transaction record
+      -- => One row per enrollment submission
+      -- => fee_at_enrollment frozen at submit time — never updated after
+      -- => ncae_* fields from Step 4; nullable since ncae_taken can be 'no'
+      -- => scholarship fields from Step 5
+      CREATE TABLE IF NOT EXISTS tesda_enrollments (
+        enrollment_id         SERIAL        PRIMARY KEY,
+        public_id             UUID          NOT NULL DEFAULT gen_random_uuid() UNIQUE,
+        student_id            BIGINT        NOT NULL REFERENCES student_accounts(student_id) ON DELETE RESTRICT,
+        branch_id             INT           NULL REFERENCES branches(branch_id)  ON DELETE SET NULL,
+        course_id             INT           NULL REFERENCES courses(course_id)   ON DELETE SET NULL,
+        class_id              INT           NULL REFERENCES classes(class_id)    ON DELETE SET NULL,
+        fee_at_enrollment     NUMERIC(10,2) NULL,
+
+        -- => Step 4: NCAE / YP4SC
+        ncae_taken            BOOLEAN       NOT NULL DEFAULT FALSE,
+        ncae_where            TEXT          NULL,
+        ncae_when             VARCHAR(50)   NULL,
+
+        -- => Step 5: Scholarship
+        is_tesda_scholar      BOOLEAN       NOT NULL DEFAULT FALSE,
+        scholarship_type      VARCHAR(50)   NULL,
+        other_scholarship     TEXT          NULL,
+
+        -- => Enrollment lifecycle status
+        status                VARCHAR(30)   NOT NULL DEFAULT 'Pending'
+                              CHECK (status IN ('Pending', 'Approved', 'Needs Clarification', 'Rejected', 'Dropped', 'Completed', 'Reserved')),
+
+        submitted_at          TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+        updated_at            TIMESTAMPTZ   NOT NULL DEFAULT NOW()
       )
     `;
 
     await sql`
-      -- => licensure_id downsized from BIGSERIAL to SERIAL - a student won't have billions of licenses
-      CREATE TABLE IF NOT EXISTS licensure_examination (
-        licensure_id      SERIAL       PRIMARY KEY,
-        profile_id        BIGINT       NOT NULL REFERENCES student_profile(profile_id) ON DELETE CASCADE,
-        title             VARCHAR(255) NOT NULL,
-        year_taken        INT          NULL,
-        examination_venue TEXT         NULL,
-        rating            VARCHAR(50)  NULL,
-        remarks           TEXT         NULL,
-        expiry_date       DATE         NULL
-      )
+      -- => Attach updated_at trigger to tesda_enrollments
+      DO $$ BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_trigger WHERE tgname = 'tesda_enrollments_set_updated_at'
+        ) THEN
+          CREATE TRIGGER tesda_enrollments_set_updated_at
+          BEFORE UPDATE ON tesda_enrollments
+          FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+        END IF;
+      END $$
     `;
 
     await sql`
-      -- => competency_id downsized from BIGSERIAL to SERIAL - bounded per student
-      CREATE TABLE IF NOT EXISTS competency_assessment (
-        competency_id       SERIAL       PRIMARY KEY,
-        profile_id          BIGINT       NOT NULL REFERENCES student_profile(profile_id) ON DELETE CASCADE,
-        title               VARCHAR(255) NOT NULL,
-        qualification_level VARCHAR(50)  NULL,
-        industry_sector     VARCHAR(100) NULL,
-        certificate_number  VARCHAR(100) NULL,
-        date_of_issuance    DATE         NULL,
-        expiration_date     DATE         NULL
-      )
-    `;
-
-    await sql`
-      -- => enrollment_id stays BIGSERIAL: this is the core transaction table, could hit millions of rows
-      -- => status uses 'Pending' as default matching the service insert
-      -- => fee_at_enrollment frozen at submission time - never updated after
-      -- => branch_id stored directly so branch is always available even when class_id is NULL
-      CREATE TABLE IF NOT EXISTS enrollment (
-        enrollment_id     BIGSERIAL     PRIMARY KEY,
-        public_id         UUID          NOT NULL DEFAULT gen_random_uuid() UNIQUE,
-        student_id        BIGINT        NOT NULL REFERENCES student_accounts(student_id) ON DELETE RESTRICT,
-        course_id         INT           NULL REFERENCES courses(course_id)   ON DELETE SET NULL,
-        class_id          INT           NULL REFERENCES classes(class_id)    ON DELETE SET NULL,
-        branch_id         INT           NULL REFERENCES branches(branch_id)  ON DELETE SET NULL,
-        assessment_type   VARCHAR(50)   NULL,
-        fee_at_enrollment NUMERIC(10,2) NULL,
-        is_shs            BOOLEAN       NOT NULL DEFAULT FALSE,
-        is_tesda_scholar  BOOLEAN       NOT NULL DEFAULT FALSE,
-        status            VARCHAR(30)   NOT NULL DEFAULT 'Pending'
-                          CHECK (status IN ('Pending','Approved','Needs Clarification','Rejected','Dropped','Completed','Reserved')),
-        submitted_at      TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
-        updated_at        TIMESTAMPTZ   NOT NULL DEFAULT NOW()
-      )
-    `;
-
-    await sql`
-      -- => work_id downsized from BIGSERIAL to SERIAL - bounded per enrollment
-      -- => salary tightened from NUMERIC(10,2) to NUMERIC(8,2) - max 999,999.99, safe for PH wages
-      CREATE TABLE IF NOT EXISTS work_experience (
-        work_id            SERIAL       PRIMARY KEY,
-        enrollment_id      BIGINT       NOT NULL REFERENCES enrollment(enrollment_id) ON DELETE CASCADE,
-        company            VARCHAR(255) NOT NULL,
-        position           VARCHAR(150) NULL,
-        salary             NUMERIC(8,2) NULL,
-        date_from          DATE         NULL,
-        date_to            DATE         NULL,
-        appointment_status VARCHAR(50)  NULL,
-        years_exp          INT          NULL
-      )
-    `;
-
-    await sql`
-      -- => training_id downsized from BIGSERIAL to SERIAL - bounded per enrollment
-      CREATE TABLE IF NOT EXISTS training_seminar (
-        training_id   SERIAL       PRIMARY KEY,
-        enrollment_id BIGINT       NOT NULL REFERENCES enrollment(enrollment_id) ON DELETE CASCADE,
-        title         VARCHAR(255) NOT NULL,
-        venue         TEXT         NULL,
-        date_from     DATE         NULL,
-        date_to       DATE         NULL,
-        hours         INT          NULL,
-        conducted_by  VARCHAR(255) NULL
+      -- => tesda_client_classifications: Step 3 checkboxes
+      -- => One row per selected classification per enrollment
+      -- => Replaces the old single client_type column in student_profile
+      -- => others_text only populated when classification_value = 'others'
+      CREATE TABLE IF NOT EXISTS tesda_client_classifications (
+        classification_id      SERIAL       PRIMARY KEY,
+        enrollment_id          INT          NOT NULL REFERENCES tesda_enrollments(enrollment_id) ON DELETE CASCADE,
+        classification_value   VARCHAR(60)  NOT NULL,
+        others_text            TEXT         NULL
       )
     `;
 
@@ -467,28 +487,29 @@ async function initDB () {
     `;
 
     await sql`
-      -- => document_id downsized from BIGSERIAL to SERIAL - max 3 docs per enrollment currently
+      -- => enrollment_documents: Step 5 file uploads
       -- => document_key stores the R2 object key (e.g. primeenroll/student-docs/birthCert_123.jpg)
       -- => Never stores a public URL - the proxy route resolves the key on demand
+      -- => Wired to tesda_enrollments instead of the old enrollment table
       CREATE TABLE IF NOT EXISTS enrollment_documents (
-        document_id   SERIAL       PRIMARY KEY,
-        enrollment_id BIGINT       NOT NULL REFERENCES enrollment(enrollment_id) ON DELETE CASCADE,
-        document_type VARCHAR(100) NOT NULL,
-        document_key  TEXT         NOT NULL,
-        uploaded_at   TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+        document_id     SERIAL       PRIMARY KEY,
+        enrollment_id   INT          NOT NULL REFERENCES tesda_enrollments(enrollment_id) ON DELETE CASCADE,
+        document_type   VARCHAR(100) NOT NULL,
+        document_key    TEXT         NOT NULL,
+        uploaded_at     IMESTAMPTZ  NOT NULL DEFAULT NOW()
       )
     `;
 
     await sql`
-      -- => document_id downsized from BIGSERIAL to SERIAL - bounded per student
-      -- => document_key stores the R2 object key - same pattern as enrollment_documents
+      -- => student_docs: student-level documents (not tied to a specific enrollment)
+      -- => Same pattern as enrollment_documents but scoped to the student account
       CREATE TABLE IF NOT EXISTS student_docs (
-        document_id   SERIAL      PRIMARY KEY,
-        student_id    BIGINT      NOT NULL REFERENCES student_accounts(student_id) ON DELETE CASCADE,
-        public_id     UUID        NOT NULL DEFAULT gen_random_uuid() UNIQUE,
-        document_type VARCHAR(100) NOT NULL,
-        document_key  TEXT        NOT NULL,
-        uploaded_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        document_id      SERIAL       PRIMARY KEY,
+        student_id       BIGINT       NOT NULL REFERENCES student_accounts(student_id) ON DELETE CASCADE,
+        public_id        UUID         NOT NULL DEFAULT gen_random_uuid() UNIQUE,
+        document_type    VARCHAR(100) NOT NULL,
+        document_key     TEXT         NOT NULL,
+        uploaded_at      TIMESTAMPTZ  NOT NULL DEFAULT NOW()
       )
     `;
 
