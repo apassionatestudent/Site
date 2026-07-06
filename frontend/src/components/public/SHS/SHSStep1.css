@@ -1,0 +1,225 @@
+/* ============================================================
+   SHSStep1.css - Student Information
+   Follows Enroll.css token system - mirrors TESDAStep1.css
+   ============================================================ */
+
+.shs1-wrap {
+  font-family: var(--font-body);
+  padding: 1.8rem 2rem 1rem;
+  background: var(--enroll-body-bg);
+  color: var(--text-primary);
+}
+
+.shs1-section-title {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--enroll-section-title-color);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 1.4rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--enroll-section-border);
+  font-family: var(--font-body);
+  opacity: 0.85;
+}
+
+.shs1-grid {
+  display: grid;
+  gap: 0 1.2rem;
+}
+
+/* => Last Name | First | Middle | Suffix */
+.shs1-name-row {
+  grid-template-columns: 1fr 1fr 1fr 0.6fr;
+}
+
+.shs1-g2 { grid-template-columns: 1fr 1fr; }
+.shs1-g3 { grid-template-columns: 1fr 1fr 1fr; }
+.shs1-g4 { grid-template-columns: 1fr 1fr 1fr 0.6fr; }
+
+/* => Sex | Month | Day | Year | Age - Sex gets a touch more room for the
+     Male/Female radio labels, Age stays narrow since it's just a number */
+.shs1-g5 { grid-template-columns: 0.9fr 1fr 1fr 1fr 0.6fr; }
+
+.shs1-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 1.2rem;
+}
+
+.shs1-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--enroll-label-color);
+  font-family: var(--font-body);
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.shs1-req {
+  color: var(--req-asterisk);
+  font-size: 14px;
+}
+
+.shs1-input,
+.shs1-select {
+  height: 40px;
+  border: 1px solid var(--enroll-field-border);
+  border-radius: 6px;
+  padding: 0 12px;
+  font-size: 15px;
+  font-family: var(--font-body);
+  background: var(--card-bg);
+  color: var(--text-primary);
+  outline: none;
+  width: 100%;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.shs1-input:focus,
+.shs1-select:focus {
+  border-color: var(--enroll-field-focus);
+  box-shadow: 0 0 0 3px rgba(139, 26, 26, 0.1);
+}
+
+.shs1-input--readonly {
+  background: var(--bg-secondary);
+  cursor: default;
+  color: var(--text-secondary);
+}
+
+.shs1-select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 32px;
+  cursor: pointer;
+}
+
+.shs1-select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* => Radio group - mirrors ts2-radio-group visual weight */
+.shs1-radio-group {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+  height: 40px;
+  border: 1px solid var(--enroll-field-border);
+  border-radius: 6px;
+  padding: 0 12px;
+  background: var(--card-bg);
+}
+
+.shs1-radio-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14.5px;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  cursor: pointer;
+}
+
+.shs1-radio-label input[type="radio"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.shs1-radio--error {
+  border-color: #c0392b !important;
+  box-shadow: 0 0 0 3px rgba(192, 57, 43, 0.08);
+}
+
+.shs1-error-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: rgba(192, 57, 43, 0.08);
+  border: 1px solid #c0392b;
+  border-radius: 6px;
+  color: #c0392b;
+  font-size: 13.5px;
+  font-family: var(--font-body);
+  margin-top: 1rem;
+}
+
+.shs1-nav {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1.5rem;
+  padding: 1rem 0 0.5rem;
+  margin-top: 0.5rem;
+  border-top: 1px solid var(--enroll-actions-border);
+}
+
+.shs1-btn-next {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 28px;
+  background: var(--enroll-btn-bg);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+  letter-spacing: 0.02em;
+}
+
+.shs1-btn-next:hover { background: var(--enroll-btn-hover); }
+.shs1-btn-next:active { transform: scale(0.98); }
+
+.shs1-input--error {
+  border-color: #c0392b !important;
+  box-shadow: 0 0 0 3px rgba(192, 57, 43, 0.12);
+}
+
+.shs1-field-error {
+  font-size: 12px;
+  color: #c0392b;
+  margin-top: 2px;
+  font-family: var(--font-body);
+}
+
+.shs1-field-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 2px;
+  font-family: var(--font-body);
+}
+
+/* ============================================================
+   Responsive
+   ============================================================ */
+
+@media (max-width: 700px) {
+  .shs1-wrap { padding: 1.2rem; }
+  .shs1-name-row { grid-template-columns: 1fr 1fr; }
+  .shs1-g3 { grid-template-columns: 1fr 1fr; }
+  .shs1-g4 { grid-template-columns: 1fr 1fr; }
+  .shs1-g5 { grid-template-columns: 1fr 1fr; }
+  .shs1-g2 { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 420px) {
+  .shs1-name-row,
+  .shs1-g3,
+  .shs1-g4,
+  .shs1-g5 { grid-template-columns: 1fr; }
+}

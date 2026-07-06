@@ -1,0 +1,330 @@
+/* ============================================================
+   SHSStep3.css - Parent/Guardian, Emergency, Health + Consent
+   Follows Enroll.css token system - mirrors TESDAStep4/5.css
+   ============================================================ */
+
+.shs3-wrap {
+  font-family: var(--font-body);
+  padding: 1.8rem 2rem 1rem;
+  background: var(--enroll-body-bg);
+  color: var(--text-primary);
+}
+
+.shs3-section-title {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--enroll-section-title-color);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 1.4rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--enroll-section-border);
+  font-family: var(--font-body);
+  opacity: 0.85;
+}
+
+.shs3-hint {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+  font-family: var(--font-body);
+}
+
+.shs3-hint--error {
+  color: #c0392b;
+}
+
+/* => Small non-bold note next to a label, e.g. "(optional)" - matches
+     SHSStep2's .shs2-hint-inline pattern */
+.shs3-hint-inline {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-muted);
+  text-transform: none;
+}
+
+/* => Subtle hint line below the Quick Fill buttons - matches SHSStep1's
+     .shs1-field-hint pattern */
+.shs3-field-hint {
+  display: block;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 6px;
+  font-family: var(--font-body);
+}
+
+/* => Father/Mother/Guardian/Someone Else quick-fill buttons for
+     Emergency Contact - wraps on narrow screens */
+.shs3-quickfill-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.shs3-quickfill-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 14px;
+  border: 1px solid var(--enroll-field-border);
+  border-radius: 20px;
+  background: var(--card-bg);
+  color: var(--text-secondary);
+  font-size: 13.5px;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+
+.shs3-quickfill-btn:hover:not(:disabled) {
+  border-color: var(--enroll-field-focus);
+}
+
+.shs3-quickfill-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.shs3-quickfill-btn--active {
+  border-color: var(--accent);
+  background: rgba(102, 9, 17, 0.08);
+  color: var(--text-primary);
+}
+
+.shs3-grid { display: grid; gap: 0 1.2rem; }
+.shs3-g2 { grid-template-columns: 1fr 1fr; }
+.shs3-g3 { grid-template-columns: 1fr 1fr 1fr; }
+
+/* => Groups Father/Mother fields into a visually distinct column so the
+     two parents don't blur together across the grid gap */
+.shs3-family-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.shs3-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 1.2rem;
+}
+
+.shs3-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--enroll-label-color);
+  font-family: var(--font-body);
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.shs3-req { color: var(--req-asterisk); font-size: 14px; }
+
+.shs3-input {
+  height: 40px;
+  border: 1px solid var(--enroll-field-border);
+  border-radius: 6px;
+  padding: 0 12px;
+  font-size: 15px;
+  font-family: var(--font-body);
+  background: var(--card-bg);
+  color: var(--text-primary);
+  outline: none;
+  width: 100%;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.shs3-input:focus {
+  border-color: var(--enroll-field-focus);
+  box-shadow: 0 0 0 3px rgba(139, 26, 26, 0.1);
+}
+
+.shs3-input--error {
+  border-color: #c0392b !important;
+  box-shadow: 0 0 0 3px rgba(192, 57, 43, 0.12);
+}
+
+/* => Medical condition radio group + inline "Please specify" input */
+.shs3-radio-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.2rem;
+  align-items: center;
+  border: 1px solid var(--enroll-field-border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  background: var(--card-bg);
+}
+
+.shs3-radio--error {
+  border-color: #c0392b !important;
+  box-shadow: 0 0 0 3px rgba(192, 57, 43, 0.08);
+}
+
+.shs3-radio-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14.5px;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.shs3-radio-label input[type="radio"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.shs3-inline-input {
+  height: 32px;
+  border: 1px solid var(--enroll-field-border);
+  border-radius: 6px;
+  padding: 0 10px;
+  font-size: 14px;
+  font-family: var(--font-body);
+  background: var(--card-bg);
+  color: var(--text-primary);
+  outline: none;
+  flex: 1;
+  min-width: 180px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.shs3-inline-input:focus {
+  border-color: var(--enroll-field-focus);
+  box-shadow: 0 0 0 3px rgba(139, 26, 26, 0.1);
+}
+
+/* => Consent box - reuses ts5-policy-box structure/spirit */
+.shs3-policy-box {
+  background: var(--bg-secondary);
+  border: 1px solid var(--enroll-field-border);
+  border-radius: 8px;
+  padding: 1.2rem 1.4rem;
+  margin-bottom: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.shs3-policy-text {
+  font-size: 13.5px;
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  line-height: 1.7;
+}
+
+.shs3-policy-text strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.shs3-consent-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 14px;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  cursor: pointer;
+  line-height: 1.6;
+  margin-bottom: 1rem;
+  padding: 10px 12px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  transition: border-color 0.15s;
+}
+
+.shs3-consent--error {
+  border-color: #c0392b !important;
+  background: rgba(192, 57, 43, 0.04);
+  box-shadow: 0 0 0 3px rgba(192, 57, 43, 0.08);
+}
+
+.shs3-consent-checkbox {
+  width: 17px;
+  height: 17px;
+  margin-top: 3px;
+  accent-color: var(--accent);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.shs3-error-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: rgba(192, 57, 43, 0.08);
+  border: 1px solid #c0392b;
+  border-radius: 6px;
+  color: #c0392b;
+  font-size: 13.5px;
+  font-family: var(--font-body);
+  margin-top: 0.8rem;
+}
+
+.shs3-nav {
+  display: flex;
+  gap: 1.5rem;
+  padding: 1rem 0 0.5rem;
+  margin-top: 0.5rem;
+  border-top: 1px solid var(--enroll-actions-border);
+}
+
+.shs3-btn-back,
+.shs3-btn-next {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 24px;
+  border-radius: 6px;
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  transition: background 0.15s, color 0.15s, transform 0.1s;
+}
+
+.shs3-btn-back {
+  background: transparent;
+  color: var(--enroll-label-color);
+  border: 1px solid var(--enroll-field-border);
+}
+
+.shs3-btn-back:hover {
+  background: var(--enroll-field-border);
+  color: var(--text-primary);
+}
+
+.shs3-btn-next {
+  background: var(--enroll-btn-bg);
+  color: #fff;
+  border: none;
+}
+
+.shs3-btn-next:hover { background: var(--enroll-btn-hover); }
+.shs3-btn-next:active { transform: scale(0.98); }
+
+.shs3-spinner {
+  animation: shs3-spin 1s linear infinite;
+}
+
+@keyframes shs3-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@media (max-width: 700px) {
+  .shs3-wrap { padding: 1.2rem; }
+  .shs3-g2,
+  .shs3-g3 { grid-template-columns: 1fr; }
+}

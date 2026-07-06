@@ -12,6 +12,11 @@ import TESDAStep3 from '../../../components/public/TESDA/TESDAStep3';
 import TESDAStep4 from '../../../components/public/TESDA/TESDAStep4';
 import TESDAStep5 from '../../../components/public/TESDA/TESDAStep5';
 
+// => New: SHS step imports, mirrors the TESDA import block above
+import SHSStep1 from '../../../components/public/SHS/SHSStep1';
+import SHSStep2 from '../../../components/public/SHS/SHSStep2';
+import SHSStep3 from '../../../components/public/SHS/SHSStep3';
+
 // => Info tooltip component used for additional explanations in the form
 import Info from '../../../components/Info.jsx';
 
@@ -259,6 +264,118 @@ const [tesdaScholarship, setTesdaScholarship] = useState({
 const [tesdaPrivacy, setTesdaPrivacy] = useState({
   agreed: false,
 });
+
+// => SHS multi-step state: tracks which of the 3 pages is active
+const [shsStep, setShsStep] = useState(1);
+
+// => SHS form data - Student Information (Step 1)
+const [shsProfile, setShsProfile] = useState({
+  lrn: '',
+  lastName: '',
+  firstName: '',
+  middleName: '',
+  suffix: 'N/A',
+  sex: '',
+  birthMonth: '',
+  birthDay: '',
+  birthYear: '',
+  placeOfBirth: '',
+  citizenship: 'Filipino',
+  religion: '',
+  region: '',
+  province: '',
+  city: '',
+  barangay: '',
+  district: '',
+  street: '',
+  contactNo: '',
+  email: '',
+});
+
+// => SHS form data - Academic Information & Strengthened SHS Enrollment Details (Step 2)
+const [shsAcademic, setShsAcademic] = useState({
+  lastSchoolAttended: '',
+  schoolAddress: '',
+  gradeLevelCompleted: '',
+  schoolYearCompleted: '',
+  track: '',      // => 'academic' | 'tech_prof'
+  cluster: '',    // => only relevant when track === 'tech_prof'
+  electives: '',
+});
+
+// => SHS form data - Document uploads for Step 2. Kept separate from
+// => shsAcademic since File objects aren't plain serializable data like
+// => the rest of the academic fields - mirrors how shsPrivacy is kept
+// => separate from shsFamily in Step 3.
+const [shsDocuments, setShsDocuments] = useState({
+  psaBirthCertificate: null,
+  grade10ReportCard: null,
+  goodMoralCertificate: null,
+  photos2x2: [],
+  photos1x1: [],
+  escCertificate: null,
+});
+
+// => SHS form data - Parent/Guardian, Emergency Contact, Health Information (Step 3)
+const [shsFamily, setShsFamily] = useState({
+  fatherName: '', fatherOccupation: '', fatherContactNo: '',
+  motherName: '', motherOccupation: '', motherContactNo: '',
+  guardianName: '', guardianOccupation: '', guardianRelationship: '', guardianContactNo: '',
+  emergencyName: '', emergencyRelationship: '', emergencyContactNo: '', emergencyAddress: '',
+  hasMedicalCondition: '',   // => 'none' | 'yes'
+  medicalConditionDetail: '',
+  allergies: '',
+  maintenanceMedication: '',
+});
+
+// => SHS form data - Data Privacy Consent (replaces Section VII's signature
+// => block per stakeholder direction - no signature capture, consent only)
+const [shsPrivacy, setShsPrivacy] = useState({
+  agreed: false,
+});
+
+// => SHS navigation helpers - same shape as tesdaGoNext/tesdaGoBack
+const shsGoNext = () => {
+  setShsStep(prev => Math.min(prev + 1, 3));
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
+const shsGoBack = () => {
+  setShsStep(prev => Math.max(prev - 1, 1));
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
+// => Final SHS form submission - assembles all data into FormData.
+// => NOTE: '/api/enrollment/submit-shs' is a placeholder endpoint - this
+// => route/controller/service/model doesn't exist on the backend yet.
+// => Flagging this explicitly rather than assuming a path, since SHS
+// => backend work hasn't been scoped yet (still pending DepEd/Section VII
+// => stakeholder clarification).
+const handleShsSubmit = async () => {
+  const formData = new FormData();
+
+  Object.entries(shsProfile).forEach(([k, v]) => formData.append(k, v));
+  formData.append('academicData', JSON.stringify(shsAcademic));
+  formData.append('familyData', JSON.stringify(shsFamily));
+  formData.append('privacyAgreed', shsPrivacy.agreed);
+
+  try {
+    const res = await fetch('/api/enrollment/submit-shs', {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!res.ok) throw new Error(`Server responded with ${res.status}`);
+
+    const result = await res.json();
+    console.log('SHS enrollment submitted:', result);
+
+    alert('Enrollment submitted successfully!');
+  } catch (err) {
+    console.error('SHS submission failed:', err);
+    alert('Submission failed. Please try again.');
+  }
+};
 
 // => Stable handler for TESDA file changes - lifted so Step 7 submit can access all files
 const handleTesdaFileChange = useCallback((key, file) => {
@@ -820,16 +937,68 @@ const handleFinalSubmit = async () => {
         </div>
       )}
 
-      {/* => SHS flow: existing tabs layout, unchanged */}
+      {/* => SHS flow: 3-step linear form with progress bar, mirrors TESDA flow below */}
       {enrollType === 'shs' && (
         <div className="enroll-wrap">
-          {/* => Back to selection */}
-          <button className="enroll-back-type" onClick={() => setEnrollType(null)}>
-            <i className="ti ti-arrow-left" /> Change Enrollment Type
-          </button>
 
-          {/* existing SHS tab content goes here - keep exactly as is */}
-          {/* step-tabs, progress-bar, tab-content divs, etc. */}
+          {/* => Back to selection - only on Step 1 */}
+          {shsStep === 1 && (
+            <button className="enroll-back-type" onClick={() => setEnrollType(null)}>
+              <i className="ti ti-arrow-left" /> Change Enrollment Type
+            </button>
+          )}
+
+          {/* => SHS Progress indicator - reuses .tesda-progress since those
+               tokens are generic (--accent, --enroll-tabs-bg, etc.), not
+               TESDA-branded, so no need to duplicate the CSS */}
+          <div className="tesda-progress">
+            <div className="tesda-progress-text">
+              Step {shsStep} of 3 &mdash;{' '}
+              <span className="tesda-progress-label">
+                {shsStep === 1 && 'Student Information'}
+                {shsStep === 2 && 'Academic Information & SHS Enrollment Details'}
+                {shsStep === 3 && 'Family, Emergency & Health Information'}
+              </span>
+            </div>
+            <div className="tesda-progress-bar">
+              <div
+                className="tesda-progress-fill"
+                style={{ width: `${(shsStep / 3) * 100}%` }}
+              />
+            </div>
+          </div>
+
+          {/* => SHS Steps */}
+          {shsStep === 1 && (
+            <SHSStep1
+              data={shsProfile}
+              onChange={(key, val) => setShsProfile(prev => ({ ...prev, [key]: val }))}
+              onNext={shsGoNext}
+            />
+          )}
+
+          {shsStep === 2 && (
+            <SHSStep2
+              data={shsAcademic}
+              onChange={(key, val) => setShsAcademic(prev => ({ ...prev, [key]: val }))}
+              documents={shsDocuments}
+              onDocumentsChange={(key, val) => setShsDocuments(prev => ({ ...prev, [key]: val }))}
+              onBack={shsGoBack}
+              onNext={shsGoNext}
+            />
+          )}
+
+          {shsStep === 3 && (
+            <SHSStep3
+              data={shsFamily}
+              onChange={(key, val) => setShsFamily(prev => ({ ...prev, [key]: val }))}
+              privacyData={shsPrivacy}
+              onPrivacyChange={(key, val) => setShsPrivacy(prev => ({ ...prev, [key]: val }))}
+              onBack={shsGoBack}
+              onSubmit={handleShsSubmit}
+            />
+          )}
+
         </div>
       )}
 

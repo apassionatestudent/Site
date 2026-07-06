@@ -1,0 +1,443 @@
+/* ============================================================
+   SHSStep2.css - Academic Information & Strengthened SHS Details
+   Follows Enroll.css token system - mirrors TESDAStep2/3.css
+   ============================================================ */
+
+.shs2-wrap {
+  font-family: var(--font-body);
+  padding: 1.8rem 2rem 1rem;
+  background: var(--enroll-body-bg);
+  color: var(--text-primary);
+}
+
+.shs2-section-title {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--enroll-section-title-color);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 1.4rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--enroll-section-border);
+  font-family: var(--font-body);
+  opacity: 0.85;
+}
+
+.shs2-grid { display: grid; gap: 0 1.2rem; }
+.shs2-g2 { grid-template-columns: 1fr 1fr; }
+
+.shs2-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 1.2rem;
+}
+
+.shs2-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--enroll-label-color);
+  font-family: var(--font-body);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.shs2-req { color: var(--req-asterisk); font-size: 14px; }
+
+/* => Small non-bold note next to a label, e.g. "(Choose 1 track)" */
+.shs2-hint-inline {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-muted);
+  text-transform: none;
+}
+
+.shs2-input {
+  height: 40px;
+  border: 1px solid var(--enroll-field-border);
+  border-radius: 6px;
+  padding: 0 12px;
+  font-size: 15px;
+  font-family: var(--font-body);
+  background: var(--card-bg);
+  color: var(--text-primary);
+  outline: none;
+  width: 100%;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.shs2-input:focus {
+  border-color: var(--enroll-field-focus);
+  box-shadow: 0 0 0 3px rgba(139, 26, 26, 0.1);
+}
+
+.shs2-input--error {
+  border-color: #c0392b !important;
+  box-shadow: 0 0 0 3px rgba(192, 57, 43, 0.12);
+}
+
+/* => Track radio group - wraps since labels are long */
+.shs2-radio-group {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+  border: 1px solid var(--enroll-field-border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  background: var(--card-bg);
+}
+
+.shs2-radio-group--wrap {
+  flex-wrap: wrap;
+  gap: 0.8rem 1.5rem;
+}
+
+.shs2-radio-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14.5px;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.shs2-radio-label input[type="radio"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.shs2-radio--error {
+  border-color: #c0392b !important;
+  box-shadow: 0 0 0 3px rgba(192, 57, 43, 0.08);
+}
+
+/* => Cluster list - vertical, each option can show specialization sub-bullets.
+     Uses a bordered card list instead of a plain checkbox grid (ts3-style)
+     because each cluster needs room for its specialization list underneath. */
+.shs2-cluster-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  border-radius: 6px;
+}
+
+.shs2-cluster-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 14px;
+  border: 1px solid var(--enroll-field-border);
+  border-radius: 8px;
+  background: var(--card-bg);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.shs2-cluster-option:hover {
+  border-color: var(--enroll-field-focus);
+}
+
+.shs2-cluster-option input[type="radio"] {
+  width: 16px;
+  height: 16px;
+  margin-top: 3px;
+  accent-color: var(--accent);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.shs2-cluster-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.shs2-cluster-label {
+  font-size: 14.5px;
+  font-weight: 500;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+}
+
+.shs2-cluster-specs {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.shs2-cluster-spec {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  font-family: var(--font-body);
+}
+
+/* => Requirements for Enrollment upload styling - same visual language
+     as TESDAStep5's file upload (hidden native input + styled label
+     acting as the button), rebuilt here with shs2- prefixed classes so
+     this file has no cross-file CSS dependency on TESDAStep5.css. */
+
+.shs2-upload-subtitle {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  font-family: var(--font-body);
+  margin-bottom: 1.2rem;
+}
+
+.shs2-uploads {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.shs2-upload-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.shs2-upload-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--enroll-label-color);
+  font-family: var(--font-body);
+  line-height: 1.4;
+}
+
+.shs2-upload-desc {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  font-family: var(--font-body);
+  margin: 0;
+}
+
+/* => Hidden real file input - the styled label below acts as the button */
+.shs2-file-input {
+  position: absolute;
+  opacity: 0;
+  width: 0.1px;
+  height: 0.1px;
+}
+
+.shs2-file-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.shs2-file-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border: 2px dashed var(--enroll-field-border);
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  min-height: 52px;
+  font-weight: 500;
+  flex: 1;
+}
+
+.shs2-file-label:hover:not(.has-file) {
+  border-color: var(--enroll-field-focus);
+  background: rgba(102, 9, 17, 0.06);
+}
+
+/* => File selected state */
+.shs2-file-label.has-file {
+  border-color: var(--accent);
+  border-style: solid;
+  background: linear-gradient(135deg, rgba(102, 9, 17, 0.1) 0%, rgba(102, 9, 17, 0.05) 100%);
+}
+
+.shs2-file-label--error {
+  border-color: #c0392b !important;
+  border-style: dashed !important;
+}
+
+.shs2-file-icon {
+  font-size: 16px;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.shs2-file-label.has-file .shs2-file-icon {
+  background: var(--accent);
+  color: #fff;
+}
+
+.shs2-file-name {
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  font-size: 13px;
+}
+
+/* => Standalone remove (x) button for single-file uploads, sits beside
+     the file label rather than inside it */
+.shs2-file-remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--enroll-field-border);
+  border-radius: 6px;
+  background: var(--card-bg);
+  color: var(--text-secondary);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+/* => Sizes the rejected.png icon to fit cleanly inside both remove-button
+     variants - .shs2-file-remove (28px box) and the smaller chip button
+     (16px box, via the --small modifier below) */
+.shs2-remove-icon {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  pointer-events: none; /* => clicks still register on the parent <button> */
+}
+
+.shs2-remove-icon--small {
+  width: 12px;
+  height: 12px;
+}
+
+.shs2-file-remove:hover {
+  border-color: #c0392b;
+  background: rgba(192, 57, 43, 0.08);
+}
+
+/* => Chip list for multi-file uploads (2x2/1x1 photos) - each selected
+     file gets its own removable chip below the upload button */
+.shs2-file-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.shs2-file-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px 4px 10px;
+  border-radius: 14px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--enroll-field-border);
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  max-width: 100%;
+}
+
+.shs2-file-chip button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+}
+
+.shs2-file-chip button:hover {
+  background: rgba(192, 57, 43, 0.12);
+}
+
+.shs2-file-error {
+  font-size: 12px;
+  color: #c0392b;
+  font-family: var(--font-body);
+}
+
+.shs2-error-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: rgba(192, 57, 43, 0.08);
+  border: 1px solid #c0392b;
+  border-radius: 6px;
+  color: #c0392b;
+  font-size: 13.5px;
+  font-family: var(--font-body);
+  margin-top: 1rem;
+}
+
+.shs2-nav {
+  display: flex;
+  gap: 1.5rem;
+  padding: 1rem 0 0.5rem;
+  margin-top: 0.5rem;
+  border-top: 1px solid var(--enroll-actions-border);
+}
+
+.shs2-btn-back,
+.shs2-btn-next {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 24px;
+  border-radius: 6px;
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  transition: background 0.15s, color 0.15s, transform 0.1s;
+}
+
+.shs2-btn-back {
+  background: transparent;
+  color: var(--enroll-label-color);
+  border: 1px solid var(--enroll-field-border);
+}
+
+.shs2-btn-back:hover {
+  background: var(--enroll-field-border);
+  color: var(--text-primary);
+}
+
+.shs2-btn-next {
+  background: var(--enroll-btn-bg);
+  color: #fff;
+  border: none;
+}
+
+.shs2-btn-next:hover { background: var(--enroll-btn-hover); }
+.shs2-btn-next:active { transform: scale(0.98); }
+
+@media (max-width: 700px) {
+  .shs2-wrap { padding: 1.2rem; }
+  .shs2-g2 { grid-template-columns: 1fr; }
+  .shs2-uploads { grid-template-columns: 1fr; }
+}

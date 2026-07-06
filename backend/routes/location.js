@@ -99,6 +99,27 @@ const isValidPsgcCode = (code) => typeof code === 'string' && /^\d{2,10}$/.test(
 // => before this function is ever called.
 const buildPsgcUrl = (base, path) => `${base}${path}`;
 
+// => Repairs "mojibake" that some PSGC upstream data has baked in - text
+// => that was UTF-8 but got mis-decoded as Latin-1 somewhere before it
+// => reached psgc.cloud's own database. Correct UTF-8 bytes for "ñ" are
+// => 0xC3 0xB1; read as Latin-1 instead of UTF-8, that becomes two
+// => separate characters: "Ã" (0xC3) + "±" (0xB1) - exactly what shows
+// => up as "ParaÃ±aque" instead of "Parañaque". Re-interpreting the
+// => already-decoded JS string as raw Latin-1 bytes, then decoding THAT
+// => as UTF-8, reverses the mistake. Only runs when the "Ã" + Latin-1
+// => continuation-byte pattern is actually present, so correctly-encoded
+// => strings without the bug pass through untouched.
+const MOJIBAKE_PATTERN = /Ã[\u0080-\u00BF]/;
+
+const fixMojibake = (str) => {
+  if (typeof str !== 'string' || !MOJIBAKE_PATTERN.test(str)) return str;
+  try {
+    return Buffer.from(str, 'latin1').toString('utf8');
+  } catch {
+    return str; // => if re-decoding fails for any reason, fall back to original
+  }
+};
+
 // => In-memory cache - regions cached on startup, others cached on first request
 let cache = {
   regions: [],
@@ -125,7 +146,8 @@ export const loadLocationCache = async () => {
 router.get('/regions', (req, res) => {
   res.json(cache.regions.map(r => ({ 
     code: r.code, 
-    name: r.name || r.regionName || r.label || ''
+    // name: r.name || r.regionName || r.label || ''
+    name: fixMojibake(r.name || r.regionName || r.label || '')
   })));
 });
 
@@ -148,8 +170,12 @@ router.get('/provinces/:regionCode', async (req, res) => {
     const data = await fetch(buildPsgcUrl(BASE, `/regions/${regionCode}/provinces`))
       .then(r => r.json());
 
+    // const mapped = (Array.isArray(data) ? data : [])
+    //   .map(p => ({ code: p.code, name: p.name }))
+    //   .sort((a, b) => a.name.localeCompare(b.name));
+
     const mapped = (Array.isArray(data) ? data : [])
-      .map(p => ({ code: p.code, name: p.name }))
+      .map(p => ({ code: p.code, name: fixMojibake(p.name) }))
       .sort((a, b) => a.name.localeCompare(b.name));
 
     // => Cache for next time
@@ -180,10 +206,19 @@ router.get('/cities/:provinceCode', async (req, res) => {
     const data = await fetch(buildPsgcUrl(BASE, `/provinces/${provinceCode}/cities-municipalities`))
       .then(r => r.json());
 
+    // const mapped = (Array.isArray(data) ? data : [])
+    //   .map(c => ({
+    //     code: c.code,
+    //     name: c.name,
+    //     zip: c.zip_code || '',
+    //     district: c.district || '',
+    //   }))
+    //   .sort((a, b) => a.name.localeCompare(b.name));
+
     const mapped = (Array.isArray(data) ? data : [])
       .map(c => ({
         code: c.code,
-        name: c.name,
+        name: fixMojibake(c.name),
         zip: c.zip_code || '',
         district: c.district || '',
       }))
@@ -215,10 +250,19 @@ router.get('/cities-by-region/:regionCode', async (req, res) => {
     const data = await fetch(buildPsgcUrl(BASE, `/regions/${regionCode}/cities-municipalities`))
       .then(r => r.json());
 
+    // const mapped = (Array.isArray(data) ? data : [])
+    //   .map(c => ({
+    //     code: c.code,
+    //     name: c.name,
+    //     zip: c.zip_code || '',
+    //     district: c.district || '',
+    //   }))
+    //   .sort((a, b) => a.name.localeCompare(b.name));
+
     const mapped = (Array.isArray(data) ? data : [])
       .map(c => ({
         code: c.code,
-        name: c.name,
+        name: fixMojibake(c.name),
         zip: c.zip_code || '',
         district: c.district || '',
       }))
@@ -303,8 +347,12 @@ router.get('/barangays/:cityCode', async (req, res) => {
     }
 
     const data = await response.json();
+    // const mapped = (Array.isArray(data) ? data : [])
+    //   .map(b => ({ code: b.code, name: b.name }))
+    //   .sort((a, b) => a.name.localeCompare(b.name));
+
     const mapped = (Array.isArray(data) ? data : [])
-      .map(b => ({ code: b.code, name: b.name }))
+      .map(b => ({ code: b.code, name: fixMojibake(b.name) }))
       .sort((a, b) => a.name.localeCompare(b.name));
 
     // => Cache to avoid re-fetching same city
