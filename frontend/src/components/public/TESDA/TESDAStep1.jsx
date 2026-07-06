@@ -431,7 +431,7 @@ const TESDAStep1 = ({ data, onChange, onNext }) => {
           <input
             type="text"
             className={`ts1-input ${contactError ? 'ts1-input--error' : ''}`}
-            placeholder="e.g. 09XX-XXX-XXXX"
+            placeholder="e.g. 09XXXXXXXXX"
             value={data.contactNo}
             maxLength={11}
             onChange={(e) => {
