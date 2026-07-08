@@ -304,13 +304,16 @@ async function initDB () {
         branch_id                   INT         NOT NULL REFERENCES branches(branch_id) ON DELETE CASCADE,
 
         -- => Date only, no time component needed
-        start_date                  DATE        NOT NULL,
-        end_date                    DATE        NOT NULL,
+        -- => Both nullable: start_date is unknown while status = 'Pending' and
+        -- => a firm date hasn't been set yet; end_date stays open while
+        -- => status = 'Ongoing' since the class may be extended
+        start_date                  DATE        NULL,
+        end_date                    DATE        NULL,
 
         -- => Ongoing: class is currently running
         -- => Concluded: all discussions done, certificates given
-        -- => Planned: class is set up but hasn't started yet
-        status                      VARCHAR(15) NOT NULL DEFAULT 'Planned' CHECK (status IN ('Planned', 'Ongoing', 'Concluded')),
+        -- => Pending: class is set up but hasn't started yet
+        status                      VARCHAR(15) NOT NULL DEFAULT 'Pending' CHECK (status IN ('Pending', 'Ongoing', 'Concluded')),
 
         -- => Regular: paid by the enrollee - TESDA-Sponsored: paid by TESDA
         class_type                  VARCHAR(20) NOT NULL DEFAULT 'Regular' CHECK (class_type IN ('Regular', 'TESDA-Sponsored')),
@@ -351,14 +354,20 @@ async function initDB () {
         cluster       VARCHAR(60) NULL,
 
         school_year   VARCHAR(20) NOT NULL,
-        start_date    DATE        NOT NULL,
-        end_date      DATE        NOT NULL,
+        -- => Both nullable - same reasoning as tesda_classes: start_date
+        -- => unknown while Pending, end_date open while Ongoing
+        start_date    DATE        NULL,
+        end_date      DATE        NULL,
 
-        status        VARCHAR(15) NOT NULL DEFAULT 'Planned' CHECK (status IN ('Planned', 'Ongoing', 'Concluded')),
+        status        VARCHAR(15) NOT NULL DEFAULT 'Pending' CHECK (status IN ('Pending', 'Ongoing', 'Concluded')),
         max_students  INT         NOT NULL,
 
         created_by    INT         REFERENCES admins(admin_id) ON DELETE SET NULL,
         updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+        -- => Messenger groupchat link for this SHS section - same pattern as tesda_classes
+        groupchat_link TEXT       DEFAULT NULL,
+
         remarks       TEXT        DEFAULT NULL
       )
     `;
@@ -628,6 +637,7 @@ async function initDB () {
         student_id                BIGINT        NOT NULL REFERENCES student_accounts(student_id) ON DELETE RESTRICT,
         branch_id                 INT           NULL REFERENCES branches(branch_id) ON DELETE SET NULL,
         lrn                       VARCHAR(12)   NULL,
+        class_id                  INT           NULL REFERENCES shs_classes(class_id) ON DELETE SET NULL,
 
         -- => Academic Information
         last_school_attended      VARCHAR(150)  NOT NULL,

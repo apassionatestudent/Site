@@ -17,7 +17,7 @@ export const getShsClasses = async (req, res) => {
       WHERE branch_id = ${branch_id}
         AND track = ${track}
         AND cluster IS NOT DISTINCT FROM ${cluster || null}
-        AND status IN ('Planned', 'Ongoing')
+        AND status IN ('Pending', 'Ongoing')
       ORDER BY start_date ASC
     `;
 
