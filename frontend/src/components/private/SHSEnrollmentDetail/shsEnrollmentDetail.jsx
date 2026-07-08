@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import BackButton from '../BackButton/BackButton.jsx';
 
-import './EnrollmentDetail.css';
+import './shsEnrollmentDetail.css';
 
 // icons
 import loadingIcon   from "../../../assets/icons/loading.png";
@@ -21,12 +21,6 @@ const statusClass = {
   'Reserved':            'status--reserved',
 };
 
-// => Formats the fee_at_enrollment numeric value to Philippine Peso display
-const formatFee = (amount) => {
-  if (amount == null) return '-';
-  return new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(amount);
-};
-
 // => Formats ISO date string to readable date
 const formatDate = (dateStr) => {
   if (!dateStr) return '-';
@@ -35,7 +29,7 @@ const formatDate = (dateStr) => {
   });
 };
 
-function EnrollmentDetail() {
+function SHSEnrollmentDetail() {
   const { publicId } = useParams();
   const navigate     = useNavigate();
 
@@ -43,7 +37,7 @@ function EnrollmentDetail() {
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError,   setDetailError]   = useState(null);
 
-  // => Fetch the single enrollment detail on mount using publicId from the URL
+  // => Fetch the single SHS enrollment detail on mount using publicId from the URL
   useEffect(() => {
     if (!publicId) return;
 
@@ -67,10 +61,6 @@ function EnrollmentDetail() {
 
     fetchDetail();
   }, [publicId]);
-
-  const handleBack = () => {
-    navigate('/dashboard/enrollment');
-  };
 
   return (
     <div className="enroll-detail-page">
@@ -96,13 +86,14 @@ function EnrollmentDetail() {
         <div className="enroll-detail">
           <div className="enroll-detail-header">
             <div>
-              {/* => Enrollment type tag shown above the course name for immediate context */}
-              <span className={`enroll-detail-type-tag type--${detail.enrollment_type?.toLowerCase() ?? 'tesda'}`}>
-                {detail.enrollment_type ?? 'TESDA'}
-              </span>
-              <h2 className="enroll-detail-title">{detail.course_name}</h2>
+              <span className="enroll-detail-type-tag type--shs">SHS</span>
+              <h2 className="enroll-detail-title">
+                {detail.track}
+                {detail.cluster ? ` – ${detail.cluster}` : ''}
+              </h2>
               <p className="enroll-detail-sub">
-                {detail.sector}
+                {detail.last_school_attended ?? '-'}
+                {detail.school_year_completed ? ` • SY ${detail.school_year_completed}` : ''}
               </p>
             </div>
             <span className={`enroll-detail-badge ${statusClass[detail.status] || ''}`}>
@@ -110,6 +101,8 @@ function EnrollmentDetail() {
             </span>
           </div>
 
+          {/* => ENROLLMENT INFO */}
+          <p className="enroll-detail-section-title">Enrollment Info</p>
           <div className="enroll-detail-grid">
 
             <div className="enroll-detail-card">
@@ -118,61 +111,80 @@ function EnrollmentDetail() {
             </div>
 
             <div className="enroll-detail-card">
-              <p className="enroll-detail-label">Class Period</p>
-              <p className="enroll-detail-value">
-                {detail.start_date
-                  ? `${formatDate(detail.start_date)} - ${formatDate(detail.end_date)}`
-                  : '-'}
-              </p>
-            </div>
-
-            <div className="enroll-detail-card">
-              <p className="enroll-detail-label">Fee at Enrollment</p>
-              <p className="enroll-detail-value">{formatFee(detail.fee_at_enrollment)}</p>
-            </div>
-
-            <div className="enroll-detail-card">
               <p className="enroll-detail-label">Date Submitted</p>
               <p className="enroll-detail-value">{formatDate(detail.submitted_at)}</p>
             </div>
 
-            {/* => Only shown for TESDA enrollments - ncae_taken is a TESDA-specific field */}
-            {detail.enrollment_type !== 'SHS' && (
+            {/* => LRN - DepEd's Learner Reference Number, lives on shs_enrollments */}
+            {detail.lrn ? (
               <div className="enroll-detail-card">
-                <p className="enroll-detail-label">Took NCAE / YP4SC</p>
-                <p className="enroll-detail-value">{detail.ncae_taken ? 'Yes' : 'No'}</p>
+                <p className="enroll-detail-label">LRN</p>
+                <p className="enroll-detail-value">{detail.lrn}</p>
+              </div>
+            ) : (
+              <div className="enroll-detail-card enroll-detail-card--muted">
+                <p className="enroll-detail-label">LRN</p>
+                <p className="enroll-detail-value enroll-detail-value--muted">Not yet provided</p>
               </div>
             )}
-
-            <div className="enroll-detail-card">
-              <p className="enroll-detail-label">TESDA Scholar</p>
-              <p className="enroll-detail-value">
-                {detail.is_tesda_scholar
-                  ? (detail.scholarship_type ?? 'Yes')
-                  : 'No'}
-              </p>
-            </div>
-
-            {/* => Groupchat link - only shown once the admin has added it to the class */}
-            {detail.groupchat_link && (
-              <div className="enroll-detail-card enroll-detail-card--groupchat">
-                <p className="enroll-detail-label">Class Groupchat</p>
-                <a
-                  href={detail.groupchat_link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="enroll-detail-link"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <i className="ti ti-brand-messenger" /> Join Groupchat
-                </a>
-              </div>
-            )}
-
-            
 
           </div>
-          
+
+          {/* => ACADEMIC BACKGROUND */}
+          <p className="enroll-detail-section-title">Academic Background</p>
+          <div className="enroll-detail-grid">
+
+            <div className="enroll-detail-card">
+              <p className="enroll-detail-label">Last School Attended</p>
+              <p className="enroll-detail-value">{detail.last_school_attended ?? '-'}</p>
+            </div>
+
+            <div className="enroll-detail-card">
+              <p className="enroll-detail-label">Grade Level Completed</p>
+              <p className="enroll-detail-value">{detail.grade_level_completed ?? '-'}</p>
+            </div>
+
+            <div className="enroll-detail-card">
+              <p className="enroll-detail-label">School Year Completed</p>
+              <p className="enroll-detail-value">{detail.school_year_completed ?? '-'}</p>
+            </div>
+
+          </div>
+
+          {/* => CLASS / BATCH - shs_enrollments has no class_id link to shs_classes yet,
+              => so this always renders the muted placeholder state until that FK + admin
+              => UI for creating SHS sections exist */}
+          <p className="enroll-detail-section-title">Class / Batch</p>
+          <div className="enroll-detail-grid">
+
+            <div className="enroll-detail-card enroll-detail-card--muted">
+              <p className="enroll-detail-label">Class Period</p>
+              <p className="enroll-detail-value enroll-detail-value--muted">Not yet assigned</p>
+            </div>
+
+            <div className="enroll-detail-card enroll-detail-card--muted">
+              <p className="enroll-detail-label">Class Groupchat</p>
+              <p className="enroll-detail-value enroll-detail-value--muted">Not yet available</p>
+            </div>
+
+          </div>
+
+          {/* => EMERGENCY CONTACT */}
+          <p className="enroll-detail-section-title">Emergency Contact</p>
+          <div className="enroll-detail-grid">
+            <div className="enroll-detail-card">
+              <p className="enroll-detail-label">Name</p>
+              <p className="enroll-detail-value">{detail.emergency_name ?? '-'}</p>
+            </div>
+            <div className="enroll-detail-card">
+              <p className="enroll-detail-label">Relationship</p>
+              <p className="enroll-detail-value">{detail.emergency_relationship ?? '-'}</p>
+            </div>
+            <div className="enroll-detail-card">
+              <p className="enroll-detail-label">Contact No.</p>
+              <p className="enroll-detail-value">{detail.emergency_contact_no ?? '-'}</p>
+            </div>
+          </div>
 
           {/* => Status-specific notice banners for the student */}
           {detail.status === 'Pending' && (
@@ -205,4 +217,4 @@ function EnrollmentDetail() {
   );
 }
 
-export default EnrollmentDetail;
+export default SHSEnrollmentDetail;
