@@ -8,7 +8,9 @@ import NotFound from './components/NotFound.jsx';
 
 // => import private components
 import Sidebar from './components/private/SideBar/SideBar.jsx';
-import EnrollmentDetail from './components/private/EnrollmentDetail/EnrollmentDetail.jsx';
+// import EnrollmentDetail from './components/private/EnrollmentDetail/EnrollmentDetail.jsx';
+import TESDAEnrollmentDetail from './components/private/TESDAEnrollmentDetail/tesdaEnrollmentDetail.jsx';
+import SHSEnrollmentDetail   from './components/private/SHSEnrollmentDetail/shsEnrollmentDetail.jsx';
 import DocumentDetail from './components/private/DocumentDetail/DocumentDetail.jsx';
 
 // => import public pages
@@ -77,8 +79,10 @@ function App() {
                     <Route path="documents/:publicId" element={<DocumentDetail />} />
 
                     <Route path="enrollment" element={<Enrollment />} />
-                    {/* => Detail view - :publicId is the UUID from the enrollment.public_id column */}
-                    <Route path="enrollment/:publicId" element={<EnrollmentDetail />} />
+                    {/* => Detail view - :publicId is the UUID */}
+                    {/* <Route path="enrollment/:publicId" element={<EnrollmentDetail />} /> */}
+                    <Route path="enrollment/tesda/:publicId" element={<TESDAEnrollmentDetail />} />
+                    <Route path="enrollment/shs/:publicId" element={<SHSEnrollmentDetail />} />
 
                     <Route path="supporttickets" element={<SupportTickets />} />
                   </Routes>

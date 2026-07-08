@@ -74,9 +74,13 @@ function Enrollment() {
     fetchEnrollments();
   }, [fetchEnrollments]);
 
-  const handleCardClick = (enrollmentPublicId) => {
-    // => Navigate to the detail page using the enrollment's public UUID
-    navigate(`/dashboard/enrollment/${enrollmentPublicId}`);
+  const handleCardClick = (enrollment) => {
+    // => Route to the type-specific detail page - TESDA and SHS render
+    // => entirely separate components (tesdaEnrollmentDetail / shsEnrollmentDetail)
+    const path = enrollment.enrollment_type === 'SHS'
+      ? `/dashboard/enrollment/shs/${enrollment.public_id}`
+      : `/dashboard/enrollment/tesda/${enrollment.public_id}`;
+    navigate(path);
   };
 
   return (
@@ -123,7 +127,7 @@ function Enrollment() {
               key={enrollment.public_id}
               className="enroll-card"
               style={{ animationDelay: `${index * 80}ms` }}
-              onClick={() => handleCardClick(enrollment.public_id)}
+              onClick={() => handleCardClick(enrollment)}
             >
               {/* => Left accent bar colored by status */}
               <div className={`enroll-card-bar ${statusClass[enrollment.status] || ''}`} />
@@ -131,10 +135,27 @@ function Enrollment() {
               <div className="enroll-card-body">
                 <div className="enroll-card-top">
                   <div>
-                    <p className="enroll-card-course">{enrollment.course_name}</p>
-                    <p className="enroll-card-sector">
-                      {enrollment.sector}
-                    </p>
+                    {/* => Title/subtitle branch on enrollment_type since TESDA and SHS
+                        => don't share a "course" concept - SHS uses track/cluster instead */}
+                    {enrollment.enrollment_type === 'SHS' ? (
+                      <>
+                        <p className="enroll-card-course">
+                          {enrollment.track}
+                          {enrollment.cluster ? ` – ${enrollment.cluster}` : ''}
+                        </p>
+                        <p className="enroll-card-sector">
+                          {enrollment.last_school_attended ?? '-'}
+                          {enrollment.school_year_completed ? ` • SY ${enrollment.school_year_completed}` : ''}
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <p className="enroll-card-course">{enrollment.course_name}</p>
+                        <p className="enroll-card-sector">
+                          {enrollment.sector}
+                        </p>
+                      </>
+                    )}
                   </div>
                   <div className="enroll-card-top-right">
                     {/* => Enrollment type tag: TESDA or SHS - determined by enrollment_type field */}
@@ -156,10 +177,13 @@ function Enrollment() {
                     <img src={buildingIcon} alt="" className="enroll-card-meta-icon" />
                     {enrollment.branch_name ?? '-'}
                   </span>
-                  <span>
-                    <img src={phpIcon} alt="" className="enroll-card-meta-icon" />
-                    {formatFee(enrollment.fee_at_enrollment)}
-                  </span>
+                  {/* => Fee only applies to TESDA - SHS is DepEd/public, no fee_at_enrollment column exists */}
+                  {enrollment.enrollment_type !== 'SHS' && (
+                    <span>
+                      <img src={phpIcon} alt="" className="enroll-card-meta-icon" />
+                      {formatFee(enrollment.fee_at_enrollment)}
+                    </span>
+                  )}
                 </div>
               </div>
             </li>

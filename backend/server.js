@@ -458,14 +458,16 @@ async function initDB () {
       -- => fee_at_enrollment frozen at submit time - never updated after
       -- => ncae_* fields from Step 4; nullable since ncae_taken can be 'no'
       -- => scholarship fields from Step 5
+      -- => uli: TESDA Unique Learner Identifier - nullable, may not be known/issued at time of enrollment
       CREATE TABLE IF NOT EXISTS tesda_enrollments (
         enrollment_id         SERIAL        PRIMARY KEY,
         public_id             UUID          NOT NULL DEFAULT gen_random_uuid() UNIQUE,
         student_id            BIGINT        NOT NULL REFERENCES student_accounts(student_id) ON DELETE RESTRICT,
-        branch_id             INT           NULL REFERENCES branches(branch_id)  ON DELETE SET NULL,
+        branch_id              INT           NULL REFERENCES branches(branch_id)  ON DELETE SET NULL,
         course_id             INT           NULL REFERENCES courses(course_id)   ON DELETE SET NULL,
         class_id              INT           NULL REFERENCES classes(class_id)    ON DELETE SET NULL,
         fee_at_enrollment     NUMERIC(10,2) NULL,
+        uli                   VARCHAR(20)   NULL,
 
         -- => Step 4: NCAE / YP4SC
         ncae_taken            BOOLEAN       NOT NULL DEFAULT FALSE,
@@ -618,11 +620,14 @@ async function initDB () {
     // => branch_id nullable - no branch selection UI yet on the SHS
     // => frontend, added now so it doesn't need a migration later
     await sql`
+      -- => lrn: DepEd Learner Reference Number - nullable, some incoming Grade 11
+      -- => students may not have one recorded yet at time of enrollment
       CREATE TABLE IF NOT EXISTS shs_enrollments (
         enrollment_id             SERIAL        PRIMARY KEY,
         public_id                 UUID          NOT NULL DEFAULT gen_random_uuid() UNIQUE,
         student_id                BIGINT        NOT NULL REFERENCES student_accounts(student_id) ON DELETE RESTRICT,
         branch_id                 INT           NULL REFERENCES branches(branch_id) ON DELETE SET NULL,
+        lrn                       VARCHAR(12)   NULL,
 
         -- => Academic Information
         last_school_attended      VARCHAR(150)  NOT NULL,
