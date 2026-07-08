@@ -181,7 +181,9 @@ function Enrollment() {
                   {enrollment.enrollment_type !== 'SHS' && (
                     <span>
                       <img src={phpIcon} alt="" className="enroll-card-meta-icon" />
-                      {formatFee(enrollment.fee_at_enrollment)}
+                      {enrollment.class_type === 'TESDA-Sponsored'
+                        ? 'Free (TESDA-Sponsored)'
+                        : formatFee(enrollment.fee_at_enrollment)}
                     </span>
                   )}
                 </div>

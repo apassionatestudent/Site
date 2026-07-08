@@ -132,7 +132,14 @@ function TESDAEnrollmentDetail() {
 
             <div className="enroll-detail-card">
               <p className="enroll-detail-label">Fee at Enrollment</p>
-              <p className="enroll-detail-value">{formatFee(detail.fee_at_enrollment)}</p>
+              <p className="enroll-detail-value">
+                {/* => TESDA-Sponsored classes are paid by TESDA to 3A Prime directly -
+                    => fee_at_enrollment still holds the course's list price, so it must
+                    => be overridden at display time rather than trusted as-is           */}
+                {detail.class_type === 'TESDA-Sponsored'
+                  ? 'Free (TESDA-Sponsored)'
+                  : formatFee(detail.fee_at_enrollment)}
+              </p>
             </div>
 
             <div className="enroll-detail-card">
@@ -160,17 +167,25 @@ function TESDAEnrollmentDetail() {
           <p className="enroll-detail-section-title">Class / Batch</p>
           <div className="enroll-detail-grid enroll-detail-grid--halves">
 
-            {detail.start_date ? (
+            {/* => 3 possible states: no start_date yet (Pending, fully muted),
+                => start_date but no end_date (Ongoing, open-ended - end date
+                => may still shift/extend), or both dates set (fixed range) */}
+            {!detail.start_date ? (
+              <div className="enroll-detail-card enroll-detail-card--muted">
+                <p className="enroll-detail-label">Class Period</p>
+                <p className="enroll-detail-value enroll-detail-value--muted">Not yet assigned</p>
+              </div>
+            ) : !detail.end_date ? (
+              <div className="enroll-detail-card">
+                <p className="enroll-detail-label">Class Period</p>
+                <p className="enroll-detail-value">{formatDate(detail.start_date)} - Ongoing</p>
+              </div>
+            ) : (
               <div className="enroll-detail-card">
                 <p className="enroll-detail-label">Class Period</p>
                 <p className="enroll-detail-value">
                   {formatDate(detail.start_date)} - {formatDate(detail.end_date)}
                 </p>
-              </div>
-            ) : (
-              <div className="enroll-detail-card enroll-detail-card--muted">
-                <p className="enroll-detail-label">Class Period</p>
-                <p className="enroll-detail-value enroll-detail-value--muted">Not yet assigned</p>
               </div>
             )}
 

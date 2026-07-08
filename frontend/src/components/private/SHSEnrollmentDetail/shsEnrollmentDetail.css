@@ -146,11 +146,32 @@
   border: 1px solid rgba(59, 130, 246, 0.3);
 }
 
+/*  GROUPCHAT CARD  */
+
+.enroll-detail-card--groupchat {
+  border-color: rgba(59, 130, 246, 0.25);
+}
+
+.enroll-detail-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #60a5fa;
+  text-decoration: none;
+  transition: color 0.18s ease;
+}
+
+.enroll-detail-link:hover {
+  color: #93c5fd;
+}
+
 /*  SECTION TITLES  */
 
 .enroll-detail-section-title {
-  font-family: var(--font-display);
-  font-size: 1.15rem; /* => bumped up from 0.95rem to sit closer to the card value text size instead of reading as a caption */
+  font-family: var(--font-body);
+  font-size: 1rem; /* => bumped up from 0.95rem to sit closer to the card value text size instead of reading as a caption */
   font-weight: 500;
   color: var(--text-muted);
   margin: 0 0 0.75rem;
@@ -168,6 +189,14 @@
   grid-template-columns: repeat(3, 1fr);
   gap: 1rem;
   margin-bottom: 1.75rem;
+}
+
+/* => Used for sections with exactly 2 cards (e.g. Class/Batch) so they split
+   => the row evenly instead of leaving a dead third column
+   => Chained selector (not a lone class) so it always wins over the base
+   => .enroll-detail-grid rule regardless of stylesheet order                */
+.enroll-detail-grid.enroll-detail-grid--halves {
+  grid-template-columns: repeat(2, 1fr);
 }
 
 .enroll-detail-card {

@@ -151,21 +151,53 @@ function SHSEnrollmentDetail() {
 
           </div>
 
-          {/* => CLASS / BATCH - shs_enrollments has no class_id link to shs_classes yet,
-              => so this always renders the muted placeholder state until that FK + admin
-              => UI for creating SHS sections exist */}
+          {/* => CLASS / BATCH - shs_enrollments.class_id -> shs_classes is now
+              => wired up in the backend union query, so this renders real data
+              => once an admin assigns a class, and the muted placeholder until then */}
           <p className="enroll-detail-section-title">Class / Batch</p>
-          <div className="enroll-detail-grid">
+          <div className="enroll-detail-grid enroll-detail-grid--halves">
 
-            <div className="enroll-detail-card enroll-detail-card--muted">
-              <p className="enroll-detail-label">Class Period</p>
-              <p className="enroll-detail-value enroll-detail-value--muted">Not yet assigned</p>
-            </div>
+            {/* => 3 possible states: no start_date yet (Planned, fully muted),
+                => start_date but no end_date (Ongoing, open-ended - end date
+                => may still shift/extend), or both dates set (fixed range) */}
+            {!detail.start_date ? (
+              <div className="enroll-detail-card enroll-detail-card--muted">
+                <p className="enroll-detail-label">Class Period</p>
+                <p className="enroll-detail-value enroll-detail-value--muted">Not yet assigned</p>
+              </div>
+            ) : !detail.end_date ? (
+              <div className="enroll-detail-card">
+                <p className="enroll-detail-label">Class Period</p>
+                <p className="enroll-detail-value">{formatDate(detail.start_date)} - Ongoing</p>
+              </div>
+            ) : (
+              <div className="enroll-detail-card">
+                <p className="enroll-detail-label">Class Period</p>
+                <p className="enroll-detail-value">
+                  {formatDate(detail.start_date)} - {formatDate(detail.end_date)}
+                </p>
+              </div>
+            )}
 
-            <div className="enroll-detail-card enroll-detail-card--muted">
-              <p className="enroll-detail-label">Class Groupchat</p>
-              <p className="enroll-detail-value enroll-detail-value--muted">Not yet available</p>
-            </div>
+            {detail.groupchat_link ? (
+              <div className="enroll-detail-card enroll-detail-card--groupchat">
+                <p className="enroll-detail-label">Class Groupchat</p>
+                <a
+                  href={detail.groupchat_link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="enroll-detail-link"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <i className="ti ti-brand-messenger" /> Join Groupchat
+                </a>
+              </div>
+            ) : (
+              <div className="enroll-detail-card enroll-detail-card--muted">
+                <p className="enroll-detail-label">Class Groupchat</p>
+                <p className="enroll-detail-value enroll-detail-value--muted">Not yet available</p>
+              </div>
+            )}
 
           </div>
 

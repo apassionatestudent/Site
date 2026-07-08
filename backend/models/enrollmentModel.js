@@ -307,37 +307,62 @@ export const insertStudentDocs = async (client, { studentId, docs }) => {
 
 
 // GET ALL ENROLLMENTS FOR A STUDENT
-// => Joins tesda_enrollments with courses, sectors, branches, and classes
-// => branch resolved via COALESCE: direct branch_id first, class's branch as fallback
-// => groupchat_link pulled from classes (not enrollment) per architectural decision
-
+// => UNION ALL across tesda_enrollments and shs_enrollments - each branch
+// => explicitly casts its "N/A for this type" columns (e.g. course_name is
+// => NULL::VARCHAR on the SHS branch) so both SELECTs produce identical
+// => column types, which UNION ALL requires
+// => class_type is pulled through so the frontend can show "Free
+// => (TESDA-Sponsored)" instead of fee_at_enrollment when applicable
 export const getEnrollmentsByStudentId = async (pool, studentId) => {
   const result = await pool.query(
-    `SELECT
-        e.public_id,
-        -- => Hardcoded for now - SHS enrollment will come from a separate table/route
-        -- => When SHS is added, this becomes a UNION ALL of tesda_enrollments + shs_enrollments
-        'TESDA'               AS enrollment_type,
-        c.title               AS course_name,
-        s.sector              AS sector,
-        e.status,
-        e.submitted_at,
-        e.fee_at_enrollment,
-        e.is_tesda_scholar,
-        e.scholarship_type,
-        e.ncae_taken,
-        COALESCE(b_direct.branch_name, b_class.branch_name) AS branch_name,
-        cl.start_date,
-        cl.end_date,
-        cl.groupchat_link
-      FROM tesda_enrollments e
-      LEFT JOIN courses     c         ON e.course_id  = c.course_id
-      LEFT JOIN sectors     s         ON c.sector_id  = s.sector_id
-      LEFT JOIN tesda_classes cl      ON e.class_id   = cl.class_id
-      LEFT JOIN branches    b_direct  ON e.branch_id  = b_direct.branch_id
-      LEFT JOIN branches    b_class   ON cl.branch_id = b_class.branch_id
-      WHERE e.student_id = $1
-      ORDER BY e.submitted_at DESC`,
+    `SELECT * FROM (
+        SELECT
+          e.public_id,
+          'TESDA'                 AS enrollment_type,
+          e.status,
+          e.submitted_at,
+          COALESCE(b_direct.branch_name, b_class.branch_name) AS branch_name,
+          e.fee_at_enrollment,
+          cl.class_type,
+          c.title                 AS course_name,
+          s.sector                AS sector,
+          NULL::VARCHAR(20)       AS track,
+          NULL::VARCHAR(60)       AS cluster,
+          NULL::VARCHAR(20)       AS school_year_completed,
+          NULL::VARCHAR(30)       AS grade_level_completed,
+          NULL::TEXT              AS last_school_attended
+        FROM tesda_enrollments e
+        LEFT JOIN courses       c        ON e.course_id  = c.course_id
+        LEFT JOIN sectors       s        ON c.sector_id  = s.sector_id
+        LEFT JOIN tesda_classes cl       ON e.class_id   = cl.class_id
+        LEFT JOIN branches      b_direct ON e.branch_id  = b_direct.branch_id
+        LEFT JOIN branches      b_class  ON cl.branch_id = b_class.branch_id
+        WHERE e.student_id = $1
+
+        UNION ALL
+
+        SELECT
+          e.public_id,
+          'SHS'                    AS enrollment_type,
+          e.status,
+          e.submitted_at,
+          COALESCE(b_direct.branch_name, b_class.branch_name) AS branch_name,
+          NULL::NUMERIC(10,2)      AS fee_at_enrollment,
+          NULL::VARCHAR(20)        AS class_type,
+          NULL::VARCHAR(255)       AS course_name,
+          NULL::VARCHAR(150)       AS sector,
+          e.track,
+          e.cluster,
+          e.school_year_completed,
+          e.grade_level_completed,
+          e.last_school_attended
+        FROM shs_enrollments e
+        LEFT JOIN shs_classes cl        ON e.class_id   = cl.class_id
+        LEFT JOIN branches    b_direct  ON e.branch_id  = b_direct.branch_id
+        LEFT JOIN branches    b_class   ON cl.branch_id = b_class.branch_id
+        WHERE e.student_id = $1
+     ) combined
+     ORDER BY submitted_at DESC`,
     [studentId]
   );
   return result.rows;
@@ -345,39 +370,89 @@ export const getEnrollmentsByStudentId = async (pool, studentId) => {
 
 
 // GET ONE ENROLLMENT BY PUBLIC UUID
-// => Ownership check against student_id prevents IDOR
-// => Returns null if not found or belongs to a different student
-
+// => Same UNION ALL shape as getEnrollmentsByStudentId, extended with every
+// => field both detail pages need. public_id is globally unique (UUID
+// => default) across both tables, so at most one branch will ever match -
+// => LIMIT 1 is just a safety net, not load-bearing logic
+// => Ownership check (student_id) happens on BOTH branches to prevent IDOR
 export const getEnrollmentByPublicId = async (pool, publicId, studentId) => {
   const result = await pool.query(
-    `SELECT
-        e.public_id,
-        -- => Hardcoded for now - SHS enrollment will come from a separate table/route
-        -- => When SHS is added, this becomes a UNION ALL of tesda_enrollments + shs_enrollments
-        'TESDA'               AS enrollment_type,
-        c.title               AS course_name,
-        s.sector              AS sector,
-        e.status,
-        e.submitted_at,
-        e.fee_at_enrollment,
-        e.is_tesda_scholar,
-        e.scholarship_type,
-        e.other_scholarship,
-        e.ncae_taken,
-        e.ncae_where,
-        e.ncae_when,
-        COALESCE(b_direct.branch_name, b_class.branch_name) AS branch_name,
-        cl.start_date,
-        cl.end_date,
-        cl.groupchat_link
-      FROM tesda_enrollments e
-      LEFT JOIN courses     c         ON e.course_id  = c.course_id
-      LEFT JOIN sectors     s         ON c.sector_id  = s.sector_id
-      LEFT JOIN classes     cl        ON e.class_id   = cl.class_id
-      LEFT JOIN branches    b_direct  ON e.branch_id  = b_direct.branch_id
-      LEFT JOIN branches    b_class   ON cl.branch_id = b_class.branch_id
-      WHERE e.public_id  = $1
-        AND e.student_id = $2`,
+    `SELECT * FROM (
+        SELECT
+          e.public_id,
+          'TESDA'                  AS enrollment_type,
+          e.status,
+          e.submitted_at,
+          COALESCE(b_direct.branch_name, b_class.branch_name) AS branch_name,
+          e.fee_at_enrollment,
+          e.uli,
+          cl.class_type,
+          c.title                  AS course_name,
+          s.sector                 AS sector,
+          e.ncae_taken,
+          e.ncae_where,
+          e.ncae_when,
+          e.is_tesda_scholar,
+          e.scholarship_type,
+          e.other_scholarship,
+          cl.start_date,
+          cl.end_date,
+          cl.groupchat_link,
+          NULL::VARCHAR(20)        AS track,
+          NULL::VARCHAR(60)        AS cluster,
+          NULL::VARCHAR(20)        AS school_year_completed,
+          NULL::VARCHAR(30)        AS grade_level_completed,
+          NULL::TEXT               AS last_school_attended,
+          NULL::VARCHAR(12)        AS lrn,
+          NULL::VARCHAR(150)       AS emergency_name,
+          NULL::VARCHAR(60)        AS emergency_relationship,
+          NULL::VARCHAR(11)        AS emergency_contact_no
+        FROM tesda_enrollments e
+        LEFT JOIN courses       c        ON e.course_id  = c.course_id
+        LEFT JOIN sectors       s        ON c.sector_id  = s.sector_id
+        LEFT JOIN tesda_classes cl       ON e.class_id   = cl.class_id
+        LEFT JOIN branches      b_direct ON e.branch_id  = b_direct.branch_id
+        LEFT JOIN branches      b_class  ON cl.branch_id = b_class.branch_id
+        WHERE e.public_id = $1 AND e.student_id = $2
+
+        UNION ALL
+
+        SELECT
+          e.public_id,
+          'SHS'                     AS enrollment_type,
+          e.status,
+          e.submitted_at,
+          COALESCE(b_direct.branch_name, b_class.branch_name) AS branch_name,
+          NULL::NUMERIC(10,2)       AS fee_at_enrollment,
+          NULL::VARCHAR(20)         AS uli,
+          NULL::VARCHAR(20)         AS class_type,
+          NULL::VARCHAR(255)        AS course_name,
+          NULL::VARCHAR(150)        AS sector,
+          NULL::BOOLEAN             AS ncae_taken,
+          NULL::TEXT                AS ncae_where,
+          NULL::VARCHAR(50)         AS ncae_when,
+          NULL::BOOLEAN             AS is_tesda_scholar,
+          NULL::VARCHAR(50)         AS scholarship_type,
+          NULL::TEXT                AS other_scholarship,
+          cl.start_date,
+          cl.end_date,
+          cl.groupchat_link,
+          e.track,
+          e.cluster,
+          e.school_year_completed,
+          e.grade_level_completed,
+          e.last_school_attended,
+          e.lrn,
+          e.emergency_name,
+          e.emergency_relationship,
+          e.emergency_contact_no
+        FROM shs_enrollments e
+        LEFT JOIN shs_classes cl        ON e.class_id   = cl.class_id
+        LEFT JOIN branches    b_direct  ON e.branch_id  = b_direct.branch_id
+        LEFT JOIN branches    b_class   ON cl.branch_id = b_class.branch_id
+        WHERE e.public_id = $1 AND e.student_id = $2
+     ) combined
+     LIMIT 1`,
     [publicId, studentId]
   );
   return result.rows[0] ?? null;
