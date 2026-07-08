@@ -242,7 +242,7 @@ const SHSStep3 = ({
             value={data.guardianContactNo}
             onChange={(e) => {
               const raw = e.target.value.replace(/\D/g, '').slice(0, 11);
-              onChange('fatherContactNo', raw);
+              onChange('guardianContactNo', raw);
             }}
           />
           <span className="shs3-field-hint">Must start with 09 and be exactly 11 digits.</span>

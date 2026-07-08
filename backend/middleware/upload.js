@@ -47,6 +47,32 @@ export const upload = multer({
   { name: 'validId',   maxCount: 1 },
 ]);
 
+// => Stricter fileFilter for SHS uploads - JPG/PNG only, no PDF
+// => (SHSStep2 restricts to JPG/PNG with real MIME-type validation on
+// => the frontend; this mirrors that restriction server-side)
+const shsFileFilter = (req, file, cb) => {
+  const allowed = ['image/jpeg', 'image/jpg', 'image/png'];
+  if (allowed.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error('Only JPG and PNG files are allowed.'), false);
+  }
+};
+
+// => Separate multer instance from `upload` since SHS has different field
+// => names AND a different fileFilter (no PDF) - fields correspond exactly
+// => to shsDocuments' keys in Enroll.jsx
+export const uploadShs = multer({
+  storage,
+  fileFilter: shsFileFilter,
+  limits: { fileSize: 5 * 1024 * 1024 }, // => same 5MB limit as TESDA
+}).fields([
+  { name: 'psaBirthCertificate',  maxCount: 1 },
+  { name: 'grade10ReportCard',    maxCount: 1 },
+  { name: 'goodMoralCertificate', maxCount: 1 },
+  { name: 'escCertificate',       maxCount: 1 },
+]);
+
 // => Uploads a buffer to R2 and returns the object key
 // => The key is what gets stored in the DB - never a public URL
 // => The proxy route uses the key to fetch the file server-side on demand

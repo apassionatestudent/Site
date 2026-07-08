@@ -49,7 +49,7 @@ export const getClasses = async (req, res) => {
         cl.max_students AS remaining_slots,
 
         i.instructor_full_name
-    FROM classes cl
+    FROM FROM tesda_classes cl
     LEFT JOIN instructors i ON cl.instructor_id = i.instructor_id
     WHERE cl.course_id = ${course_id}
         AND cl.branch_id = ${branch_id}

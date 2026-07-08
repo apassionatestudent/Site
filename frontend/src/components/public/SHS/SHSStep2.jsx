@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './SHSStep2.css';
 // => Remove-file icon for the upload section below - swapped in from your
 // => own assets instead of a webfont icon class, since the Tabler icon
@@ -95,6 +95,8 @@ const SHSStep2 = ({ data, onChange, documents, onDocumentsChange, onBack, onNext
     schoolYearCompleted: false,
     track: false,
     cluster: false,
+    branch: false,
+    class: false,
   });
 
   // => Per-document error flags, keyed by REQUIRED_DOCUMENTS' `key`
@@ -103,6 +105,49 @@ const SHSStep2 = ({ data, onChange, documents, onDocumentsChange, onBack, onNext
   // => Separate from docErrors so the error message can say WHY it failed
   // => (wrong file type vs. missing/incomplete) instead of one generic line
   const [docTypeErrors, setDocTypeErrors] = useState({});
+
+  // => Live branch list, fetched once on mount
+  const [branches, setBranches] = useState([]);
+
+  // => Live class list for the currently selected branch+track+cluster -
+  // => refetched whenever any of those three change. Empty array (after a
+  // => completed fetch) means "no open class yet" -> Reserve path.
+  const [shsClasses, setShsClasses] = useState([]);
+  const [classesLoading, setClassesLoading] = useState(false);
+  const [classesFetched, setClassesFetched] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/branches')
+      .then((res) => res.json())
+      .then(setBranches)
+      .catch((err) => console.error('Failed to fetch branches:', err));
+  }, []);
+
+  useEffect(() => {
+    // => Nothing to fetch yet until branch + track are both chosen
+    if (!data.branch || !data.track) {
+      setShsClasses([]);
+      setClassesFetched(false);
+      return;
+    }
+
+    setClassesLoading(true);
+    const params = new URLSearchParams({ branch_id: data.branch, track: data.track });
+    if (data.cluster) params.append('cluster', data.cluster);
+
+    fetch(`/api/shs-classes?${params.toString()}`)
+      .then((res) => res.json())
+      .then((list) => {
+        setShsClasses(list);
+        setClassesFetched(true);
+      })
+      .catch((err) => console.error('Failed to fetch SHS classes:', err))
+      .finally(() => setClassesLoading(false));
+  }, [data.branch, data.track, data.cluster]);
+
+  // => True once we've actually checked and confirmed there's nothing open -
+  // => used to decide whether "no class selected" is valid (Reserve) or an error
+  const noClassesAvailable = classesFetched && shsClasses.length === 0;
 
   const clearError = (field) => {
     setFieldErrors(prev => ({ ...prev, [field]: false }));
@@ -134,6 +179,11 @@ const SHSStep2 = ({ data, onChange, documents, onDocumentsChange, onBack, onNext
     if (!data.schoolYearCompleted) return 'missing';
     if (!data.track) return 'missing';
     if (clusterRequired && !data.cluster) return 'missing';
+    // => Branch required for BOTH tracks - was only checking 'academic' before
+    if (!data.branch) return 'missing';
+    // => Class only required if there's actually one to pick - if the fetch
+    // => came back empty, that's the valid Reserve path, not a missing field
+    if (!data.class && !noClassesAvailable) return 'missing';
     if (!allDocumentsValid()) return 'missing';
     return 'valid';
   };
@@ -181,6 +231,8 @@ const SHSStep2 = ({ data, onChange, documents, onDocumentsChange, onBack, onNext
       schoolYearCompleted: !data.schoolYearCompleted,
       track: !data.track,
       cluster: clusterRequired && !data.cluster,
+      branch: !data.branch,
+      class: !data.class && !noClassesAvailable,
     });
 
     // => Build docErrors from REQUIRED_DOCUMENTS rather than hand-listing
@@ -200,6 +252,7 @@ const SHSStep2 = ({ data, onChange, documents, onDocumentsChange, onBack, onNext
     setFieldErrors({
       lastSchoolAttended: false, gradeLevelCompleted: false,
       schoolYearCompleted: false, track: false, cluster: false,
+      branch: false, class: false,
     });
     setDocErrors({});
     setDocTypeErrors({});
@@ -273,9 +326,15 @@ const SHSStep2 = ({ data, onChange, documents, onDocumentsChange, onBack, onNext
                 value={value}
                 checked={data.track === value}
                 onChange={(e) => {
+                  // onChange('track', e.target.value);
+                  // // => Clear cluster when switching away from Tech-Prof
+                  // if (e.target.value !== 'tech_prof') onChange('cluster', '');
+                  // clearError('track');
+
                   onChange('track', e.target.value);
-                  // => Clear cluster when switching away from Tech-Prof
-                  if (e.target.value !== 'tech_prof') onChange('cluster', '');
+                  onChange('cluster', '');
+                  onChange('branch', '');
+                  onChange('class', '');
                   clearError('track');
                 }}
               />
@@ -314,6 +373,61 @@ const SHSStep2 = ({ data, onChange, documents, onDocumentsChange, onBack, onNext
           </div>
         </div>
       )}
+
+      <div className="shs2-grid shs2-g2 shs2-branch-class-row">
+        <div className="shs2-field-group">
+          <label className="shs2-label">
+            Preferred Branch <span className="shs2-req">*</span>
+          </label>
+          <select
+            className={`shs2-select ${fieldErrors.branch ? 'shs2-input--error' : ''}`}
+            value={data.branch}
+            onChange={(e) => {
+              onChange('branch', e.target.value);
+              onChange('class', '');
+              clearError('branch');
+            }}
+          >
+            <option value="">Select branch</option>
+            {branches.map(({ branch_id, branch_name }) => (
+              <option key={branch_id} value={branch_id}>{branch_name}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="shs2-field-group">
+          <label className="shs2-label">
+            Preferred Class <span className="shs2-req">*</span>
+          </label>
+
+          {/* => Reserve path: fetch completed, branch+track selected, but
+               nothing open yet - show a static notice instead of a dropdown */}
+          {noClassesAvailable ? (
+            <div className="shs2-reserve-notice">
+              <i className="ti ti-clock" /> No open class yet for this selection - your enrollment will be marked as <strong>Reserved</strong> until one is available.
+            </div>
+          ) : (
+            <select
+              className={`shs2-select ${fieldErrors.class ? 'shs2-input--error' : ''}`}
+              value={data.class}
+              disabled={!data.branch || !data.track || classesLoading}
+              onChange={(e) => {
+                onChange('class', e.target.value);
+                clearError('class');
+              }}
+            >
+              <option value="">
+                {classesLoading ? 'Loading classes...' : 'Select class'}
+              </option>
+              {shsClasses.map(({ class_id, start_date, end_date }) => (
+                <option key={class_id} value={class_id}>
+                  {new Date(start_date).toLocaleDateString()} – {new Date(end_date).toLocaleDateString()}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
+      </div>
 
       <div className="shs2-field-group">
         <label className="shs2-label">Preferred Electives <span className="shs2-hint-inline">(if applicable)</span></label>

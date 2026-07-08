@@ -1,5 +1,4 @@
-
-import { processEnrollmentSubmission, getStudentEnrollments, getStudentEnrollmentDetail } from '../services/enrollmentService.js';
+import { processEnrollmentSubmission, processShsEnrollmentSubmission, getStudentEnrollments, getStudentEnrollmentDetail } from '../services/enrollmentService.js';
 
 // => POST /api/enrollment/submit
 export const submitEnrollment = async (req, res) => {
@@ -17,6 +16,27 @@ export const submitEnrollment = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Enrollment submission failed. Please try again.',
+    });
+  }
+};
+
+// => POST /api/enrollment/submit-shs
+export const submitShsEnrollment = async (req, res) => {
+  try {
+    const result = await processShsEnrollmentSubmission(req.body, req.files);
+    res.status(201).json({
+      success: true,
+      message: 'SHS enrollment submitted successfully.',
+      enrollment_id: result.enrollmentId,
+    });
+  } catch (err) {
+    console.error('SHS enrollment submission error:', err);
+    // => Validation errors (statusCode 400) get their real message shown -
+    // => genuine server/DB errors stay generic so internals aren't leaked
+    const statusCode = err.statusCode || 500;
+    res.status(statusCode).json({
+      success: false,
+      message: statusCode === 400 ? err.message : 'SHS enrollment submission failed. Please try again.',
     });
   }
 };

@@ -268,7 +268,6 @@ const [tesdaPrivacy, setTesdaPrivacy] = useState({
 // => SHS multi-step state: tracks which of the 3 pages is active
 const [shsStep, setShsStep] = useState(1);
 
-// => SHS form data - Student Information (Step 1)
 const [shsProfile, setShsProfile] = useState({
   lrn: '',
   lastName: '',
@@ -279,9 +278,15 @@ const [shsProfile, setShsProfile] = useState({
   birthMonth: '',
   birthDay: '',
   birthYear: '',
-  placeOfBirth: '',
+  // => was a single placeOfBirth string - split to match SHSStep1's actual
+  // => cascade (birthplaceRegion/Province/City), separate from home address below
+  birthplaceRegion: '',
+  birthplaceProvince: '',
+  birthplaceCity: '',
   citizenship: 'Filipino',
   religion: '',
+  // => new: "Others" specify text, read/written by SHSStep1 as data.religionOthers
+  religionOthers: '',
   region: '',
   province: '',
   city: '',
@@ -289,6 +294,9 @@ const [shsProfile, setShsProfile] = useState({
   district: '',
   street: '',
   contactNo: '',
+  // => new: required field in SHSStep1, was never added here - admins use
+  // => this for batch group-chat additions
+  facebookLink: '',
   email: '',
 });
 
@@ -301,6 +309,11 @@ const [shsAcademic, setShsAcademic] = useState({
   track: '',      // => 'academic' | 'tech_prof'
   cluster: '',    // => only relevant when track === 'tech_prof'
   electives: '',
+  // => matches shs_enrollments.branch_id
+  branch: '',
+  // => matches shs_enrollments.class_id - stays '' when no class is
+  // => available for the branch+track+cluster combo (Reserve path)
+  class: '',
 });
 
 // => SHS form data - Document uploads for Step 2. Kept separate from
@@ -311,8 +324,9 @@ const [shsDocuments, setShsDocuments] = useState({
   psaBirthCertificate: null,
   grade10ReportCard: null,
   goodMoralCertificate: null,
-  photos2x2: [],
-  photos1x1: [],
+  // => photos2x2/photos1x1 removed - that upload feature was pulled from
+  // => SHSStep2.jsx once physical-submission-only was decided; these keys
+  // => were dead state left behind
   escCertificate: null,
 });
 
@@ -358,6 +372,14 @@ const handleShsSubmit = async () => {
   formData.append('academicData', JSON.stringify(shsAcademic));
   formData.append('familyData', JSON.stringify(shsFamily));
   formData.append('privacyAgreed', shsPrivacy.agreed);
+
+  // => new: wires shsDocuments' actual File objects into the request -
+  // => same pattern as handleTesdaSubmit's file loop below. Only appends
+  // => when a file is present, since escCertificate can be null (Optional/
+  // => not required unless schoolType === 'private')
+  Object.entries(shsDocuments).forEach(([k, file]) => {
+    if (file) formData.append(k, file);
+  });
 
   try {
     const res = await fetch('/api/enrollment/submit-shs', {

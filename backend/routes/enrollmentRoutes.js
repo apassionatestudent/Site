@@ -11,8 +11,8 @@
 // export default router;
 
 import express from 'express';
-import { submitEnrollment, getMyEnrollments, getMyEnrollmentDetail } from '../controllers/enrollmentController.js';
-import { upload } from '../middleware/upload.js';
+import { submitEnrollment, submitShsEnrollment, getMyEnrollments, getMyEnrollmentDetail } from '../controllers/enrollmentController.js';
+import { upload, uploadShs } from '../middleware/upload.js';
 import { protectStudent } from '../middleware/studentAuth.js';
 import { readLimiter, submissionLimiter, floodLimiter } from '../middleware/rateLimiters.js';
 
@@ -21,6 +21,10 @@ const router = express.Router();
 // => uploadDocs middleware runs first (parses files to memory buffer),
 // => then submitEnrollment controller runs with req.files already populated
 router.post('/submit', submissionLimiter, upload, submitEnrollment);
+
+// => uploadShs middleware runs first (parses SHS's 4 file fields to memory
+// => buffer), then submitShsEnrollment controller runs with req.files populated
+router.post('/submit-shs', submissionLimiter, uploadShs, submitShsEnrollment);
 
 // => Protected: only logged-in students can fetch their own enrollments
 router.get('/my-enrollments', floodLimiter, protectStudent, readLimiter, getMyEnrollments);

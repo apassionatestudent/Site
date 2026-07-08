@@ -26,6 +26,10 @@
 .shs2-grid { display: grid; gap: 0 1.2rem; }
 .shs2-g2 { grid-template-columns: 1fr 1fr; }
 
+.shs2-branch-class-row {
+  margin-top: -0.2rem;
+}
+
 .shs2-field-group {
   display: flex;
   flex-direction: column;
@@ -76,6 +80,47 @@
 .shs2-input--error {
   border-color: #c0392b !important;
   box-shadow: 0 0 0 3px rgba(192, 57, 43, 0.12);
+}
+
+.shs2-select {
+  height: 40px;
+  border: 1px solid var(--enroll-field-border);
+  border-radius: 6px;
+  padding: 0 12px;
+  font-size: 15px;
+  font-family: var(--font-body);
+  background: var(--card-bg);
+  color: var(--text-primary);
+  outline: none;
+  width: 100%;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.shs2-select:focus {
+  border-color: var(--enroll-field-focus);
+  box-shadow: 0 0 0 3px rgba(139, 26, 26, 0.1);
+}
+
+.shs2-select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* => Static notice shown in place of the class dropdown when no shs_classes
+     row exists yet for the selected branch+track+cluster combo */
+.shs2-reserve-notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px dashed var(--enroll-field-border);
+  border-radius: 6px;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-family: var(--font-body);
 }
 
 /* => Track radio group - wraps since labels are long */
@@ -436,8 +481,28 @@
 .shs2-btn-next:hover { background: var(--enroll-btn-hover); }
 .shs2-btn-next:active { transform: scale(0.98); }
 
+.shs2-select {
+  height: 40px;
+  border: 1px solid var(--enroll-field-border);
+  border-radius: 6px;
+  padding: 0 12px;
+  font-size: 15px;
+  font-family: var(--font-body);
+  background: var(--card-bg);
+  color: var(--text-primary);
+  outline: none;
+  width: 100%;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.shs2-select:focus {
+  border-color: var(--enroll-field-focus);
+  box-shadow: 0 0 0 3px rgba(139, 26, 26, 0.1);
+}
+
 @media (max-width: 700px) {
   .shs2-wrap { padding: 1.2rem; }
   .shs2-g2 { grid-template-columns: 1fr; }
   .shs2-uploads { grid-template-columns: 1fr; }
+  .shs2-g2 { grid-template-columns: 1fr; }
 }

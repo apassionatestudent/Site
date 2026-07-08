@@ -18,6 +18,7 @@ import studentAuthRouter from './routes/studentAuth.js';
 import branchesRouter from "./routes/branches.js"; 
 import coursesRouter from "./routes/courses.js";
 import classRouter from "./routes/classes.js";
+import shsClassesRouter from './routes/shsClasses.js';
 import enrollmentRoutes from './routes/enrollmentRoutes.js';
 import documentRoutes from './routes/documentRoutes.js';
 
@@ -52,6 +53,8 @@ app.use("/api/branches", branchesRouter);
 app.use("/api/courses", coursesRouter);
 // => Register classes route
 app.use("/api/classes", classRouter);
+// => Register SHS classes route
+app.use("/api/shs-classes", shsClassesRouter);
 
 
 // => Enrollment submission route
@@ -293,7 +296,7 @@ async function initDB () {
     `;
 
     await sql`
-      CREATE TABLE IF NOT EXISTS classes (
+      CREATE TABLE IF NOT EXISTS tesda_classes (
         class_id                    SERIAL      PRIMARY KEY,
 
         instructor_id               INT         REFERENCES instructors(instructor_id) ON DELETE SET NULL,
@@ -308,6 +311,9 @@ async function initDB () {
         -- => Concluded: all discussions done, certificates given
         -- => Planned: class is set up but hasn't started yet
         status                      VARCHAR(15) NOT NULL DEFAULT 'Planned' CHECK (status IN ('Planned', 'Ongoing', 'Concluded')),
+
+        -- => Regular: paid by the enrollee - TESDA-Sponsored: paid by TESDA
+        class_type                  VARCHAR(20) NOT NULL DEFAULT 'Regular' CHECK (class_type IN ('Regular', 'TESDA-Sponsored')),
 
         -- => Minimum students required before class can begin
         required_number_of_students INT         NOT NULL,
@@ -327,6 +333,33 @@ async function initDB () {
 
         -- => Admin notes, delays, announcements, etc.
         remarks                     TEXT        DEFAULT NULL
+      )
+    `;
+
+    // => shs_classes: SHS's equivalent of tesda_classes, but keyed by
+    // => branch + track + cluster instead of course_id, since SHS enrollees
+    // => pick a track/cluster, not a TESDA course. No instructor_id for now -
+    // => flagged as an open question, easy to ALTER in later if needed.
+    await sql`
+      CREATE TABLE IF NOT EXISTS shs_classes (
+        class_id      SERIAL      PRIMARY KEY,
+        branch_id     INT         NOT NULL REFERENCES branches(branch_id) ON DELETE CASCADE,
+
+        -- => track/cluster left WITHOUT a CHECK - same reasoning as
+        -- => shs_enrollments.track/cluster: values are frontend-enforced
+        track         VARCHAR(20) NOT NULL,
+        cluster       VARCHAR(60) NULL,
+
+        school_year   VARCHAR(20) NOT NULL,
+        start_date    DATE        NOT NULL,
+        end_date      DATE        NOT NULL,
+
+        status        VARCHAR(15) NOT NULL DEFAULT 'Planned' CHECK (status IN ('Planned', 'Ongoing', 'Concluded')),
+        max_students  INT         NOT NULL,
+
+        created_by    INT         REFERENCES admins(admin_id) ON DELETE SET NULL,
+        updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        remarks       TEXT        DEFAULT NULL
       )
     `;
 
@@ -387,6 +420,8 @@ async function initDB () {
         END IF;
       END $$
     `;
+
+    
 
     await sql`
       -- => student_address: Step 1 address fields
@@ -487,17 +522,170 @@ async function initDB () {
     `;
 
     await sql`
-      -- => enrollment_documents: Step 5 file uploads
+      -- => tesda_documents (renamed from enrollment_documents): Step 5 file uploads
       -- => document_key stores the R2 object key (e.g. primeenroll/student-docs/birthCert_123.jpg)
       -- => Never stores a public URL - the proxy route resolves the key on demand
       -- => Wired to tesda_enrollments instead of the old enrollment table
-      CREATE TABLE IF NOT EXISTS enrollment_documents (
+      -- => Renamed to tesda_documents since SHS now gets its own shs_documents table
+      CREATE TABLE IF NOT EXISTS tesda_documents (
         document_id     SERIAL       PRIMARY KEY,
-        public_id          UUID         NOT NULL DEFAULT gen_random_uuid() UNIQUE,
+        public_id       UUID         NOT NULL DEFAULT gen_random_uuid() UNIQUE,
         enrollment_id   INT          NOT NULL REFERENCES tesda_enrollments(enrollment_id) ON DELETE CASCADE,
         document_type   VARCHAR(100) NOT NULL,
         document_key    TEXT         NOT NULL,
-        uploaded_at     IMESTAMPTZ  NOT NULL DEFAULT NOW()
+        -- => fixed typo: was "IMESTAMPTZ" (missing leading T)
+        uploaded_at     TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+      )
+    `;
+
+    // => shs_family_members: SHS Father/Mother/Guardian records
+    // => ONE table with a role column instead of separate father_*/mother_*/
+    // => guardian_* columns - each person gets their own row distinguished by `role`
+    // => Keyed on student_id directly (shared identity, not per-enrollment) -
+    // => family info doesn't change per school year the way enrollment details do
+    // => UNIQUE(student_id, role) - a student can only have ONE row per role
+    await sql`
+      CREATE TABLE IF NOT EXISTS shs_family_members (
+        family_member_id         SERIAL       PRIMARY KEY,
+        student_id                BIGINT       NOT NULL REFERENCES student_accounts(student_id) ON DELETE CASCADE,
+        role                      VARCHAR(20)  NOT NULL CHECK (role IN ('Father', 'Mother', 'Guardian')),
+        full_name                 VARCHAR(150) NOT NULL,
+        occupation                VARCHAR(150) NULL,
+        contact_no                VARCHAR(11)  NULL,
+
+        -- => Only meaningful for the Guardian role (physical form only asks
+        -- => "Relationship to Student" for Guardian) - left nullable for
+        -- => Father/Mother rows rather than splitting into another table
+        relationship_to_student   VARCHAR(60)  NULL,
+
+        UNIQUE (student_id, role)
+      )
+    `;
+
+    // => Enforces: a student must have BOTH Father and Mother rows, OR a
+    // => Guardian row alone - a single parent by themselves is not enough.
+    // => This is a cross-row business rule, so a plain column CHECK can't
+    // => express it - needs a trigger that looks at all of a student's rows.
+    await sql`
+      CREATE OR REPLACE FUNCTION check_shs_family_requirement()
+      RETURNS TRIGGER AS $$
+      DECLARE
+        affected_student_id BIGINT;
+        has_father BOOLEAN;
+        has_mother BOOLEAN;
+        has_guardian BOOLEAN;
+      BEGIN
+        affected_student_id := COALESCE(NEW.student_id, OLD.student_id);
+
+        SELECT
+          EXISTS (SELECT 1 FROM shs_family_members WHERE student_id = affected_student_id AND role = 'Father'),
+          EXISTS (SELECT 1 FROM shs_family_members WHERE student_id = affected_student_id AND role = 'Mother'),
+          EXISTS (SELECT 1 FROM shs_family_members WHERE student_id = affected_student_id AND role = 'Guardian')
+        INTO has_father, has_mother, has_guardian;
+
+        IF NOT ((has_father AND has_mother) OR has_guardian) THEN
+          RAISE EXCEPTION 'Student % must have both Father and Mother, or a Guardian.', affected_student_id;
+        END IF;
+
+        RETURN NULL; -- => AFTER trigger - return value is ignored either way
+      END;
+      $$ LANGUAGE plpgsql
+    `;
+
+    await sql`
+      -- => DEFERRABLE INITIALLY DEFERRED - this check only runs at COMMIT,
+      -- => not after each individual row insert. Needed because the SHS
+      -- => submission service inserts Father/Mother/Guardian rows one at a
+      -- => time inside one transaction via 'pool' - without deferring, the
+      -- => very first row insert would trip the check before the second
+      -- => row ever gets a chance to land.
+      DO $$ BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_trigger WHERE tgname = 'trg_check_shs_family_requirement'
+        ) THEN
+          CREATE CONSTRAINT TRIGGER trg_check_shs_family_requirement
+          AFTER INSERT OR UPDATE OR DELETE ON shs_family_members
+          DEFERRABLE INITIALLY DEFERRED
+          FOR EACH ROW EXECUTE FUNCTION check_shs_family_requirement();
+        END IF;
+      END $$
+    `;
+
+    // => shs_enrollments: core SHS enrollment transaction record
+    // => Holds ONLY enrollment-specific data (academic history, track/
+    // => cluster, emergency contact, health, consent) - identity/address
+    // => fields live in the shared student_profile/student_address tables instead
+    // => branch_id nullable - no branch selection UI yet on the SHS
+    // => frontend, added now so it doesn't need a migration later
+    await sql`
+      CREATE TABLE IF NOT EXISTS shs_enrollments (
+        enrollment_id             SERIAL        PRIMARY KEY,
+        public_id                 UUID          NOT NULL DEFAULT gen_random_uuid() UNIQUE,
+        student_id                BIGINT        NOT NULL REFERENCES student_accounts(student_id) ON DELETE RESTRICT,
+        branch_id                 INT           NULL REFERENCES branches(branch_id) ON DELETE SET NULL,
+
+        -- => Academic Information
+        last_school_attended      VARCHAR(150)  NOT NULL,
+        school_address             TEXT          NULL,
+        grade_level_completed      VARCHAR(30)   NOT NULL,
+        school_year_completed      VARCHAR(20)   NOT NULL,
+
+        -- => Strengthened SHS Enrollment Details
+        -- => track/cluster left WITHOUT a CHECK - values are already
+        -- => enforced by the frontend's radio group / <select>
+        track                      VARCHAR(20)   NOT NULL,
+        cluster                    VARCHAR(60)   NULL,
+        electives                  TEXT          NULL,
+
+        -- => Emergency Contact
+        emergency_name             VARCHAR(150)  NOT NULL,
+        emergency_relationship     VARCHAR(60)   NOT NULL,
+        emergency_contact_no       VARCHAR(11)   NOT NULL,
+        emergency_address          TEXT          NOT NULL,
+
+        -- => Health Information
+        has_medical_condition      VARCHAR(10)   NOT NULL CHECK (has_medical_condition IN ('none', 'yes')),
+        medical_condition_detail   TEXT          NULL,
+        allergies                  TEXT          NULL,
+        maintenance_medication     TEXT          NULL,
+
+        -- => Data privacy consent - no DB CHECK forcing TRUE, since the
+        -- => frontend disables the Submit button until this is checked
+        privacy_agreed             BOOLEAN       NOT NULL DEFAULT FALSE,
+
+        -- => Enrollment lifecycle status - same values/flow as tesda_enrollments
+        status                     VARCHAR(30)   NOT NULL DEFAULT 'Pending'
+                                   CHECK (status IN ('Pending', 'Approved', 'Needs Clarification', 'Rejected', 'Dropped', 'Completed', 'Reserved')),
+
+        submitted_at               TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+        updated_at                 TIMESTAMPTZ   NOT NULL DEFAULT NOW()
+      )
+    `;
+
+    await sql`
+      -- => Attach updated_at trigger to shs_enrollments
+      DO $$ BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_trigger WHERE tgname = 'shs_enrollments_set_updated_at'
+        ) THEN
+          CREATE TRIGGER shs_enrollments_set_updated_at
+          BEFORE UPDATE ON shs_enrollments
+          FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+        END IF;
+      END $$
+    `;
+
+    // => shs_documents: SHS Step 2 file uploads
+    // => Kept as its own separate table from tesda_documents per your
+    // => direction - document_key stores the R2 object key, never a public URL
+    await sql`
+      CREATE TABLE IF NOT EXISTS shs_documents (
+        document_id     SERIAL       PRIMARY KEY,
+        public_id       UUID         NOT NULL DEFAULT gen_random_uuid() UNIQUE,
+        enrollment_id   INT          NOT NULL REFERENCES shs_enrollments(enrollment_id) ON DELETE CASCADE,
+        document_type   VARCHAR(100) NOT NULL,
+        document_key    TEXT         NOT NULL,
+        uploaded_at     TIMESTAMPTZ  NOT NULL DEFAULT NOW()
       )
     `;
 
