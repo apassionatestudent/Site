@@ -3,7 +3,7 @@
 // => All queries receive `pool` as a param - no module-level pool import needed
 
 // GET ALL DOCUMENTS FOR A STUDENT
-// => Returns both enrollment_documents and student_docs for the logged-in student
+// => Returns both tesda_documents and student_docs for the logged-in student
 // => Each row tagged with source: 'enrollment' or 'profile' so the frontend can group them
 // => Ownership enforced via student_id on both tables - no IDOR possible
 export const getDocumentsByStudentId = async (pool, studentId) => {
@@ -16,7 +16,7 @@ export const getDocumentsByStudentId = async (pool, studentId) => {
         'enrollment'          AS source,
         e.public_id           AS enrollment_public_id,
         c.title               AS course_name
-      FROM enrollment_documents ed
+      FROM tesda_documents ed
       JOIN tesda_enrollments e ON ed.enrollment_id = e.enrollment_id
       LEFT JOIN courses c ON e.course_id = c.course_id
       WHERE e.student_id = $1
@@ -27,11 +27,11 @@ export const getDocumentsByStudentId = async (pool, studentId) => {
 };
 
 // GET ONE DOCUMENT BY PUBLIC UUID
-// => Checks enrollment_documents first, then student_docs
+// => Checks tesda_documents first, then student_docs
 // => In both cases, ownership is verified against the requesting student_id
 // => Returns null if not found or if it belongs to a different student - prevents IDOR
 export const getDocumentByPublicId = async (pool, publicId, studentId) => {
-  // => Try enrollment_documents first
+  // => Try tesda_documents first
   const enrollmentDoc = await pool.query(
     `SELECT
         ed.public_id,
@@ -44,7 +44,7 @@ export const getDocumentByPublicId = async (pool, publicId, studentId) => {
         s.sector              AS sector,
         e.status              AS enrollment_status,
         e.submitted_at        AS enrollment_submitted_at
-      FROM enrollment_documents ed
+      FROM tesda_documents ed
       JOIN tesda_enrollments e  ON ed.enrollment_id = e.enrollment_id
       LEFT JOIN courses c ON e.course_id = c.course_id
       LEFT JOIN sectors s ON c.sector_id  = s.sector_id
@@ -55,7 +55,7 @@ export const getDocumentByPublicId = async (pool, publicId, studentId) => {
 
   if (enrollmentDoc.rows[0]) return enrollmentDoc.rows[0];
 
-  // => Fall back to student_docs if not found in enrollment_documents
+  // => Fall back to student_docs if not found in tesda_documents
   const profileDoc = await pool.query(
     `SELECT
         sd.public_id,

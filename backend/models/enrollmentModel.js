@@ -39,30 +39,33 @@ export const insertStudentProfile = async (client, { studentId, body }) => {
         sex, civil_status, employment_status,
         birth_date,
         birthplace_region, birthplace_province, birthplace_city,
-        highest_educ_attainment)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
+        highest_educ_attainment,
+        lrn, religion, religion_others)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20)
      RETURNING profile_id`,
     [
       studentId,
       body.lastName,
       body.firstName,
-      body.middleName       || null,
-      body.nameExtension    || null,
+      body.middleName        || null,
+      // => TESDA sends nameExtension, SHS sends suffix - same concept, different key
+      body.nameExtension     || body.suffix || null,
       body.contactNo,
-      body.facebookLink     || null,
-      body.email            || null,
-      body.nationality,
+      body.facebookLink      || null,
+      body.email             || null,
+      // => TESDA sends nationality, SHS sends citizenship - same concept, different key
+      body.nationality       || body.citizenship || null,
       body.sex,
-      body.civilStatus,
-      body.employmentStatus,
-      // => TESDAStep2 sends birthMonth as a month name (e.g. 'August'), not a number
-      // => MONTHS.indexOf() gives 0-based index, +1 converts to 1-based before padding
+      body.civilStatus       || null, // => TESDA-only - NULL on SHS submissions
+      body.employmentStatus  || null, // => TESDA-only - NULL on SHS submissions
       `${body.birthYear}-${String(MONTHS.indexOf(body.birthMonth) + 1).padStart(2,'0')}-${String(body.birthDay).padStart(2,'0')}`,
-      // => Keys now match tesdaPersonal state: birthplaceRegion/Province/City
       body.birthplaceRegion,
       body.birthplaceProvince || null,
       body.birthplaceCity,
-      body.educAttainment,
+      body.educAttainment     || null, // => TESDA-only - NULL on SHS submissions
+      body.lrn                || null, // => SHS-only - NULL on TESDA submissions
+      body.religion           || null, // => SHS-only - NULL on TESDA submissions
+      body.religionOthers     || null, // => SHS-only - NULL on TESDA submissions
     ]
   );
   return result.rows[0].profile_id;
@@ -109,6 +112,112 @@ export const insertStudentGuardian = async (client, { studentId, body }) => {
       body.guardianAddress || null,
     ]
   );
+};
+
+// SHS ENROLLMENT
+// => Core SHS enrollment transaction record - academic history, track/
+// => cluster, emergency contact, and health info all live here (Step 2 + 3
+// => fields that AREN'T identity/address/family, which live in the shared
+// => student_profile/student_address tables or shs_family_members instead)
+export const insertShsEnrollment = async (client, { studentId, academicData, familyData, privacyAgreed }) => {
+  // => No class picked because none were available for this branch+track+
+  // => cluster combo (frontend shows "Reserve" instead of a dropdown in
+  // => that case) - class_id stays NULL, status becomes 'Reserved' until
+  // => an admin creates and assigns a real shs_classes row
+  const status = academicData.class ? 'Pending' : 'Reserved';
+
+  const result = await client.query(
+    `INSERT INTO shs_enrollments
+       (student_id, branch_id, class_id,
+        last_school_attended, school_address, grade_level_completed, school_year_completed,
+        track, cluster, electives,
+        emergency_name, emergency_relationship, emergency_contact_no, emergency_address,
+        has_medical_condition, medical_condition_detail, allergies, maintenance_medication,
+        privacy_agreed,
+        status, submitted_at)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,NOW())
+     RETURNING enrollment_id`,
+    [
+      studentId,
+      academicData.branch || null,
+      academicData.class  || null,
+      academicData.lastSchoolAttended,
+      academicData.schoolAddress || null,
+      academicData.gradeLevelCompleted,
+      academicData.schoolYearCompleted,
+      academicData.track,
+      academicData.cluster || null,
+      academicData.electives || null,
+      familyData.emergencyName,
+      familyData.emergencyRelationship,
+      familyData.emergencyContactNo,
+      familyData.emergencyAddress,
+      familyData.hasMedicalCondition,
+      familyData.hasMedicalCondition === 'yes' ? (familyData.medicalConditionDetail || null) : null,
+      familyData.allergies || null,
+      familyData.maintenanceMedication || null,
+      privacyAgreed,
+      status,
+    ]
+  );
+  return result.rows[0].enrollment_id;
+};
+
+
+// SHS FAMILY MEMBERS
+// => One row per Father/Mother/Guardian actually provided - shsFamily's flat
+// => fatherName/motherName/guardianName shape gets split into role-tagged rows here
+// => The DEFERRED constraint trigger on shs_family_members (checked at COMMIT,
+// => not per-row) validates the both-parents-or-guardian rule after this loop finishes
+
+export const insertShsFamilyMembers = async (client, { studentId, familyData }) => {
+  const members = [
+    familyData.fatherName && {
+      role: 'Father',
+      fullName: familyData.fatherName,
+      occupation: familyData.fatherOccupation || null,
+      contactNo: familyData.fatherContactNo || null,
+      relationshipToStudent: null, // => only Guardian rows carry this
+    },
+    familyData.motherName && {
+      role: 'Mother',
+      fullName: familyData.motherName,
+      occupation: familyData.motherOccupation || null,
+      contactNo: familyData.motherContactNo || null,
+      relationshipToStudent: null,
+    },
+    familyData.guardianName && {
+      role: 'Guardian',
+      fullName: familyData.guardianName,
+      occupation: familyData.guardianOccupation || null,
+      contactNo: familyData.guardianContactNo || null,
+      relationshipToStudent: familyData.guardianRelationship || null,
+    },
+  ].filter(Boolean); // => drops any role that wasn't provided
+
+  for (const m of members) {
+    await client.query(
+      `INSERT INTO shs_family_members
+         (student_id, role, full_name, occupation, contact_no, relationship_to_student)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [studentId, m.role, m.fullName, m.occupation, m.contactNo, m.relationshipToStudent]
+    );
+  }
+};
+
+
+// SHS DOCUMENTS
+// => Same shape/pattern as insertEnrollmentDocuments, wired to shs_enrollments
+// => and the separate shs_documents table instead of tesda_documents
+
+export const insertShsDocuments = async (client, { enrollmentId, docs }) => {
+  for (const doc of docs) {
+    await client.query(
+      `INSERT INTO shs_documents (enrollment_id, document_type, document_key, uploaded_at)
+       VALUES ($1, $2, $3, NOW())`,
+      [enrollmentId, doc.type, doc.key]
+    );
+  }
 };
 
 
@@ -174,7 +283,7 @@ export const insertClientClassifications = async (client, { enrollmentId, classi
 export const insertEnrollmentDocuments = async (client, { enrollmentId, docs }) => {
   for (const doc of docs) {
     await client.query(
-      `INSERT INTO enrollment_documents (enrollment_id, document_type, document_key, uploaded_at)
+      `INSERT INTO tesda_documents (enrollment_id, document_type, document_key, uploaded_at)
        VALUES ($1, $2, $3, NOW())`,
       [enrollmentId, doc.type, doc.key]
     );
@@ -224,7 +333,7 @@ export const getEnrollmentsByStudentId = async (pool, studentId) => {
       FROM tesda_enrollments e
       LEFT JOIN courses     c         ON e.course_id  = c.course_id
       LEFT JOIN sectors     s         ON c.sector_id  = s.sector_id
-      LEFT JOIN classes     cl        ON e.class_id   = cl.class_id
+      LEFT JOIN tesda_classes cl      ON e.class_id   = cl.class_id
       LEFT JOIN branches    b_direct  ON e.branch_id  = b_direct.branch_id
       LEFT JOIN branches    b_class   ON cl.branch_id = b_class.branch_id
       WHERE e.student_id = $1
