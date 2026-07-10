@@ -40,32 +40,30 @@ export const insertStudentProfile = async (client, { studentId, body }) => {
         birth_date,
         birthplace_region, birthplace_province, birthplace_city,
         highest_educ_attainment,
-        lrn, religion, religion_others)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20)
+        religion, religion_others)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)
      RETURNING profile_id`,
     [
       studentId,
       body.lastName,
       body.firstName,
       body.middleName        || null,
-      // => TESDA sends nameExtension, SHS sends suffix - same concept, different key
       body.nameExtension     || body.suffix || null,
       body.contactNo,
       body.facebookLink      || null,
       body.email             || null,
-      // => TESDA sends nationality, SHS sends citizenship - same concept, different key
       body.nationality       || body.citizenship || null,
       body.sex,
-      body.civilStatus       || null, // => TESDA-only - NULL on SHS submissions
-      body.employmentStatus  || null, // => TESDA-only - NULL on SHS submissions
+      body.civilStatus       || null,
+      body.employmentStatus  || null,
       `${body.birthYear}-${String(MONTHS.indexOf(body.birthMonth) + 1).padStart(2,'0')}-${String(body.birthDay).padStart(2,'0')}`,
       body.birthplaceRegion,
       body.birthplaceProvince || null,
       body.birthplaceCity,
-      body.educAttainment     || null, // => TESDA-only - NULL on SHS submissions
-      body.lrn                || null, // => SHS-only - NULL on TESDA submissions
-      body.religion           || null, // => SHS-only - NULL on TESDA submissions
-      body.religionOthers     || null, // => SHS-only - NULL on TESDA submissions
+      body.educAttainment     || null,
+      // => lrn REMOVED - belongs on shs_enrollments, not student_profile
+      body.religion           || null,
+      body.religionOthers     || null,
     ]
   );
   return result.rows[0].profile_id;
@@ -119,26 +117,23 @@ export const insertStudentGuardian = async (client, { studentId, body }) => {
 // => cluster, emergency contact, and health info all live here (Step 2 + 3
 // => fields that AREN'T identity/address/family, which live in the shared
 // => student_profile/student_address tables or shs_family_members instead)
-export const insertShsEnrollment = async (client, { studentId, academicData, familyData, privacyAgreed }) => {
-  // => No class picked because none were available for this branch+track+
-  // => cluster combo (frontend shows "Reserve" instead of a dropdown in
-  // => that case) - class_id stays NULL, status becomes 'Reserved' until
-  // => an admin creates and assigns a real shs_classes row
+export const insertShsEnrollment = async (client, { studentId, body, academicData, familyData, privacyAgreed }) => {
   const status = academicData.class ? 'Pending' : 'Reserved';
 
   const result = await client.query(
     `INSERT INTO shs_enrollments
-       (student_id, branch_id, class_id,
+       (student_id, lrn, branch_id, class_id,
         last_school_attended, school_address, grade_level_completed, school_year_completed,
         track, cluster, electives,
         emergency_name, emergency_relationship, emergency_contact_no, emergency_address,
         has_medical_condition, medical_condition_detail, allergies, maintenance_medication,
         privacy_agreed,
         status, submitted_at)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,NOW())
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,NOW())
      RETURNING enrollment_id`,
     [
       studentId,
+      body.lrn,
       academicData.branch || null,
       academicData.class  || null,
       academicData.lastSchoolAttended,
@@ -162,7 +157,6 @@ export const insertShsEnrollment = async (client, { studentId, academicData, fam
   );
   return result.rows[0].enrollment_id;
 };
-
 
 // SHS FAMILY MEMBERS
 // => One row per Father/Mother/Guardian actually provided - shsFamily's flat

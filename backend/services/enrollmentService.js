@@ -175,8 +175,8 @@ export const processShsEnrollmentSubmission = async (body, files) => {
     await insertStudentAddress(client, { studentId, body });
 
     // => 4. Core SHS enrollment record (academic + track/cluster + emergency + health)
-    const enrollmentId = await insertShsEnrollment(client, { studentId, academicData, familyData, privacyAgreed });
-
+    // const enrollmentId = await insertShsEnrollment(client, { studentId, academicData, familyData, privacyAgreed });
+    const enrollmentId = await insertShsEnrollment(client, { studentId, body, academicData, familyData, privacyAgreed });
     // => 5. Family members - one row each for whichever of Father/Mother/
     // => Guardian were provided. The DEFERRED constraint trigger on
     // => shs_family_members checks the both-parents-or-guardian rule at
