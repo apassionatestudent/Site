@@ -221,20 +221,24 @@ export const insertShsDocuments = async (client, { enrollmentId, docs }) => {
 // => scholarship_type / other_scholarship only if is_tesda_scholar is true
 
 export const insertTesdaEnrollment = async (client, { studentId, courseData, ncaeData, scholarshipData }) => {
+  // => Mirrors insertShsEnrollment's Reserve handling: 'reserve' isn't a real
+  // => class_id, it's the frontend's placeholder for "no open section yet."
+  const hasRealClass = courseData.courseClass && courseData.courseClass !== 'reserve';
+  const status = hasRealClass ? 'Pending' : 'Reserved';
+
   const result = await client.query(
     `INSERT INTO tesda_enrollments
        (student_id, branch_id, course_id, class_id, fee_at_enrollment,
         ncae_taken, ncae_where, ncae_when,
         is_tesda_scholar, scholarship_type, other_scholarship,
         status, submitted_at)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'Pending', NOW())
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12, NOW())
      RETURNING enrollment_id`,
     [
       studentId,
-      // => tesdaCourse keys: branch / course / courseClass (not branchId/courseId/classId)
       courseData.branch       || null,
       courseData.course       || null,
-      courseData.courseClass  || null,
+      hasRealClass ? courseData.courseClass : null,
       courseData.courseFee    || null,
       ncaeData.takenBefore === 'yes',
       ncaeData.takenBefore === 'yes' ? (ncaeData.where || null) : null,
@@ -242,6 +246,7 @@ export const insertTesdaEnrollment = async (client, { studentId, courseData, nca
       scholarshipData.isScholar === 'yes',
       scholarshipData.isScholar === 'yes' ? (scholarshipData.scholarshipType  || null) : null,
       scholarshipData.isScholar === 'yes' ? (scholarshipData.otherScholarship || null) : null,
+      status,
     ]
   );
   return result.rows[0].enrollment_id;
