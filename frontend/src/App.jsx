@@ -1,6 +1,8 @@
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import './App.css'
 
+import { Toaster } from "react-hot-toast";
+
 // => import public components
 import NavBar from './components/public/Navbar/NavBar.jsx';
 import Footer from './components/public/Footer/Footer.jsx';
@@ -92,6 +94,7 @@ function App() {
           />
           <Route path="*" element={<NotFound />} />
         </Routes>
+        <Toaster /> {/* For toast notifications */}
       </main>
       {/* => show Footer only on public pages */}
       {!isDashboard && <Footer />}
