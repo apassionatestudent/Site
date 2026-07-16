@@ -5,43 +5,19 @@ import './SHSStep2.css';
 // => glyph wasn't rendering for this one.
 import rejectedIcon from '../../../assets/icons/rejected.png';
 
-// => Tracks from the physical Grade 11 SY 2026-2027 enrollment form,
-// => Section III "STRENGTHENED SENIOR HIGH SCHOOL ENROLLMENT DETAILS"
-const TRACKS = [
-  { value: 'academic', label: 'Academic Track' },
-  { value: 'tech_prof', label: 'Technical Professional Track' },
-];
+import Info from '../../Info.jsx';
 
-// => Clusters only apply when Technical Professional Track is chosen.
-// => RESOLVED: the physical enrollment form printed "Hospitality and
-// => Tourism" as two separate checkboxes with different specializations
-// => under each. The official SY 2026-2027 promotional flyer confirms
-// => this was a form printing split, not two real clusters - it's ONE
-// => Hospitality and Tourism cluster with all 4 specializations. Merged
-// => below. The flyer also gave us specializations for Construction and
-// => Building Technology + Industrial Technologies, which the enrollment
-// => form didn't print sub-bullets for.
+// => Academic Track removed - Prime Academy only offers the Technical
+// => Professional Track per the SY 2026-2027 flyer, so the track choice
+// => is gone from the UI entirely (hardcoded to 'tech_prof' in Enroll.jsx).
+// => Clusters no longer carry a hardcoded `specializations` list - that
+// => was static text disconnected from shs_courses. Curriculum (which
+// => courses, and whether they're Grade 11 or Grade 12) is now fetched
+// => live from /api/shs-clusters and rendered inline per cluster below.
 const CLUSTERS = [
-  {
-    value: 'construction_building_tech',
-    label: 'Construction and Building Technology',
-    specializations: ['Manual Metal Arc Welding', 'Technical Drafting'],
-  },
-  {
-    value: 'industrial_technologies',
-    label: 'Industrial Technologies',
-    specializations: ['Electrical Installation and Maintenance', 'Electronics Product Assembly and Servicing'],
-  },
-  {
-    value: 'hospitality_tourism',
-    label: 'Hospitality and Tourism',
-    specializations: [
-      'Bakery Operations',
-      'Kitchen Operations',
-      'Hotel Operation (Housekeeping Services)',
-      'Food and Beverage Operation',
-    ],
-  },
+  { value: 'construction_building_tech', label: 'Construction and Building Technology' },
+  { value: 'industrial_technologies', label: 'Industrial Technologies' },
+  { value: 'hospitality_tourism', label: 'Hospitality and Tourism' },
 ];
 
 // => Capitalizes first letter of each word, lowercases the rest - same
@@ -75,7 +51,7 @@ const REQUIRED_DOCUMENTS = [
   { key: 'psaBirthCertificate', label: 'Original PSA Birth Certificate', required: true, multiple: false },
   { key: 'grade10ReportCard', label: 'Photocopy of Recent Grade 10 Report Card', required: true, multiple: false },
   { key: 'goodMoralCertificate', label: 'Good Moral Certificate', required: true, multiple: false },
-  { key: 'escCertificate', label: 'ESC Certificate (for Private JHS)', required: false, multiple: false },
+  { key: 'escCertificate', label: 'ESC Certificate (for Private Junior High School)', required: false, multiple: false },
 ];
 
 // => JPG/PNG only - no PDF, no other image formats. This is enforced here
@@ -93,7 +69,6 @@ const SHSStep2 = ({ data, onChange, documents, onDocumentsChange, onBack, onNext
     lastSchoolAttended: false,
     gradeLevelCompleted: false,
     schoolYearCompleted: false,
-    track: false,
     cluster: false,
     branch: false,
     class: false,
@@ -115,6 +90,14 @@ const SHSStep2 = ({ data, onChange, documents, onDocumentsChange, onBack, onNext
   const [shsClasses, setShsClasses] = useState([]);
   const [classesLoading, setClassesLoading] = useState(false);
   const [classesFetched, setClassesFetched] = useState(false);
+
+  // => Live curriculum for ALL clusters, fetched once on mount and keyed
+  // => by cluster value - shown inline in each cluster card below (which
+  // => courses, tagged Grade 11 / Grade 12) instead of the old hardcoded
+  // => `specializations` text. Fetched upfront (not on-select) so the
+  // => info is visible in the picker itself, before the student chooses.
+  const [clusterCourses, setClusterCourses] = useState({});
+  const [clusterCoursesLoading, setClusterCoursesLoading] = useState(false);
 
   useEffect(() => {
     fetch('/api/branches')
@@ -149,6 +132,23 @@ const SHSStep2 = ({ data, onChange, documents, onDocumentsChange, onBack, onNext
   // => used to decide whether "no class selected" is valid (Reserve) or an error
   const noClassesAvailable = classesFetched && shsClasses.length === 0;
 
+  useEffect(() => {
+    setClusterCoursesLoading(true);
+    Promise.all(
+      CLUSTERS.map(({ value }) =>
+        fetch(`/api/shs-clusters?cluster=${encodeURIComponent(value)}`)
+          .then((res) => res.json())
+          .then((list) => [value, list])
+          .catch((err) => {
+            console.error(`Failed to fetch curriculum for cluster "${value}":`, err);
+            return [value, []];
+          })
+      )
+    )
+      .then((entries) => setClusterCourses(Object.fromEntries(entries)))
+      .finally(() => setClusterCoursesLoading(false));
+  }, []);
+
   const clearError = (field) => {
     setFieldErrors(prev => ({ ...prev, [field]: false }));
   };
@@ -157,9 +157,6 @@ const SHSStep2 = ({ data, onChange, documents, onDocumentsChange, onBack, onNext
     setDocErrors(prev => ({ ...prev, [key]: false }));
     setDocTypeErrors(prev => ({ ...prev, [key]: false }));
   };
-
-  // => Cluster selection only required when Technical Professional Track is chosen
-  const clusterRequired = data.track === 'tech_prof';
 
   // => True if a single required document's value satisfies its rule -
   // => single file present, or exact photo count for multi-file ones
@@ -177,8 +174,7 @@ const SHSStep2 = ({ data, onChange, documents, onDocumentsChange, onBack, onNext
     if (!data.lastSchoolAttended) return 'missing';
     if (!data.gradeLevelCompleted) return 'missing';
     if (!data.schoolYearCompleted) return 'missing';
-    if (!data.track) return 'missing';
-    if (clusterRequired && !data.cluster) return 'missing';
+    if (!data.cluster) return 'missing';
     // => Branch required for BOTH tracks - was only checking 'academic' before
     if (!data.branch) return 'missing';
     // => Class only required if there's actually one to pick - if the fetch
@@ -229,8 +225,7 @@ const SHSStep2 = ({ data, onChange, documents, onDocumentsChange, onBack, onNext
       lastSchoolAttended: !data.lastSchoolAttended,
       gradeLevelCompleted: !data.gradeLevelCompleted,
       schoolYearCompleted: !data.schoolYearCompleted,
-      track: !data.track,
-      cluster: clusterRequired && !data.cluster,
+      cluster: !data.cluster,
       branch: !data.branch,
       class: !data.class && !noClassesAvailable,
     });
@@ -251,7 +246,7 @@ const SHSStep2 = ({ data, onChange, documents, onDocumentsChange, onBack, onNext
 
     setFieldErrors({
       lastSchoolAttended: false, gradeLevelCompleted: false,
-      schoolYearCompleted: false, track: false, cluster: false,
+      schoolYearCompleted: false, cluster: false,
       branch: false, class: false,
     });
     setDocErrors({});
@@ -315,41 +310,17 @@ const SHSStep2 = ({ data, onChange, documents, onDocumentsChange, onBack, onNext
         III. Strengthened Senior High School Enrollment Details
       </div>
 
+      {/* => Select Cluster - Track selection removed entirely (only
+           Technical Professional Track is offered). Curriculum (which
+           courses, tagged Grade 11 / Grade 12) is fetched live per cluster
+           and shown right in the card, replacing the old hardcoded
+           `specializations` bullets. */}
       <div className="shs2-field-group">
-        <label className="shs2-label">Preferred Track <span className="shs2-req">*</span> <span className="shs2-hint-inline">(Choose 1 track)</span></label>
-        <div className={`shs2-radio-group shs2-radio-group--wrap ${fieldErrors.track ? 'shs2-radio--error' : ''}`}>
-          {TRACKS.map(({ value, label }) => (
-            <label key={value} className="shs2-radio-label">
-              <input
-                type="radio"
-                name="track"
-                value={value}
-                checked={data.track === value}
-                onChange={(e) => {
-                  // onChange('track', e.target.value);
-                  // // => Clear cluster when switching away from Tech-Prof
-                  // if (e.target.value !== 'tech_prof') onChange('cluster', '');
-                  // clearError('track');
-
-                  onChange('track', e.target.value);
-                  onChange('cluster', '');
-                  onChange('branch', '');
-                  onChange('class', '');
-                  clearError('track');
-                }}
-              />
-              <span>{label}</span>
-            </label>
-          ))}
-        </div>
-      </div>
-
-      {/* => Cluster - only shown when Technical Professional Track is chosen */}
-      {clusterRequired && (
-        <div className="shs2-field-group">
-          <label className="shs2-label">Preferred Cluster <span className="shs2-req">*</span> <span className="shs2-hint-inline">(Choose 1 cluster)</span></label>
-          <div className={`shs2-cluster-list ${fieldErrors.cluster ? 'shs2-radio--error' : ''}`}>
-            {CLUSTERS.map(({ value, label, specializations }) => (
+        <label className="shs2-label">Select Cluster <span className="shs2-req">*</span> <span className="shs2-hint-inline">(Choose 1 cluster)</span> <Info content="Sample content" /></label>
+        <div className={`shs2-cluster-list ${fieldErrors.cluster ? 'shs2-radio--error' : ''}`}>
+          {CLUSTERS.map(({ value, label }) => {
+            const courses = clusterCourses[value] || [];
+            return (
               <label key={value} className="shs2-cluster-option">
                 <input
                   type="radio"
@@ -360,24 +331,34 @@ const SHSStep2 = ({ data, onChange, documents, onDocumentsChange, onBack, onNext
                 />
                 <span className="shs2-cluster-text">
                   <span className="shs2-cluster-label">{label}</span>
-                  {specializations.length > 0 && (
+                  {clusterCoursesLoading ? (
+                    <span className="shs2-cluster-specs">Loading curriculum…</span>
+                  ) : courses.length === 0 ? (
+                    <span className="shs2-cluster-specs">Curriculum not yet published for this cluster.</span>
+                  ) : (
                     <span className="shs2-cluster-specs">
-                      {specializations.map(s => (
-                        <span key={s} className="shs2-cluster-spec">• {s}</span>
+                      {courses.map(({ course_id, title, grade_level, course_link }) => (
+                        <span key={course_id} className="shs2-cluster-spec">
+                          • {course_link ? (
+                            <a href={course_link} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>{title}</a>
+                          ) : title}
+                          {' '}
+                          <span className="shs2-cluster-spec-grade">({grade_level})</span>
+                        </span>
                       ))}
                     </span>
                   )}
                 </span>
               </label>
-            ))}
-          </div>
+            );
+          })}
         </div>
-      )}
+      </div>
 
       <div className="shs2-grid shs2-g2 shs2-branch-class-row">
         <div className="shs2-field-group">
           <label className="shs2-label">
-            Preferred Branch <span className="shs2-req">*</span>
+            Select Branch <span className="shs2-req">*</span>
           </label>
           <select
             className={`shs2-select ${fieldErrors.branch ? 'shs2-input--error' : ''}`}
@@ -397,7 +378,7 @@ const SHSStep2 = ({ data, onChange, documents, onDocumentsChange, onBack, onNext
 
         <div className="shs2-field-group">
           <label className="shs2-label">
-            Preferred Class <span className="shs2-req">*</span>
+            Select Class <span className="shs2-req">*</span>
           </label>
 
           {/* => Reserve path: fetch completed, branch+track selected, but
@@ -430,7 +411,7 @@ const SHSStep2 = ({ data, onChange, documents, onDocumentsChange, onBack, onNext
       </div>
 
       <div className="shs2-field-group">
-        <label className="shs2-label">Preferred Electives <span className="shs2-hint-inline">(if applicable)</span></label>
+        <label className="shs2-label">Select Electives <span className="shs2-hint-inline">(if applicable)</span></label>
         <input
           type="text"
           className="shs2-input"

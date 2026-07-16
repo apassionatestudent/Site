@@ -223,6 +223,12 @@
   font-family: var(--font-body);
 }
 
+.shs2-cluster-spec-grade {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
 /* => Requirements for Enrollment upload styling - same visual language
      as TESDAStep5's file upload (hidden native input + styled label
      acting as the button), rebuilt here with shs2- prefixed classes so

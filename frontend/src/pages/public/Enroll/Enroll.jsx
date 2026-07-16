@@ -300,14 +300,18 @@ const [shsProfile, setShsProfile] = useState({
   email: '',
 });
 
-// => SHS form data - Academic Information & Strengthened SHS Enrollment Details (Step 2)
 const [shsAcademic, setShsAcademic] = useState({
   lastSchoolAttended: '',
   schoolAddress: '',
   gradeLevelCompleted: '',
   schoolYearCompleted: '',
-  track: '',      // => 'academic' | 'tech_prof'
-  cluster: '',    // => only relevant when track === 'tech_prof'
+  // => Academic Track removed from the UI - only Technical Professional
+  // => Track is offered per the SY 2026-2027 flyer. Hardcoded here rather
+  // => than removed from the schema, since shs_enrollments.track and
+  // => shs_classes.track are both NOT NULL and shs_classes matching still
+  // => keys off this value.
+  track: 'technical professional',
+  cluster: '',
   electives: '',
   // => matches shs_enrollments.branch_id
   branch: '',

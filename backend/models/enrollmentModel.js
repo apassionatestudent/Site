@@ -117,9 +117,13 @@ export const insertStudentGuardian = async (client, { studentId, body }) => {
 // => cluster, emergency contact, and health info all live here (Step 2 + 3
 // => fields that AREN'T identity/address/family, which live in the shared
 // => student_profile/student_address tables or shs_family_members instead)
-export const insertShsEnrollment = async (client, { studentId, body, academicData, familyData, privacyAgreed }) => {
+export const insertShsEnrollment = async (client, { studentId, body, academicData, familyData }) => {
   const status = academicData.class ? 'Pending' : 'Reserved';
 
+  // => course_id dropped from this INSERT: a cluster is a fixed 2-year
+  // => curriculum (G11 + G12 courses looked up via shs_courses.cluster_id),
+  // => not a single course the student chooses. Column stays in the table
+  // => (nullable) for historical rows, just no longer written here.
   const result = await client.query(
     `INSERT INTO shs_enrollments
        (student_id, lrn, branch_id, class_id,
@@ -127,9 +131,8 @@ export const insertShsEnrollment = async (client, { studentId, body, academicDat
         track, cluster, electives,
         emergency_name, emergency_relationship, emergency_contact_no, emergency_address,
         has_medical_condition, medical_condition_detail, allergies, maintenance_medication,
-        privacy_agreed,
         status, submitted_at)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,NOW())
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,NOW())
      RETURNING enrollment_id`,
     [
       studentId,
@@ -151,7 +154,6 @@ export const insertShsEnrollment = async (client, { studentId, body, academicDat
       familyData.hasMedicalCondition === 'yes' ? (familyData.medicalConditionDetail || null) : null,
       familyData.allergies || null,
       familyData.maintenanceMedication || null,
-      privacyAgreed,
       status,
     ]
   );
@@ -207,8 +209,9 @@ export const insertShsFamilyMembers = async (client, { studentId, familyData }) 
 export const insertShsDocuments = async (client, { enrollmentId, docs }) => {
   for (const doc of docs) {
     await client.query(
-      `INSERT INTO shs_documents (enrollment_id, document_type, document_key, uploaded_at)
-       VALUES ($1, $2, $3, NOW())`,
+      // => is_original explicitly TRUE - same reasoning as insertEnrollmentDocuments
+      `INSERT INTO shs_documents (enrollment_id, document_type, document_key, uploaded_at, is_original)
+       VALUES ($1, $2, $3, NOW(), TRUE)`,
       [enrollmentId, doc.type, doc.key]
     );
   }
@@ -282,8 +285,10 @@ export const insertClientClassifications = async (client, { enrollmentId, classi
 export const insertEnrollmentDocuments = async (client, { enrollmentId, docs }) => {
   for (const doc of docs) {
     await client.query(
-      `INSERT INTO tesda_documents (enrollment_id, document_type, document_key, uploaded_at)
-       VALUES ($1, $2, $3, NOW())`,
+      // => is_original explicitly TRUE - these are the docs the student
+      //    submitted at enrollment time, locked from admin deletion
+      `INSERT INTO tesda_documents (enrollment_id, document_type, document_key, uploaded_at, is_original)
+       VALUES ($1, $2, $3, NOW(), TRUE)`,
       [enrollmentId, doc.type, doc.key]
     );
   }

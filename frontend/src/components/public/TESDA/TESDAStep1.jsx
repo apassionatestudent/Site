@@ -25,9 +25,18 @@ const validateMobile = (value) => {
 // => Validates email using regex
 // => Allows standard email format: user@domain.tld
 const validateEmail = (value) => {
-  if (!value) return null; // => Email is optional, only validate format if filled
+  if (!value) return 'Email is required.';
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(value)) return 'Please enter a valid email address.';
+  return null;
+};
+
+// => Validates Facebook profile URL - matches Enroll.jsx's SHS-side regex
+// => so both flows enforce the same format
+const validateFacebookLink = (value) => {
+  if (!value) return 'Facebook profile link is required.';
+  const fbRegex = /^https?:\/\/(www\.)?facebook\.com\/[^\s]{1,}$/i;
+  if (!fbRegex.test(value)) return 'Please enter a valid Facebook URL (e.g. https://www.facebook.com/yourname).';
   return null;
 };
 
@@ -50,8 +59,9 @@ const TESDAStep1 = ({ data, onChange, onNext }) => {
   const [nationalities, setNationalities] = useState([]);
   const [loadingNationalities, setLoadingNationalities] = useState(true);
 
-  // => Inline field-level errors for email and contact
+  // => Inline field-level errors for email, facebook, and contact
   const [emailError, setEmailError] = useState('');
+  const [facebookError, setFacebookError] = useState('');
   const [contactError, setContactError] = useState('');
 
   // => Field-level error flags - highlight individual fields on failed submit
@@ -65,6 +75,8 @@ const TESDAStep1 = ({ data, onChange, onNext }) => {
     street: false,
     contactNo: false,
     nationality: false,
+    email: false,
+    facebookLink: false,
   });
 
   // => Controls whether validation errors are visible
@@ -150,9 +162,12 @@ const TESDAStep1 = ({ data, onChange, onNext }) => {
     if (!data.street) return 'missing';
     if (!data.contactNo) return 'missing';
     if (!data.nationality) return 'missing';
+    if (!data.email) return 'missing';
+    if (!data.facebookLink) return 'missing';
     // => Fail if inline field errors exist
     if (validateMobile(data.contactNo)) return 'error';
-    if (data.email && validateEmail(data.email)) return 'error';
+    if (validateEmail(data.email)) return 'error';
+    if (validateFacebookLink(data.facebookLink)) return 'error';
     return 'valid';
   };
 
@@ -160,8 +175,10 @@ const TESDAStep1 = ({ data, onChange, onNext }) => {
     // => Run inline validators and show their errors on submit attempt
     const mobileErr = validateMobile(data.contactNo);
     const emailErr = validateEmail(data.email);
+    const facebookErr = validateFacebookLink(data.facebookLink);
     setContactError(mobileErr || '');
     setEmailError(emailErr || '');
+    setFacebookError(facebookErr || '');
 
     // => Mark which specific fields are empty/invalid so they turn red
     setFieldErrors({
@@ -174,6 +191,8 @@ const TESDAStep1 = ({ data, onChange, onNext }) => {
       street: !data.street,
       contactNo: !data.contactNo || !!mobileErr,
       nationality: !data.nationality,
+      email: !!emailErr,
+      facebookLink: !!facebookErr,
     });
 
     if (validate() !== 'valid') {
@@ -192,6 +211,8 @@ const TESDAStep1 = ({ data, onChange, onNext }) => {
       street: false,
       contactNo: false,
       nationality: false,
+      email: false,
+      facebookLink: false,
     });
     setShowErrors(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -400,31 +421,50 @@ const TESDAStep1 = ({ data, onChange, onNext }) => {
         </div>
       </div>
 
-      {/* => Row 3: Email + Contact No. + Nationality */}
-      <div className="ts1-grid ts1-g3" style={{ marginTop: '1.2rem' }}>
+      {/* => Row 3: Email + Facebook - both required as of the student_profile
+           NOT NULL tightening. Replaces the old dual-purpose "email or FB
+           name" single field. */}
+      <div className="ts1-grid ts1-g2" style={{ marginTop: '1.2rem' }}>
 
         <div className="ts1-field-group">
-          {/* TODO: I need to be able to add a way to enter an email address as username, but the problem is the problem is that there are some old people enrolling, so it seems like they don't have an email address. In such case I may need to user a literal username.  */}
-          <label className="ts1-label">Email Address / Facebook Account</label>
+          <label className="ts1-label">Email Address <span className="ts1-req">*</span></label>
           <input
             type="text"
-            className={`ts1-input ${emailError ? 'ts1-input--error' : ''}`}
-            placeholder="e.g. juan@email.com or Facebook name"
+            className={`ts1-input ${emailError || fieldErrors.email ? 'ts1-input--error' : ''}`}
+            placeholder="e.g. juan@email.com"
             value={data.email}
             onChange={(e) => {
               onChange('email', e.target.value);
-              // => Validate on change so error clears as soon as user fixes it
               setEmailError(validateEmail(e.target.value) || '');
+              setFieldErrors(prev => ({ ...prev, email: false }));
             }}
           />
-          {/* => Only show email error if filled AND invalid */}
           {emailError && (
             <span className="ts1-field-error">{emailError}</span>
           )}
-          <span className="ts1-field-hint">
-            If no email, enter your Facebook account name instead.
-          </span>
         </div>
+
+        <div className="ts1-field-group">
+          <label className="ts1-label">Facebook Profile Link <span className="ts1-req">*</span></label>
+          <input
+            type="text"
+            className={`ts1-input ${facebookError || fieldErrors.facebookLink ? 'ts1-input--error' : ''}`}
+            placeholder="e.g. https://www.facebook.com/yourname"
+            value={data.facebookLink}
+            onChange={(e) => {
+              onChange('facebookLink', e.target.value);
+              setFacebookError(validateFacebookLink(e.target.value) || '');
+              setFieldErrors(prev => ({ ...prev, facebookLink: false }));
+            }}
+          />
+          {facebookError && (
+            <span className="ts1-field-error">{facebookError}</span>
+          )}
+        </div>
+      </div>
+
+      {/* => Row 3b: Contact No. + Nationality */}
+      <div className="ts1-grid ts1-g2" style={{ marginTop: '1.2rem' }}>
 
         <div className="ts1-field-group">
           <label className="ts1-label">Contact No. <span className="ts1-req">*</span></label>
