@@ -410,7 +410,8 @@ export const getEnrollmentByPublicId = async (pool, publicId, studentId) => {
           NULL::VARCHAR(12)        AS lrn,
           NULL::VARCHAR(150)       AS emergency_name,
           NULL::VARCHAR(60)        AS emergency_relationship,
-          NULL::VARCHAR(11)        AS emergency_contact_no
+          NULL::VARCHAR(11)        AS emergency_contact_no,
+          e.external_remarks
         FROM tesda_enrollments e
         LEFT JOIN courses       c        ON e.course_id  = c.course_id
         LEFT JOIN sectors       s        ON c.sector_id  = s.sector_id
@@ -449,7 +450,8 @@ export const getEnrollmentByPublicId = async (pool, publicId, studentId) => {
           e.lrn,
           e.emergency_name,
           e.emergency_relationship,
-          e.emergency_contact_no
+          e.emergency_contact_no,
+          e.external_remarks
         FROM shs_enrollments e
         LEFT JOIN shs_classes cl        ON e.class_id   = cl.class_id
         LEFT JOIN branches    b_direct  ON e.branch_id  = b_direct.branch_id

@@ -7,6 +7,7 @@ import './tesdaEnrollmentDetail.css';
 // icons
 import loadingIcon   from "../../../assets/icons/loading.png";
 import errorIcon     from "../../../assets/icons/warning.png";
+import informationIcon from "../../../assets/icons/information.png";
 import checkmarkIcon from "../../../assets/icons/checkmark.png";
 import rejectedIcon  from "../../../assets/icons/rejected.png";
 
@@ -102,6 +103,17 @@ function TESDAEnrollmentDetail() {
               {detail.status}
             </span>
           </div>
+
+          {/* => Admin's explanation for the current status, if one was left.
+              => Shown regardless of status - a remark can accompany any
+              => status change, not just Rejected/Needs Clarification, so
+              => it's not folded into the status-specific banners below. */}
+          {detail.external_remarks && (
+            <div className="enroll-notice enroll-notice--remarks">
+              <img src={informationIcon} alt="Information Icon" className="enroll-notice-icon" />
+              <p><strong>Note from the admin:</strong> {detail.external_remarks}</p>
+            </div>
+          )}
 
           {/* => ENROLLMENT INFO */}
           <p className="enroll-detail-section-title">Enrollment Info</p>

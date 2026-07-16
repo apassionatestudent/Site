@@ -269,6 +269,23 @@
   object-fit: contain;
 }
 
+/* => Neutral variant for the admin's external remarks - not tied to a
+   => status color like the banners below it, since a remark can be
+   => attached to any status, not just Rejected/Needs Clarification.
+   => align-items: flex-start (not center) since remarks can wrap to
+   => multiple lines, unlike the short one-line banners below. */
+.enroll-notice--remarks {
+  background: rgba(255,255,255,0.05);
+  border-color: var(--border);
+  color: var(--text-primary);
+  margin-bottom: 1.5rem;
+  align-items: flex-start;
+}
+
+.enroll-notice--remarks p {
+  margin: 0;
+}
+
 /*  RWD  */
 
 @media (max-width: 768px) {
