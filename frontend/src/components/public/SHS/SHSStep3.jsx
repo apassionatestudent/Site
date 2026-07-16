@@ -393,6 +393,10 @@ const SHSStep3 = ({
               onChange={(e) => {
                 onChange('hasMedicalCondition', e.target.value);
                 onChange('medicalConditionDetail', '');
+                // => "None" also clears Allergies/Medication - those are
+                //    gated behind hasMedicalCondition now, not independent.
+                onChange('allergies', '');
+                onChange('maintenanceMedication', '');
                 clearError('hasMedicalCondition');
               }}
             />
@@ -422,20 +426,29 @@ const SHSStep3 = ({
 
       <div className="shs3-grid shs3-g2">
         <div className="shs3-field-group">
-          <label className="shs3-label">Allergies (if any)</label>
+          <label className="shs3-label">
+            Allergies (if any)
+            {/* => Only relevant once a medical condition is declared */}
+            <span className="shs3-hint-inline"> (requires "Yes" above)</span>
+          </label>
           <input
             type="text"
             className="shs3-input"
             value={data.allergies}
+            disabled={data.hasMedicalCondition !== 'yes'}
             onChange={(e) => onChange('allergies', e.target.value)}
           />
         </div>
         <div className="shs3-field-group">
-          <label className="shs3-label">Maintenance Medication (if any)</label>
+          <label className="shs3-label">
+            Maintenance Medication (if any)
+            <span className="shs3-hint-inline"> (requires "Yes" above)</span>
+          </label>
           <input
             type="text"
             className="shs3-input"
             value={data.maintenanceMedication}
+            disabled={data.hasMedicalCondition !== 'yes'}
             onChange={(e) => onChange('maintenanceMedication', e.target.value)}
           />
         </div>

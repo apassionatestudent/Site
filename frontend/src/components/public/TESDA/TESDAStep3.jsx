@@ -43,18 +43,14 @@ const TESDAStep3 = ({ selected, onChange, othersText, onOthersTextChange, onBack
     }
   };
 
-  // => Toggle a classification in/out of the selected array
-  const handleToggle = (value) => {
-    if (selected.includes(value)) {
-      onChange(selected.filter(v => v !== value));
-    } else {
-      onChange([...selected, value]);
-    }
+  // => Select only one classification at a time
+  const handleSelect = (value) => {
+    onChange(value);
   };
 
   // => At least one classification must be selected
   const validate = () => {
-    if (selected.length === 0 && !othersText.trim()) return 'missing';
+    if (!selected && !othersText.trim()) return 'missing';
     return 'valid';
   };
 
@@ -75,19 +71,20 @@ const TESDAStep3 = ({ selected, onChange, othersText, onOthersTextChange, onBack
         Learner / Trainee / Student (Clients) Classification
       </div>
       <p className="ts3-hint">
-        Select all that apply to you.
+        Select one classification that applies to you.
       </p>
 
-      {/* => Checkbox grid */}
+      {/* => Radio grid */}
       <div className="ts3-checkbox-grid">
         {CLASSIFICATIONS.map(({ value, label }) => (
           <label key={value} className="ts3-checkbox-label">
             <input
-              type="checkbox"
+              type="radio"
+              name="client_classification"
               className="ts3-checkbox"
               value={value}
-              checked={selected.includes(value)}
-              onChange={() => handleToggle(value)}
+              checked={selected === value}
+              onChange={() => handleSelect(value)}
             />
             <span>{label}</span>
           </label>
@@ -96,18 +93,19 @@ const TESDAStep3 = ({ selected, onChange, othersText, onOthersTextChange, onBack
         {/* => Others field - matches the MIS 03-01 "Others: (Please Specify)" */}
         <label className="ts3-checkbox-label">
           <input
-            type="checkbox"
+            type="radio"
+            name="client_classification"
             className="ts3-checkbox"
             value="others"
-            checked={selected.includes('others')}
-            onChange={() => handleToggle('others')}
+            checked={selected === 'others'}
+            onChange={() => handleSelect('others')}
           />
           <span>Others</span>
         </label>
       </div>
 
       {/* => Show text input when "Others" is checked */}
-      {selected.includes('others') && (
+      {selected === 'others' && (
         <div className="ts3-others-wrap">
           <label className="ts3-others-label">
             Please specify <span className="ts3-req">*</span>
@@ -126,7 +124,7 @@ const TESDAStep3 = ({ selected, onChange, othersText, onOthersTextChange, onBack
       {showErrors && validate() !== 'valid' && (
         <div className="ts3-error-banner">
           <i className="ti ti-alert-circle" />
-          Please select at least one classification before proceeding.
+          Please select one classification before proceeding.
         </div>
       )}
 

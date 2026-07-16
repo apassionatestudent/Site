@@ -19,6 +19,10 @@ import branchesRouter from "./routes/branches.js";
 import coursesRouter from "./routes/courses.js";
 import classRouter from "./routes/classes.js";
 import shsClassesRouter from './routes/shsClasses.js';
+// => Renamed from shsCourses -> shsClusters: SHS students enroll into a
+// => cluster, not an individual course - this route now returns a
+// => cluster's G11/G12 curriculum for display, not a selectable list
+import shsClustersRoute from './routes/shsClusters.js';
 import enrollmentRoutes from './routes/enrollmentRoutes.js';
 import documentRoutes from './routes/documentRoutes.js';
 
@@ -55,7 +59,8 @@ app.use("/api/courses", coursesRouter);
 app.use("/api/classes", classRouter);
 // => Register SHS classes route
 app.use("/api/shs-classes", shsClassesRouter);
-
+// => Register SHS courses route
+app.use('/api/shs-clusters', shsClustersRoute);
 
 // => Enrollment submission route
 app.use('/api/enrollment', enrollmentRoutes);
@@ -350,7 +355,7 @@ async function initDB () {
 
         -- => track/cluster left WITHOUT a CHECK - same reasoning as
         -- => shs_enrollments.track/cluster: values are frontend-enforced
-        track         VARCHAR(20) NOT NULL,
+        track         VARCHAR(30) NOT NULL,
         cluster       VARCHAR(60) NULL,
 
         school_year   VARCHAR(20) NOT NULL,
@@ -390,10 +395,10 @@ async function initDB () {
 
         -- => Step 1: Contact
         -- => facebook_link: used for groupchat coordination, required since even non-tech users typically have FB
-        -- => email: optional; if provided, can be used to create a student dashboard account later
+        -- => email: required as of [today's date] - both TESDA and SHS now collect it explicitly (TESDA used to have a single dual-purpose "email or FB name" field, which is why old rows may hold a placeholder)
         contact_no               VARCHAR(11)  NOT NULL,
-        facebook_link            TEXT         NULL,
-        email                    VARCHAR(255) NULL,
+        facebook_link            TEXT         NOT NULL,
+        email                    VARCHAR(255) NOT NULL,
         nationality              VARCHAR(60)  NOT NULL,
 
         -- => Step 2: Demographics
@@ -411,6 +416,10 @@ async function initDB () {
 
         -- => Step 2: Education
         highest_educ_attainment  VARCHAR(60)  NOT NULL,
+
+        -- => Religion: religion_others holds free text when religion = 'Others'
+        religion                 VARCHAR(60)  NULL,
+        religion_others          VARCHAR(100) NULL,
 
         created_at               TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
         updated_at               TIMESTAMPTZ  NOT NULL DEFAULT NOW()
@@ -456,8 +465,9 @@ async function initDB () {
       CREATE TABLE IF NOT EXISTS student_guardian (
         guardian_id        SERIAL       PRIMARY KEY,
         student_id         BIGINT       NOT NULL REFERENCES student_accounts(student_id) ON DELETE CASCADE UNIQUE,
-        guardian_name      VARCHAR(150) NOT NULL,
-        guardian_address   TEXT         NULL
+        guardian_name        VARCHAR(150) NOT NULL,
+        guardian_address     TEXT         NULL,
+        guardian_contact_no  VARCHAR(11)  NOT NULL
       )
     `;
 
@@ -487,6 +497,12 @@ async function initDB () {
         is_tesda_scholar      BOOLEAN       NOT NULL DEFAULT FALSE,
         scholarship_type      VARCHAR(50)   NULL,
         other_scholarship     TEXT          NULL,
+
+        -- => Admin-entered notes
+        -- => internal_remarks: staff-only, never shown to the student
+        -- => external_remarks: shown/emailed to the student to explain a status decision
+        internal_remarks      TEXT          NULL,
+        external_remarks      TEXT          NULL,
 
         -- => Enrollment lifecycle status
         status                VARCHAR(30)   NOT NULL DEFAULT 'Pending'
@@ -544,6 +560,10 @@ async function initDB () {
         enrollment_id   INT          NOT NULL REFERENCES tesda_enrollments(enrollment_id) ON DELETE CASCADE,
         document_type   VARCHAR(100) NOT NULL,
         document_key    TEXT         NOT NULL,
+        -- => is_original: TRUE for docs submitted by the student at enrollment
+        -- => time - locked from deletion for audit purposes, replace-only.
+        -- => FALSE for docs an admin adds later - those CAN be deleted.
+        is_original     BOOLEAN      NOT NULL DEFAULT TRUE,
         -- => fixed typo: was "IMESTAMPTZ" (missing leading T)
         uploaded_at     TIMESTAMPTZ  NOT NULL DEFAULT NOW()
       )
@@ -622,6 +642,62 @@ async function initDB () {
       END $$
     `;
 
+    // => shs_tracks: normalized SHS track reference data (e.g. STEM, ABM, TVL)
+    // => Replaces the old raw-string track column on shs_enrollments/shs_classes for the catalog feature
+    await sql`
+      CREATE TABLE IF NOT EXISTS shs_tracks (
+        track_id  SERIAL       PRIMARY KEY,
+        value     VARCHAR(20)  UNIQUE NOT NULL,
+        name      VARCHAR(100) NOT NULL
+      )
+    `;
+
+    // => shs_clusters: normalized SHS cluster reference data, FK'd to its parent track
+    await sql`
+      CREATE TABLE IF NOT EXISTS shs_clusters (
+        cluster_id  SERIAL       PRIMARY KEY,
+        value       VARCHAR(50)  UNIQUE NOT NULL,
+        name        VARCHAR(150) NOT NULL,
+        track_id    INT          NOT NULL REFERENCES shs_tracks(track_id),
+        created_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+        updated_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+      )
+    `;
+
+    // => shs_courses: SHS course catalog, mirrors the TESDA courses table
+    // => but drops accreditation/fee/hours columns since SHS has neither concept
+    await sql`
+      CREATE TABLE IF NOT EXISTS shs_courses (
+        course_id        SERIAL       PRIMARY KEY,
+        cluster_id       INT          NOT NULL REFERENCES shs_clusters(cluster_id) ON DELETE RESTRICT,
+        title            VARCHAR(255) NOT NULL,
+        description      TEXT,
+        cover_image_url  TEXT,
+
+        -- => grade_level: a cluster is a fixed 2-year curriculum, not a
+        -- => course the student picks between - every course row is tagged
+        -- => G11 or G12 so the frontend can display "what you'll be taking
+        -- => each year" instead of offering it as a selectable option
+        grade_level       VARCHAR(10)  NOT NULL CHECK (grade_level IN ('Grade 11', 'Grade 12')),
+
+        -- => course_link: optional external reference (e.g. DepEd curriculum
+        -- => PDF) shown alongside the title/description, informational only
+        course_link       TEXT         NULL,
+
+        -- => 'active' courses are selectable on the public enrollment form;
+        -- => 'inactive' hides them without breaking historical enrollment links
+        status            VARCHAR(10)  NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'inactive')),
+
+        -- => Audit trail
+        created_by        INT          REFERENCES admins(admin_id) ON DELETE SET NULL,
+        created_at         TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+        updated_at         TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+
+        -- => Soft-delete: NULL means active/not deleted
+        deleted_at         TIMESTAMPTZ  NULL
+      )
+    `;
+
     // => shs_enrollments: core SHS enrollment transaction record
     // => Holds ONLY enrollment-specific data (academic history, track/
     // => cluster, emergency contact, health, consent) - identity/address
@@ -639,16 +715,20 @@ async function initDB () {
         lrn                       VARCHAR(12)   NULL,
         class_id                  INT           NULL REFERENCES shs_classes(class_id) ON DELETE SET NULL,
 
+        -- => course_id: links to the shs_courses catalog entry chosen at enrollment
+        -- => Nullable since enrollments predating the course catalog feature won't have one
+        course_id                 INT           NULL REFERENCES shs_courses(course_id) ON DELETE SET NULL,
+
         -- => Academic Information
-        last_school_attended      VARCHAR(150)  NOT NULL,
-        school_address             TEXT          NULL,
+        last_school_attended      VARCHAR(150)   NOT NULL,
+        school_address             TEXT          NOT NULL,
         grade_level_completed      VARCHAR(30)   NOT NULL,
         school_year_completed      VARCHAR(20)   NOT NULL,
 
         -- => Strengthened SHS Enrollment Details
         -- => track/cluster left WITHOUT a CHECK - values are already
         -- => enforced by the frontend's radio group / <select>
-        track                      VARCHAR(20)   NOT NULL,
+        track                      VARCHAR(30)   NOT NULL,
         cluster                    VARCHAR(60)   NULL,
         electives                  TEXT          NULL,
 
@@ -664,9 +744,11 @@ async function initDB () {
         allergies                  TEXT          NULL,
         maintenance_medication     TEXT          NULL,
 
-        -- => Data privacy consent - no DB CHECK forcing TRUE, since the
-        -- => frontend disables the Submit button until this is checked
-        privacy_agreed             BOOLEAN       NOT NULL DEFAULT FALSE,
+        -- => Admin-entered notes
+        -- => internal_remarks: staff-only, never shown to the student
+        -- => external_remarks: shown/emailed to the student to explain a status decision
+        internal_remarks           TEXT          NULL,
+        external_remarks           TEXT          NULL,
 
         -- => Enrollment lifecycle status - same values/flow as tesda_enrollments
         status                     VARCHAR(30)   NOT NULL DEFAULT 'Pending'
@@ -700,6 +782,11 @@ async function initDB () {
         enrollment_id   INT          NOT NULL REFERENCES shs_enrollments(enrollment_id) ON DELETE CASCADE,
         document_type   VARCHAR(100) NOT NULL,
         document_key    TEXT         NOT NULL,
+        -- => is_original: TRUE for docs submitted by the student at enrollment
+        -- => time - locked from deletion for audit purposes, replace-only.
+        -- => FALSE for docs an admin adds later - those CAN be deleted.
+        is_original     BOOLEAN      NOT NULL DEFAULT TRUE,
+        -- => fixed typo: was "IMESTAMPTZ" (missing leading T)
         uploaded_at     TIMESTAMPTZ  NOT NULL DEFAULT NOW()
       )
     `;
@@ -716,6 +803,8 @@ async function initDB () {
         uploaded_at      TIMESTAMPTZ  NOT NULL DEFAULT NOW()
       )
     `;
+
+    
 
     console.log("Database initialized successfully");
   } catch (error) {
