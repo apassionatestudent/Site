@@ -25,7 +25,7 @@
   opacity: 0.85;
 }
 
-/* ── Course Selection ── */
+/* -- Course Selection -- */
 
 /* => 3-column grid: Branch | Course | Class */
 .ts5-grid { display: grid; gap: 0 1.2rem; }
@@ -104,7 +104,7 @@
   line-height: 1.5;
 }
 
-/* ── Upload Requirements ── */
+/* -- Upload Requirements -- */
 
 .ts5-upload-subtitle {
   font-size: 13px;
@@ -247,7 +247,7 @@
   font-family: var(--font-body);
 }
 
-/* ── Error banners ── */
+/* -- Error banners -- */
 .ts5-error-banner {
   display: flex;
   align-items: center;
@@ -262,7 +262,7 @@
   margin-top: 0.8rem;
 }
 
-/* ── Navigation ── */
+/* -- Navigation -- */
 .ts5-nav {
   display: flex;
   gap: 1.5rem;
@@ -308,7 +308,7 @@
 .ts5-btn-next:hover  { background: var(--enroll-btn-hover); }
 .ts5-btn-next:active { transform: scale(0.98); }
 
-/* ── Scholarship Section ── */
+/* -- Scholarship Section -- */
 
 /* => Scholar question + type on same line */
 .ts5-scholar-row {
@@ -400,7 +400,7 @@
   margin-bottom: 1.2rem;
 }
 
-/* ── Privacy Disclaimer Section ── */
+/* -- Privacy Disclaimer Section -- */
 
 .ts5-policy-box {
   background: var(--bg-secondary);
@@ -470,7 +470,7 @@
   .ts5-scholar-other-input { width: 100%; }
 }
 
-/* ── Responsive ── */
+/* -- Responsive -- */
 @media (max-width: 700px) {
   .ts5-wrap    { padding: 1.2rem; }
   .ts5-g3      { grid-template-columns: 1fr; }
