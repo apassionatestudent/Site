@@ -231,7 +231,7 @@ const TESDAStep5 = ({
   return (
     <div className="ts5-wrap">
 
-      {/* ── Section: Course Selection ── */}
+      {/* -- Section: Course Selection -- */}
       <div className="ts5-section-title">Course & Schedule</div>
 
       {/* => Branch + Course + Class in one row */}
@@ -361,7 +361,7 @@ const TESDAStep5 = ({
 
       </div>
 
-      {/* ── Section: Upload Requirements ── */}
+      {/* -- Section: Upload Requirements -- */}
       <div className="ts5-section-title" style={{ marginTop: '1.8rem' }}>
         Upload Requirements
       </div>
@@ -426,7 +426,7 @@ const TESDAStep5 = ({
         ))}
       </div>
 
-      {/* ── Section: Scholarship Package ── */}
+      {/* -- Section: Scholarship Package -- */}
       <div className="ts5-section-title" style={{ marginTop: '1.8rem' }}>
         Scholarship Package
       </div>
@@ -516,7 +516,7 @@ const TESDAStep5 = ({
         </p>
       )}
 
-      {/* ── Section: Privacy Consent ── */}
+      {/* -- Section: Privacy Consent -- */}
       <div className="ts5-section-title" style={{ marginTop: '1.8rem' }}>
         Privacy Disclaimer
       </div>
