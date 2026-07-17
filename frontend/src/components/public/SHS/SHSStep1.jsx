@@ -47,13 +47,12 @@ const validateMobile = (value) => {
   return null;
 };
 
-// => Validates email using regex
-// => Now REQUIRED per your request - returns a required message on empty
-// => instead of passing silently, same shape as validateMobile below
+// => Validates email using regex - same EMAIL_REGEX used in
+// => TESDAStep1.jsx and StudentDetail.jsx so all three enforce identically
+const EMAIL_REGEX = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
 const validateEmail = (value) => {
   if (!value) return 'Email address is required.';
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(value)) return 'Please enter a valid email address.';
+  if (!EMAIL_REGEX.test(value)) return 'Please enter a valid email address.';
   return null;
 };
 
@@ -97,11 +96,14 @@ const applyProperCase = (e, key, onChangeFn) => {
 
 // => Not part of the physical form - admins add each SHS enrollee to a
 // => batch group chat and need this anyway, so we collect it upfront here.
-// => Now REQUIRED per your request.
+// => Accepts facebook.com with no subdomain, www., or Meta's actual
+// => "web." desktop subdomain. Same FACEBOOK_LINK_REGEX as
+// => TESDAStep1.jsx and StudentDetail.jsx (fb.com shortlinks no longer
+// => accepted - flag if you want that kept as a valid alternate).
+const FACEBOOK_LINK_REGEX = /^(https?:\/\/)?(www\.|web\.)?facebook\.com\/.+$/i;
 const validateFacebookLink = (value) => {
   if (!value) return 'Facebook profile link is required.';
-  const fbRegex = /^(https?:\/\/)?(www\.)?(facebook|fb)\.com\/.+/i;
-  if (!fbRegex.test(value)) return 'Please enter a valid Facebook profile link.';
+  if (!FACEBOOK_LINK_REGEX.test(value)) return 'Please enter a valid Facebook profile link (e.g. https://www.facebook.com/yourname).';
   return null;
 };
 

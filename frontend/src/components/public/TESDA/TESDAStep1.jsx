@@ -22,21 +22,24 @@ const validateMobile = (value) => {
   return null;
 };
 
-// => Validates email using regex
-// => Allows standard email format: user@domain.tld
+// => Broad email format check: accepts any real provider (gmail.com,
+// => icloud.com, yahoo.com, outlook.com, custom domains, .com.ph, .edu,
+// => etc.) - only rejects structurally malformed input. Same pattern as
+// => SHSStep1.jsx and StudentDetail.jsx, so all three enforce identically.
+const EMAIL_REGEX = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
 const validateEmail = (value) => {
   if (!value) return 'Email is required.';
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(value)) return 'Please enter a valid email address.';
+  if (!EMAIL_REGEX.test(value)) return 'Please enter a valid email address.';
   return null;
 };
 
-// => Validates Facebook profile URL - matches Enroll.jsx's SHS-side regex
-// => so both flows enforce the same format
+// => Accepts facebook.com links with no subdomain, www., or Meta's actual
+// => "web." desktop subdomain, with or without http(s)://. Matches
+// => SHSStep1.jsx and StudentDetail.jsx so all three enforce identically.
+const FACEBOOK_LINK_REGEX = /^(https?:\/\/)?(www\.|web\.)?facebook\.com\/.+$/i;
 const validateFacebookLink = (value) => {
   if (!value) return 'Facebook profile link is required.';
-  const fbRegex = /^https?:\/\/(www\.)?facebook\.com\/[^\s]{1,}$/i;
-  if (!fbRegex.test(value)) return 'Please enter a valid Facebook URL (e.g. https://www.facebook.com/yourname).';
+  if (!FACEBOOK_LINK_REGEX.test(value)) return 'Please enter a valid Facebook URL (e.g. https://www.facebook.com/yourname).';
   return null;
 };
 

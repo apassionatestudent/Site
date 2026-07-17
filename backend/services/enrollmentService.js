@@ -26,6 +26,16 @@ export const processEnrollmentSubmission = async (body, files) => {
   const classifications  = JSON.parse(body.classifications);  // => Step 3: array of selected values
   const othersText       = body.othersText || null;           // => Step 3: 'others' free text if applicable
 
+  // => Email is required server-side too - TESDAStep1.jsx disables Next
+  // => until a valid email is typed, but that's a UI convenience, not a
+  // => security boundary. A direct API call could otherwise skip it, and
+  // => student_profile.email is NOT NULL, so a missing email would
+  // => otherwise surface as a raw, unhelpful Postgres error instead of
+  // => this clean validation message.
+  if (!body.email || !body.email.trim()) {
+    throw Object.assign(new Error('Email address is required.'), { statusCode: 400 });
+  }
+
   // => Upload files to R2 BEFORE the DB transaction
   // => R2 uploads are external HTTP calls - they cannot be rolled back
   // => If the DB transaction fails later, orphaned R2 files are acceptable
@@ -119,6 +129,12 @@ export const processShsEnrollmentSubmission = async (body, files) => {
   // => security boundary. A direct API call could otherwise skip it.
   if (!privacyAgreed) {
     throw Object.assign(new Error('Data privacy consent is required.'), { statusCode: 400 });
+  }
+
+  // => Email is required server-side too - same reasoning as TESDA's
+  // => guard in processEnrollmentSubmission above
+  if (!body.email || !body.email.trim()) {
+    throw Object.assign(new Error('Email address is required.'), { statusCode: 400 });
   }
 
   // => Guards mirroring the DB CHECK constraints on shs_enrollments -

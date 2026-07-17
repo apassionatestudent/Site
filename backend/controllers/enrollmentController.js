@@ -13,9 +13,13 @@ export const submitEnrollment = async (req, res) => {
     });
   } catch (err) {
     console.error('Enrollment submission error:', err);
-    res.status(500).json({
+    // => Validation errors (statusCode 400) get their real message shown -
+    // => genuine server/DB errors stay generic so internals aren't leaked.
+    // => Mirrors submitShsEnrollment's existing pattern below.
+    const statusCode = err.statusCode || 500;
+    res.status(statusCode).json({
       success: false,
-      message: 'Enrollment submission failed. Please try again.',
+      message: statusCode === 400 ? err.message : 'Enrollment submission failed. Please try again.',
     });
   }
 };
