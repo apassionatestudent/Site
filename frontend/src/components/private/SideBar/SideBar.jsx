@@ -8,6 +8,7 @@ import AccountIcon from "../../../assets/icons/account.png";
 import DocumentsIcon from "../../../assets/icons/documents.png";
 import EnrollmentIcon from "../../../assets/icons/enroll.png";
 import SupportIcon from "../../../assets/icons/support.png";
+import LogsIcon from "../../../assets/icons/logs.png";
 import LogoutIcon from "../../../assets/icons/logout.png";
 import DefaultAvatar from "../../../assets/icons/default-avatar.png";
 import Site from "../../../assets/icons/site.png";
@@ -26,6 +27,7 @@ const NAV_ITEMS = [
   { id: "documents",     label: "Documents",     icon: DocumentsIcon,     to: "dashboard/documents" },
   { id: "enrollment",    label: "Enrollment",    icon: EnrollmentIcon,    to: "dashboard/enrollment" },
   { id: "support",       label: "Support Tickets", icon: SupportIcon,     to: "dashboard/supporttickets" },
+  { id: "logs",          label: "Logs",          icon: LogsIcon,       to: "dashboard/logs" },
   {id: "back to site",   label: "Back to Site",  icon: Site,              to: "/"}
 ];
 

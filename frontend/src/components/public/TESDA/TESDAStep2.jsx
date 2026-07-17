@@ -40,6 +40,10 @@ const MONTHS = [
   'September', 'October', 'November', 'December',
 ];
 
+// => Age gate: student must be at least 12, no older than 100.
+const MIN_AGE = 12;
+const MAX_AGE = 100;
+
 const TESDAStep2 = ({ data, onChange, onBack, onNext }) => {
 
   // => PSGC state for birthplace
@@ -67,8 +71,11 @@ const TESDAStep2 = ({ data, onChange, onBack, onNext }) => {
     guardianName: false,
   });
 
-  // => Computed age from birthdate fields
+  // => Computed age from birthdate fields (formatted string, for display)
   const [computedAge, setComputedAge] = useState('');
+  // => Same computation as computedAge but kept as a raw number (or null)
+  //    so validate() can compare it against MIN_AGE/MAX_AGE directly
+  const [computedAgeRaw, setComputedAgeRaw] = useState(null);
 
   // => Track if birthplace region is NCR (no province level)
   const isBirthNCR = data.birthplaceRegion === '1300000000';
@@ -94,6 +101,7 @@ const TESDAStep2 = ({ data, onChange, onBack, onNext }) => {
   useEffect(() => {
     if (!data.birthYear || !data.birthMonth || !data.birthDay) {
       setComputedAge('');
+      setComputedAgeRaw(null);
       return;
     }
     const birth = new Date(
@@ -106,6 +114,7 @@ const TESDAStep2 = ({ data, onChange, onBack, onNext }) => {
     const m = today.getMonth() - birth.getMonth();
     if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
     setComputedAge(age >= 0 ? `${age} years old` : '');
+    setComputedAgeRaw(age >= 0 ? age : null);
   }, [data.birthYear, data.birthMonth, data.birthDay]);
 
   // => Fetch regions for birthplace on mount
@@ -161,10 +170,12 @@ const TESDAStep2 = ({ data, onChange, onBack, onNext }) => {
     return Array.from({ length: daysInMonth }, (_, i) => i + 1);
   };
 
-  // => Generate year range (1900 to current year)
+  // => Generate year range - limited to the last 100 years (matches
+  // => MAX_AGE below), so the dropdown never offers a year the age gate
+  // => would reject anyway.
   const getYears = () => {
     const current = new Date().getFullYear();
-    return Array.from({ length: current - 1899 }, (_, i) => current - i);
+    return Array.from({ length: MAX_AGE }, (_, i) => current - i);
   };
 
   // => Validates required fields for Step 2
@@ -175,6 +186,10 @@ const TESDAStep2 = ({ data, onChange, onBack, onNext }) => {
     if (!data.birthMonth) return 'missing';
     if (!data.birthDay) return 'missing';
     if (!data.birthYear) return 'missing';
+    // => Must come after the birthdate-missing check above, since
+    // => computedAgeRaw is null until all 3 birthdate fields are filled
+    if (computedAgeRaw !== null && computedAgeRaw < MIN_AGE) return 'underage';
+    if (computedAgeRaw !== null && computedAgeRaw > MAX_AGE) return 'overage';
     if (!data.birthplaceRegion) return 'missing';
     if (!isBirthNCR && !data.birthplaceProvince) return 'missing';
     if (!data.birthplaceCity) return 'missing';
@@ -361,7 +376,11 @@ const TESDAStep2 = ({ data, onChange, onBack, onNext }) => {
           <label className="ts2-label">Age</label>
           <input
             type="text"
-            className="ts2-input ts2-input--readonly"
+            className={`ts2-input ts2-input--readonly ${
+              computedAgeRaw !== null && (computedAgeRaw < MIN_AGE || computedAgeRaw > MAX_AGE)
+                ? 'ts2-input--error'
+                : ''
+            }`}
             value={computedAge || '-'}
             readOnly
             title="Auto-computed from birthdate"
@@ -369,6 +388,16 @@ const TESDAStep2 = ({ data, onChange, onBack, onNext }) => {
         </div>
 
       </div>
+
+      {/* => Inline age-gate warning - shows as soon as the computed age
+           falls outside 12-100, even before the person clicks Next */}
+      {computedAgeRaw !== null && (computedAgeRaw < MIN_AGE || computedAgeRaw > MAX_AGE) && (
+        <p className="ts2-section-note" style={{ color: '#c0392b', marginTop: '-0.8rem', marginBottom: '1rem' }}>
+          {computedAgeRaw < MIN_AGE
+            ? `Student must be at least ${MIN_AGE} years old. Current computed age: ${computedAgeRaw}.`
+            : `Please double-check the birthdate - computed age is ${computedAgeRaw}, which exceeds ${MAX_AGE}.`}
+        </p>
+      )}
 
       {/* => Birthplace section */}
       <div className="ts2-section-title" style={{ marginTop: '1.4rem' }}>
@@ -510,7 +539,12 @@ const TESDAStep2 = ({ data, onChange, onBack, onNext }) => {
       {showErrors && validate() !== 'valid' && (
         <div className="ts2-error-banner">
           <i className="ti ti-alert-circle" />
-          Please fill in all required fields (denoted with ' * ') before proceeding.
+          {validate() === 'underage'
+            ? `Student must be at least ${MIN_AGE} years old to proceed.`
+            : validate() === 'overage'
+              ? `Please double-check the birthdate - computed age exceeds ${MAX_AGE} years.`
+              : "Please fill in all required fields (denoted with ' * ') before proceeding."
+          }
         </div>
       )}
 

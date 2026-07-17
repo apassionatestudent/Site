@@ -14,6 +14,9 @@ const MONTHS = [
 // => Minimum age for SHS Grade 11 enrollment - typical entry age for
 // => Senior High School in the Philippines
 const MIN_AGE = 16;
+// => Ceiling - matches the getYears() dropdown range below, so nothing
+// => older than 100 is ever offered to pick from in the first place.
+const MAX_AGE = 100;
 
 // => Common religions in the Philippines - static list, no backend needed
 // => for this (unlike nationality/citizenship below, which has its own
@@ -295,10 +298,12 @@ const SHSStep1 = ({ data, onChange, onNext }) => {
     return Array.from({ length: daysInMonth }, (_, i) => i + 1);
   };
 
-  // => Generate year range (1900 to current year)
+  // => Generate year range - limited to the last 100 years (matches
+  // => MAX_AGE below), so the dropdown never offers a year the age gate
+  // => would reject anyway.
   const getYears = () => {
     const current = new Date().getFullYear();
-    return Array.from({ length: current - 1899 }, (_, i) => current - i);
+    return Array.from({ length: MAX_AGE }, (_, i) => current - i);
   };
 
   // => Compute age (as a number) when birthdate fields change - kept raw
@@ -330,6 +335,7 @@ const SHSStep1 = ({ data, onChange, onNext }) => {
     // => Must come after the birthdate-missing check above, since
     // => computedAge is null until all 3 birthdate fields are filled
     if (computedAge !== null && computedAge < MIN_AGE) return 'underage';
+    if (computedAge !== null && computedAge > MAX_AGE) return 'overage';
     if (!data.birthplaceRegion) return 'missing';
     if (!isBirthplaceNCR && !data.birthplaceProvince) return 'missing';
     if (!data.birthplaceCity) return 'missing';
@@ -525,7 +531,7 @@ const SHSStep1 = ({ data, onChange, onNext }) => {
           <label className="shs1-label">Age</label>
           <input
             type="text"
-            className={`shs1-input shs1-input--readonly ${computedAge !== null && computedAge < MIN_AGE ? 'shs1-input--error' : ''}`}
+            className={`shs1-input shs1-input--readonly ${computedAge !== null && (computedAge < MIN_AGE || computedAge > MAX_AGE) ? 'shs1-input--error' : ''}`}
             value={computedAge !== null ? `${computedAge} years old` : '-'}
             readOnly
             title="Auto-computed from birthdate"
@@ -533,13 +539,16 @@ const SHSStep1 = ({ data, onChange, onNext }) => {
         </div>
       </div>
 
-      {/* => Underage warning - shown as soon as the birthdate makes the
-           computed age fall below MIN_AGE, even before the person clicks
-           Next, so they see it immediately instead of only on submit. */}
-      {computedAge !== null && computedAge < MIN_AGE && (
+      {/* => Age-gate warning - shown as soon as the birthdate pushes the
+           computed age outside MIN_AGE/MAX_AGE, even before the person
+           clicks Next, so they see it immediately instead of only on
+           submit. */}
+      {computedAge !== null && (computedAge < MIN_AGE || computedAge > MAX_AGE) && (
         <div className="shs1-error-banner" style={{ marginTop: '-0.6rem', marginBottom: '1rem' }}>
           <i className="ti ti-alert-circle" />
-          Enrollee must be at least {MIN_AGE} years old. Current computed age: {computedAge}.
+          {computedAge < MIN_AGE
+            ? `Enrollee must be at least ${MIN_AGE} years old. Current computed age: ${computedAge}.`
+            : `Please double-check the birthdate - computed age is ${computedAge}, which exceeds ${MAX_AGE}.`}
         </div>
       )}
 
@@ -851,7 +860,9 @@ const SHSStep1 = ({ data, onChange, onNext }) => {
             ? 'Please correct the errors above before proceeding.'
             : validate() === 'underage'
               ? `Enrollee must be at least ${MIN_AGE} years old to proceed.`
-              : "Please fill in all required fields (denoted with ' * ') before proceeding."
+              : validate() === 'overage'
+                ? `Please double-check the birthdate - computed age exceeds ${MAX_AGE} years.`
+                : "Please fill in all required fields (denoted with ' * ') before proceeding."
           }
         </div>
       )}
