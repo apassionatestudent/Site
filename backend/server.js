@@ -15,7 +15,6 @@ import referenceRoutes from './routes/reference.js';
 
 import studentAuthRouter from './routes/studentAuth.js';
 
-import branchesRouter from "./routes/branches.js"; 
 import coursesRouter from "./routes/courses.js";
 import classRouter from "./routes/classes.js";
 import shsClassesRouter from './routes/shsClasses.js';
@@ -51,8 +50,6 @@ app.use('/api/location', locationRoutes);
 app.use('/api/reference', referenceRoutes);
 app.use('/api/student-auth', studentAuthRouter);
 
-// => Register branches route
-app.use("/api/branches", branchesRouter);
 // => Register courses route
 app.use("/api/courses", coursesRouter);
 // => Register classes route
@@ -169,29 +166,6 @@ async function initDB () {
       END $$
     `;
 
-    // branches
-    await sql`
-      -- => branch_id: auto-incrementing primary key
-      -- => branch_name: display name of the branch
-      -- => address: full address string
-      -- => office_hours: JSONB so you can store structured per-day schedules
-      -- => is_active: soft toggle to hide/show branches without deleting
-      -- => maps_url: Google Maps or any map URL to guide students to the branch
-      -- => created_at / updated_at: audit timestamps
-      -- => branch_name tightened from VARCHAR(150) to VARCHAR(100) - no center name realistically exceeds this
-
-      CREATE TABLE IF NOT EXISTS branches (
-        branch_id    SERIAL       PRIMARY KEY,
-        branch_name  VARCHAR(100) NOT NULL,
-        address      TEXT         NOT NULL,
-        office_hours JSONB        NOT NULL DEFAULT '{}',
-        is_active    BOOLEAN      NOT NULL DEFAULT TRUE,
-        maps_url     TEXT         DEFAULT NULL,
-        created_at   TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
-        updated_at   TIMESTAMPTZ  NOT NULL DEFAULT NOW()
-      )
-    `;
-
     // courses parts
     await sql`
       -- => sectors: TESDA industry sectors (e.g. ICT, Agriculture, Construction)
@@ -202,7 +176,7 @@ async function initDB () {
     `;
 
     await sql`
-      CREATE TABLE IF NOT EXISTS courses (
+      CREATE TABLE IF NOT EXISTS tesda_courses (
         course_id        SERIAL         PRIMARY KEY,
         title            VARCHAR(255)   NOT NULL,
         description      TEXT,
@@ -240,7 +214,7 @@ async function initDB () {
       -- => Basic competencies are common across all TESDA qualifications
       CREATE TABLE IF NOT EXISTS basic_competency (
         basic_id   SERIAL      PRIMARY KEY,
-        course_id  INT         NOT NULL REFERENCES courses(course_id) ON DELETE CASCADE,
+        course_id  INT         NOT NULL REFERENCES tesda_courses(course_id) ON DELETE CASCADE,
         code       VARCHAR(50) NOT NULL,
         competency TEXT        NOT NULL
       )
@@ -250,7 +224,7 @@ async function initDB () {
       -- => Common competencies are sector-specific, shared across courses in the same sector
       CREATE TABLE IF NOT EXISTS common_competency (
         common_id  SERIAL      PRIMARY KEY,
-        course_id  INT         NOT NULL REFERENCES courses(course_id) ON DELETE CASCADE,
+        course_id  INT         NOT NULL REFERENCES tesda_courses(course_id) ON DELETE CASCADE,
         code       VARCHAR(50) NOT NULL,
         competency TEXT        NOT NULL
       )
@@ -260,20 +234,9 @@ async function initDB () {
       -- => Core competencies are unique to each specific qualification
       CREATE TABLE IF NOT EXISTS core_competency (
         core_id    SERIAL      PRIMARY KEY,
-        course_id  INT         NOT NULL REFERENCES courses(course_id) ON DELETE CASCADE,
+        course_id  INT         NOT NULL REFERENCES tesda_courses(course_id) ON DELETE CASCADE,
         code       VARCHAR(50) NOT NULL,
         competency TEXT        NOT NULL
-      )
-    `;
-
-    await sql`
-      -- => Junction table => one row per branch that offers a course
-      -- => UNIQUE constraint prevents the same course being added to the same branch twice
-      CREATE TABLE IF NOT EXISTS course_branch (
-        course_branch_id SERIAL PRIMARY KEY,
-        course_id        INT    NOT NULL REFERENCES courses(course_id)   ON DELETE CASCADE,
-        branch_id        INT    NOT NULL REFERENCES branches(branch_id)  ON DELETE CASCADE,
-        UNIQUE (course_id, branch_id)
       )
     `;
 
@@ -305,8 +268,7 @@ async function initDB () {
         class_id                    SERIAL      PRIMARY KEY,
 
         instructor_id               INT         REFERENCES instructors(instructor_id) ON DELETE SET NULL,
-        course_id                   INT         NOT NULL REFERENCES courses(course_id)  ON DELETE CASCADE,
-        branch_id                   INT         NOT NULL REFERENCES branches(branch_id) ON DELETE CASCADE,
+        course_id                   INT         NOT NULL REFERENCES tesda_courses(course_id)  ON DELETE CASCADE,
 
         -- => Date only, no time component needed
         -- => Both nullable: start_date is unknown while status = 'Pending' and
@@ -345,13 +307,13 @@ async function initDB () {
     `;
 
     // => shs_classes: SHS's equivalent of tesda_classes, but keyed by
-    // => branch + track + cluster instead of course_id, since SHS enrollees
+    // => track + cluster instead of course_id, since SHS enrollees
     // => pick a track/cluster, not a TESDA course. No instructor_id for now -
     // => flagged as an open question, easy to ALTER in later if needed.
+    // => No branch_id - single-branch institution, no branch distinction.
     await sql`
       CREATE TABLE IF NOT EXISTS shs_classes (
         class_id      SERIAL      PRIMARY KEY,
-        branch_id     INT         NOT NULL REFERENCES branches(branch_id) ON DELETE CASCADE,
 
         -- => track/cluster left WITHOUT a CHECK - same reasoning as
         -- => shs_enrollments.track/cluster: values are frontend-enforced
@@ -482,8 +444,7 @@ async function initDB () {
         enrollment_id         SERIAL        PRIMARY KEY,
         public_id             UUID          NOT NULL DEFAULT gen_random_uuid() UNIQUE,
         student_id            BIGINT        NOT NULL REFERENCES student_accounts(student_id) ON DELETE RESTRICT,
-        branch_id              INT           NULL REFERENCES branches(branch_id)  ON DELETE SET NULL,
-        course_id             INT           NULL REFERENCES courses(course_id)   ON DELETE SET NULL,
+        course_id             INT           NULL REFERENCES tesda_courses(course_id)   ON DELETE SET NULL,
         class_id              INT           NULL REFERENCES classes(class_id)    ON DELETE SET NULL,
         fee_at_enrollment     NUMERIC(10,2) NULL,
         uli                   VARCHAR(20)   NULL,
@@ -702,8 +663,7 @@ async function initDB () {
     // => Holds ONLY enrollment-specific data (academic history, track/
     // => cluster, emergency contact, health, consent) - identity/address
     // => fields live in the shared student_profile/student_address tables instead
-    // => branch_id nullable - no branch selection UI yet on the SHS
-    // => frontend, added now so it doesn't need a migration later
+    // => No branch_id - single-branch institution, no branch distinction.
     await sql`
       -- => lrn: DepEd Learner Reference Number - nullable, some incoming Grade 11
       -- => students may not have one recorded yet at time of enrollment
@@ -711,7 +671,6 @@ async function initDB () {
         enrollment_id             SERIAL        PRIMARY KEY,
         public_id                 UUID          NOT NULL DEFAULT gen_random_uuid() UNIQUE,
         student_id                BIGINT        NOT NULL REFERENCES student_accounts(student_id) ON DELETE RESTRICT,
-        branch_id                 INT           NULL REFERENCES branches(branch_id) ON DELETE SET NULL,
         lrn                       VARCHAR(12)   NULL,
         class_id                  INT           NULL REFERENCES shs_classes(class_id) ON DELETE SET NULL,
 

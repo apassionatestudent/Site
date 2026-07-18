@@ -99,7 +99,6 @@ export default function Footer() {
             <ul className="footer-links">
               <li><a href="/privacy-policy">Privacy Policy</a></li>
               <li><a href="/faqs">FAQs</a></li>
-              <li><a href="/branches">Branches</a></li>
             </ul>
           </div>
 

@@ -35,11 +35,11 @@ const TESDAStep5 = ({
   onBack, onSubmit,           // => onSubmit replaces onNext since this is now the last step
 }) => {
 
-  const [branches, setBranches] = useState([]);
-  const [branchesLoading, setBranchesLoading] = useState(true);
-
+  // => Courses fetched once on mount - each row already carries its sector
+  // => name (courses.sector_id -> sectors.sector), shown read-only once a
+  // => course is selected. No branch/sector filtering anymore.
   const [courses, setCourses] = useState([]);
-  const [coursesLoading, setCoursesLoading] = useState(false);
+  const [coursesLoading, setCoursesLoading] = useState(true);
 
   const [classes, setClasses] = useState([]);
   const [classesLoading, setClassesLoading] = useState(false);
@@ -72,7 +72,6 @@ const TESDAStep5 = ({
 
   // => Field-level highlights for selects
   const [fieldErrors, setFieldErrors] = useState({
-    branch: false,
     course: false,
     courseClass: false,
   });
@@ -81,43 +80,30 @@ const TESDAStep5 = ({
     setFieldErrors(prev => ({ ...prev, [field]: false }));
   };
 
-  // => Fetch all active branches on mount
+  // => Fetch all active courses on mount - no branch/sector filter,
+  // => single-branch institution now
   useEffect(() => {
-    fetch('/api/branches')
-      .then(r => r.json())
-      .then(d => setBranches(Array.isArray(d) ? d : []))
-      .catch(err => console.error('Failed to fetch branches:', err))
-      .finally(() => setBranchesLoading(false));
-  }, []);
-
-  // => Fetch courses when branch changes
-  useEffect(() => {
-    if (!data.branch) {
-      setCourses([]);
-      setClasses([]);
-      return;
-    }
     setCoursesLoading(true);
-    fetch(`/api/courses?branch_id=${data.branch}`)
+    fetch('/api/courses')
       .then(r => r.json())
       .then(d => setCourses(Array.isArray(d) ? d : []))
       .catch(err => console.error('Failed to fetch courses:', err))
       .finally(() => setCoursesLoading(false));
-  }, [data.branch]);
+  }, []);
 
-  // => Fetch classes when course + branch are both selected
+  // => Fetch classes when course is selected
   useEffect(() => {
-    if (!data.course || !data.branch) {
+    if (!data.course) {
       setClasses([]);
       return;
     }
     setClassesLoading(true);
-    fetch(`/api/classes?course_id=${data.course}&branch_id=${data.branch}`)
+    fetch(`/api/classes?course_id=${data.course}`)
       .then(r => r.json())
       .then(d => setClasses(Array.isArray(d) ? d : []))
       .catch(err => console.error('Failed to fetch classes:', err))
       .finally(() => setClassesLoading(false));
-  }, [data.course, data.branch]);
+  }, [data.course]);
 
   // => Fetch course-specific additional document requirements
   useEffect(() => {
@@ -163,7 +149,6 @@ const TESDAStep5 = ({
 
   // => Validates all selects + all file uploads together, scholarship, and data privacy notice
   const validate = () => {
-    if (!data.branch) return 'missing';
     if (!data.course) return 'missing';
     if (!data.courseClass) return 'missing';
     for (const { id } of allRequirements) {
@@ -181,7 +166,6 @@ const TESDAStep5 = ({
   const handleSubmit = async () => {
     // => Highlight empty selects
     setFieldErrors({
-      branch: !data.branch,
       course: !data.course,
       courseClass: !data.courseClass,
     });
@@ -211,7 +195,7 @@ const TESDAStep5 = ({
     }
 
     // => All valid - submit
-    setFieldErrors({ branch: false, course: false, courseClass: false });
+    setFieldErrors({ course: false, courseClass: false });
     setFileErrors({});
     setScholarErrors({ isScholar: false, scholarshipType: false, otherScholarship: false });
     setPrivacyErrors({ agreed: false });
@@ -234,40 +218,8 @@ const TESDAStep5 = ({
       {/* -- Section: Course Selection -- */}
       <div className="ts5-section-title">Course & Schedule</div>
 
-      {/* => Branch + Course + Class in one row */}
-      <div className="ts5-grid ts5-g3">
-
-        {/* => Branch */}
-        <div className="ts5-field-group">
-          <label className="ts5-label">
-            Branch <span className="ts5-req">*</span>
-          </label>
-          <select
-            className={`ts5-select ${fieldErrors.branch ? 'ts5-select--error' : ''}`}
-            value={data.branch}
-            onChange={(e) => {
-              onChange('branch', e.target.value);
-              // => Reset downstream fields when branch changes
-              onChange('course', '');
-              onChange('courseClass', '');
-              onChange('courseFee', '');
-              setSelectedCourse(null);
-              setCourses([]);
-              setClasses([]);
-              clearError('branch');
-            }}
-            disabled={branchesLoading}
-          >
-            <option value="">
-              {branchesLoading ? 'Loading...' : 'Select a Branch'}
-            </option>
-            {branches.map(b => (
-              <option key={b.branch_id} value={b.branch_id}>
-                {b.branch_name}
-              </option>
-            ))}
-          </select>
-        </div>
+      {/* => Course + Class in one row - Sector shown read-only under Course */}
+      <div className="ts5-grid ts5-g2">
 
         {/* => Course */}
         <div className="ts5-field-group">
@@ -283,20 +235,17 @@ const TESDAStep5 = ({
               // => Reset class when course changes
               onChange('courseClass', '');
               setClasses([]);
-              // => Find and store fee from the loaded courses list
+              // => Find and store the full course record (title, amount,
+              // => sector) from the already-loaded courses list
               const found = courses.find(c => String(c.course_id) === String(courseId));
               setSelectedCourse(found || null);
               onChange('courseFee', found ? found.amount : '');
               clearError('course');
             }}
-            disabled={!data.branch || coursesLoading}
+            disabled={coursesLoading}
           >
             <option value="">
-              {!data.branch
-                ? '- Select Branch first -'
-                : coursesLoading
-                ? 'Loading...'
-                : 'Select a Course'}
+              {coursesLoading ? 'Loading...' : 'Select a Course'}
             </option>
             {courses.map(c => (
               <option key={c.course_id} value={c.course_id}>
@@ -304,11 +253,18 @@ const TESDAStep5 = ({
               </option>
             ))}
           </select>
-          {/* => Show fee below the course dropdown once selected */}
+          {/* => Fee + Sector shown below the course dropdown once selected.
+               Sector is read-only - just informs the student which sector
+               their chosen course falls under (courses.sector_id) */}
           {selectedCourse && (
-            <span className="ts5-fee">
-              Fee: <strong>₱{Number(selectedCourse.amount).toLocaleString('en-PH')}</strong>
-            </span>
+            <>
+              <span className="ts5-fee">
+                Fee: <strong>₱{Number(selectedCourse.amount).toLocaleString('en-PH')}</strong>
+              </span>
+              <span className="ts5-hint">
+                Sector: <strong>{selectedCourse.sector || 'Unassigned'}</strong>
+              </span>
+            </>
           )}
         </div>
 
@@ -567,10 +523,10 @@ const TESDAStep5 = ({
       </label>
 
       {/* => Error banners */}
-      {showErrors && (!data.branch || !data.course || !data.courseClass) && (
+      {showErrors && (!data.course || !data.courseClass) && (
         <div className="ts5-error-banner">
           <i className="ti ti-alert-circle" />
-          Please select a branch, course, and class before proceeding.
+          Please select a course and class before proceeding.
         </div>
       )}
       {showFileBanner && (

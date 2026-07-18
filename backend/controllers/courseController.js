@@ -1,23 +1,18 @@
 import { sql } from '../config/db.js';
 
-// => GET /api/courses?branch_id=1 => fetch active courses for a specific branch
-export const getCoursesByBranch = async (req, res) => {
+// => GET /api/courses - fetch all active TESDA courses. No branch or
+// => sector filtering - single-branch institution now, and sector is
+// => shown read-only on the frontend (derived from the selected course),
+// => not used to filter the list.
+export const getCourses = async (req, res) => {
   try {
-    const { branch_id } = req.query;
-
-    // => branch_id is required => courses are branch-specific
-    if (!branch_id) {
-      return res.status(400).json({ error: 'branch_id is required.' });
-    }
-
     const result = await sql`
-    SELECT c.course_id, c.title, c.amount
-    FROM courses c
-    INNER JOIN course_branch cb ON c.course_id = cb.course_id
-    WHERE cb.branch_id = ${branch_id}
-        AND c.status = 'active'
-        AND c.deleted_at IS NULL
-    ORDER BY c.title ASC
+      SELECT tc.course_id, tc.title, tc.amount, tc.sector_id, s.sector
+      FROM tesda_courses tc
+      LEFT JOIN sectors s ON tc.sector_id = s.sector_id
+      WHERE tc.status = 'active'
+        AND tc.deleted_at IS NULL
+      ORDER BY tc.title ASC
     `;
 
     // => Neon returns { rows: [...] } - we only want the rows array
