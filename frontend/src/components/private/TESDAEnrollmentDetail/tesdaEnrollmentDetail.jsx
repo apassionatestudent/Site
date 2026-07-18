@@ -120,11 +120,6 @@ function TESDAEnrollmentDetail() {
           <div className="enroll-detail-grid">
 
             <div className="enroll-detail-card">
-              <p className="enroll-detail-label">Branch</p>
-              <p className="enroll-detail-value">{detail.branch_name ?? '-'}</p>
-            </div>
-
-            <div className="enroll-detail-card">
               <p className="enroll-detail-label">Date Submitted</p>
               <p className="enroll-detail-value">{formatDate(detail.submitted_at)}</p>
             </div>
@@ -235,19 +230,19 @@ function TESDAEnrollmentDetail() {
           {detail.status === 'Approved' && (
             <div className="enroll-notice enroll-notice--approved">
               <img src={checkmarkIcon} alt="" className="enroll-notice-icon" />
-              Your enrollment has been approved. Please coordinate with the branch for next steps.
+              Your enrollment has been approved. Please coordinate with the training center for next steps.
             </div>
           )}
           {detail.status === 'Needs Clarification' && (
             <div className="enroll-notice enroll-notice--clarification">
               <img src={errorIcon} alt="" className="enroll-notice-icon" />
-              The admin requires additional information. Please check your email or contact the branch.
+              The admin requires additional information. Please check your email or contact the training center.
             </div>
           )}
           {detail.status === 'Rejected' && (
             <div className="enroll-notice enroll-notice--rejected">
               <img src={rejectedIcon} alt="" className="enroll-notice-icon" />
-              Your enrollment was not approved. Please contact the branch for details.
+              Your enrollment was not approved. Please contact the training center for details.
             </div>
           )}
         </div>

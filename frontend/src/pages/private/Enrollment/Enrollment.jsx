@@ -10,7 +10,6 @@ import loadingIcon    from "../../../assets/icons/loading.png";
 import errorIcon      from "../../../assets/icons/warning.png";
 import clipboardIcon  from "../../../assets/icons/clipboard.png";
 import calendarIcon   from "../../../assets/icons/calendar.png";
-import buildingIcon   from "../../../assets/icons/building.png";
 import phpIcon        from "../../../assets/icons/php.png";
 
 // => Maps each status to a CSS modifier class for color-coding
@@ -172,10 +171,6 @@ function Enrollment() {
                   <span>
                     <img src={calendarIcon} alt="" className="enroll-card-meta-icon" />
                     Submitted {formatDate(enrollment.submitted_at)}
-                  </span>
-                  <span>
-                    <img src={buildingIcon} alt="" className="enroll-card-meta-icon" />
-                    {enrollment.branch_name ?? '-'}
                   </span>
                   {/* => Fee only applies to TESDA - SHS is DepEd/public, no fee_at_enrollment column exists */}
                   {enrollment.enrollment_type !== 'SHS' && (
