@@ -1,13 +1,13 @@
 import { sql } from '../config/db.js';
 
-// => GET /api/classes?course_id=1&branch_id=1 - fetch classes for a specific course and branch
+// => GET /api/classes?course_id=1 - fetch classes for a specific course
 export const getClasses = async (req, res) => {
   try {
-    const { course_id, branch_id } = req.query;
+    const { course_id } = req.query;
 
-    // => Both are required - a class belongs to a specific course at a specific branch
-    if (!course_id || !branch_id) {
-      return res.status(400).json({ error: 'course_id and branch_id are required.' });
+    // => single-branch institution now - no branch_id filter needed
+    if (!course_id) {
+      return res.status(400).json({ error: 'course_id is required.' });
     }
 
     // => to be used once there are enrollments to compute remaining slots on the fly instead of storing it in the database
@@ -52,7 +52,6 @@ export const getClasses = async (req, res) => {
     FROM tesda_classes cl
     LEFT JOIN instructors i ON cl.instructor_id = i.instructor_id
     WHERE cl.course_id = ${course_id}
-        AND cl.branch_id = ${branch_id}
         AND cl.status IN ('Pending', 'Ongoing')
         -- TODO: I need to check if they'd allow enrollments to ongoing classes or not. 
     ORDER BY cl.start_date ASC

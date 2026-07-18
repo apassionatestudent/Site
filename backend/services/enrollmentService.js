@@ -20,7 +20,7 @@ import {
 export const processEnrollmentSubmission = async (body, files) => {
   // => Parse the JSON blobs sent via FormData
   // => Each step's data is stringified on the frontend before appending to FormData
-  const courseData       = JSON.parse(body.courseData);       // => Step 5: branch/course/class/fee
+  const courseData       = JSON.parse(body.courseData);       // => Step 5: course/class/fee (sector is read-only, derived, not submitted)
   const ncaeData         = JSON.parse(body.ncaeData);         // => Step 4: takenBefore/where/when
   const scholarshipData  = JSON.parse(body.scholarshipData);  // => Step 5: isScholar/type/other
   const classifications  = JSON.parse(body.classifications);  // => Step 3: array of selected values
@@ -120,7 +120,7 @@ export const processEnrollmentSubmission = async (body, files) => {
 
 export const processShsEnrollmentSubmission = async (body, files) => {
   // => Parse the JSON blobs sent via FormData - same pattern as processEnrollmentSubmission
-  const academicData  = JSON.parse(body.academicData); // => Step 2: school info, track/cluster, branch
+  const academicData  = JSON.parse(body.academicData); // => Step 2: school info, track/cluster
   const familyData     = JSON.parse(body.familyData);   // => Step 3: father/mother/guardian, emergency, health
   const privacyAgreed  = body.privacyAgreed === 'true';  // => FormData sends booleans as strings
 

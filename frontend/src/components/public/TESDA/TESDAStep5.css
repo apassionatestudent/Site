@@ -27,9 +27,10 @@
 
 /* -- Course Selection -- */
 
-/* => 3-column grid: Branch | Course | Class */
+/* => 2-column grid: Course | Class (Sector is no longer a column - it's
+     shown read-only beneath Course instead) */
 .ts5-grid { display: grid; gap: 0 1.2rem; }
-.ts5-g3   { grid-template-columns: 1fr 1fr 1fr; }
+.ts5-g2   { grid-template-columns: 1fr 1fr; }
 
 .ts5-field-group {
   display: flex;
@@ -473,6 +474,6 @@
 /* -- Responsive -- */
 @media (max-width: 700px) {
   .ts5-wrap    { padding: 1.2rem; }
-  .ts5-g3      { grid-template-columns: 1fr; }
+  .ts5-g2      { grid-template-columns: 1fr; }
   .ts5-uploads { grid-template-columns: 1fr; gap: 1.2rem; }
 }

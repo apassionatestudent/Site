@@ -126,18 +126,17 @@ export const insertShsEnrollment = async (client, { studentId, body, academicDat
   // => (nullable) for historical rows, just no longer written here.
   const result = await client.query(
     `INSERT INTO shs_enrollments
-       (student_id, lrn, branch_id, class_id,
+       (student_id, lrn, class_id,
         last_school_attended, school_address, grade_level_completed, school_year_completed,
         track, cluster, electives,
         emergency_name, emergency_relationship, emergency_contact_no, emergency_address,
         has_medical_condition, medical_condition_detail, allergies, maintenance_medication,
         status, submitted_at)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,NOW())
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,NOW())
      RETURNING enrollment_id`,
     [
       studentId,
       body.lrn,
-      academicData.branch || null,
       academicData.class  || null,
       academicData.lastSchoolAttended,
       academicData.schoolAddress || null,
@@ -231,15 +230,14 @@ export const insertTesdaEnrollment = async (client, { studentId, courseData, nca
 
   const result = await client.query(
     `INSERT INTO tesda_enrollments
-       (student_id, branch_id, course_id, class_id, fee_at_enrollment,
+       (student_id, course_id, class_id, fee_at_enrollment,
         ncae_taken, ncae_where, ncae_when,
         is_tesda_scholar, scholarship_type, other_scholarship,
         status, submitted_at)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12, NOW())
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11, NOW())
      RETURNING enrollment_id`,
     [
       studentId,
-      courseData.branch       || null,
       courseData.course       || null,
       hasRealClass ? courseData.courseClass : null,
       courseData.courseFee    || null,
@@ -325,7 +323,6 @@ export const getEnrollmentsByStudentId = async (pool, studentId) => {
           'TESDA'                 AS enrollment_type,
           e.status,
           e.submitted_at,
-          COALESCE(b_direct.branch_name, b_class.branch_name) AS branch_name,
           e.fee_at_enrollment,
           cl.class_type,
           c.title                 AS course_name,
@@ -336,11 +333,9 @@ export const getEnrollmentsByStudentId = async (pool, studentId) => {
           NULL::VARCHAR(30)       AS grade_level_completed,
           NULL::TEXT              AS last_school_attended
         FROM tesda_enrollments e
-        LEFT JOIN courses       c        ON e.course_id  = c.course_id
+        LEFT JOIN tesda_courses c        ON e.course_id  = c.course_id
         LEFT JOIN sectors       s        ON c.sector_id  = s.sector_id
         LEFT JOIN tesda_classes cl       ON e.class_id   = cl.class_id
-        LEFT JOIN branches      b_direct ON e.branch_id  = b_direct.branch_id
-        LEFT JOIN branches      b_class  ON cl.branch_id = b_class.branch_id
         WHERE e.student_id = $1
 
         UNION ALL
@@ -350,7 +345,6 @@ export const getEnrollmentsByStudentId = async (pool, studentId) => {
           'SHS'                    AS enrollment_type,
           e.status,
           e.submitted_at,
-          COALESCE(b_direct.branch_name, b_class.branch_name) AS branch_name,
           NULL::NUMERIC(10,2)      AS fee_at_enrollment,
           NULL::VARCHAR(20)        AS class_type,
           NULL::VARCHAR(255)       AS course_name,
@@ -362,8 +356,6 @@ export const getEnrollmentsByStudentId = async (pool, studentId) => {
           e.last_school_attended
         FROM shs_enrollments e
         LEFT JOIN shs_classes cl        ON e.class_id   = cl.class_id
-        LEFT JOIN branches    b_direct  ON e.branch_id  = b_direct.branch_id
-        LEFT JOIN branches    b_class   ON cl.branch_id = b_class.branch_id
         WHERE e.student_id = $1
      ) combined
      ORDER BY submitted_at DESC`,
@@ -387,7 +379,6 @@ export const getEnrollmentByPublicId = async (pool, publicId, studentId) => {
           'TESDA'                  AS enrollment_type,
           e.status,
           e.submitted_at,
-          COALESCE(b_direct.branch_name, b_class.branch_name) AS branch_name,
           e.fee_at_enrollment,
           e.uli,
           cl.class_type,
@@ -413,11 +404,9 @@ export const getEnrollmentByPublicId = async (pool, publicId, studentId) => {
           NULL::VARCHAR(11)        AS emergency_contact_no,
           e.external_remarks
         FROM tesda_enrollments e
-        LEFT JOIN courses       c        ON e.course_id  = c.course_id
+        LEFT JOIN tesda_courses c        ON e.course_id  = c.course_id
         LEFT JOIN sectors       s        ON c.sector_id  = s.sector_id
         LEFT JOIN tesda_classes cl       ON e.class_id   = cl.class_id
-        LEFT JOIN branches      b_direct ON e.branch_id  = b_direct.branch_id
-        LEFT JOIN branches      b_class  ON cl.branch_id = b_class.branch_id
         WHERE e.public_id = $1 AND e.student_id = $2
 
         UNION ALL
@@ -427,7 +416,6 @@ export const getEnrollmentByPublicId = async (pool, publicId, studentId) => {
           'SHS'                     AS enrollment_type,
           e.status,
           e.submitted_at,
-          COALESCE(b_direct.branch_name, b_class.branch_name) AS branch_name,
           NULL::NUMERIC(10,2)       AS fee_at_enrollment,
           NULL::VARCHAR(20)         AS uli,
           NULL::VARCHAR(20)         AS class_type,
@@ -454,8 +442,6 @@ export const getEnrollmentByPublicId = async (pool, publicId, studentId) => {
           e.external_remarks
         FROM shs_enrollments e
         LEFT JOIN shs_classes cl        ON e.class_id   = cl.class_id
-        LEFT JOIN branches    b_direct  ON e.branch_id  = b_direct.branch_id
-        LEFT JOIN branches    b_class   ON cl.branch_id = b_class.branch_id
         WHERE e.public_id = $1 AND e.student_id = $2
      ) combined
      LIMIT 1`,
