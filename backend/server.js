@@ -266,6 +266,7 @@ async function initDB () {
     await sql`
       CREATE TABLE IF NOT EXISTS tesda_classes (
         class_id                    SERIAL      PRIMARY KEY,
+        public_id                   UUID        NOT NULL DEFAULT gen_random_uuid() UNIQUE,
 
         instructor_id               INT         REFERENCES instructors(instructor_id) ON DELETE SET NULL,
         course_id                   INT         NOT NULL REFERENCES tesda_courses(course_id)  ON DELETE CASCADE,
@@ -314,6 +315,7 @@ async function initDB () {
     await sql`
       CREATE TABLE IF NOT EXISTS shs_classes (
         class_id      SERIAL      PRIMARY KEY,
+        public_id     UUID        NOT NULL DEFAULT gen_random_uuid() UNIQUE,
 
         -- => track/cluster left WITHOUT a CHECK - same reasoning as
         -- => shs_enrollments.track/cluster: values are frontend-enforced
@@ -603,23 +605,12 @@ async function initDB () {
       END $$
     `;
 
-    // => shs_tracks: normalized SHS track reference data (e.g. STEM, ABM, TVL)
-    // => Replaces the old raw-string track column on shs_enrollments/shs_classes for the catalog feature
-    await sql`
-      CREATE TABLE IF NOT EXISTS shs_tracks (
-        track_id  SERIAL       PRIMARY KEY,
-        value     VARCHAR(20)  UNIQUE NOT NULL,
-        name      VARCHAR(100) NOT NULL
-      )
-    `;
-
     // => shs_clusters: normalized SHS cluster reference data, FK'd to its parent track
     await sql`
       CREATE TABLE IF NOT EXISTS shs_clusters (
         cluster_id  SERIAL       PRIMARY KEY,
         value       VARCHAR(50)  UNIQUE NOT NULL,
         name        VARCHAR(150) NOT NULL,
-        track_id    INT          NOT NULL REFERENCES shs_tracks(track_id),
         created_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
         updated_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW()
       )
