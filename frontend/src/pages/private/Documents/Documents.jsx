@@ -134,8 +134,16 @@ function Documents() {
                       <div className="docs-card-top">
                         <div>
                           <p className="docs-card-type">{doc.document_type}</p>
-                          {doc.course_name && (
-                            <p className="docs-card-course">{doc.course_name}</p>
+                          {doc.enrollment_type === 'SHS' ? (
+                            doc.track && (
+                              <p className="docs-card-course">
+                                {doc.track}{doc.cluster ? ` – ${doc.cluster}` : ''}
+                              </p>
+                            )
+                          ) : (
+                            doc.course_name && (
+                              <p className="docs-card-course">{doc.course_name}</p>
+                            )
                           )}
                         </div>
                         <span className={`docs-card-badge ${sourceClass[doc.source] || ''}`}>

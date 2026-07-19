@@ -155,6 +155,27 @@
   margin: 0;
 }
 
+/*  LINKED ENROLLMENT LINK  */
+
+.doc-detail-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--accent);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: var(--font-body);
+  transition: color 0.18s ease;
+}
+
+.doc-detail-link:hover {
+  color: var(--accent-hover);
+}
+
 /*  PREVIEW SECTION  */
 
 .doc-preview-section {

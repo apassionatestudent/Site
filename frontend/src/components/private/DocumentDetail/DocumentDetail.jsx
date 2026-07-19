@@ -134,11 +134,20 @@ function DocumentDetail() {
           <div className="doc-detail-header">
             <div>
               <h2 className="doc-detail-title">{detail.document_type}</h2>
-              {detail.course_name && (
-                <p className="doc-detail-sub">
-                  {detail.course_name}
-                  {detail.sector ? ` · ${detail.sector}` : ''}
-                </p>
+              {detail.enrollment_type === 'SHS' ? (
+                detail.track && (
+                  <p className="doc-detail-sub">
+                    {detail.track}
+                    {detail.cluster ? ` – ${detail.cluster}` : ''}
+                  </p>
+                )
+              ) : (
+                detail.course_name && (
+                  <p className="doc-detail-sub">
+                    {detail.course_name}
+                    {detail.sector ? ` · ${detail.sector}` : ''}
+                  </p>
+                )
               )}
             </div>
             <span className={`doc-detail-badge source--${detail.source}`}>
@@ -170,6 +179,26 @@ function DocumentDetail() {
                 <div className="doc-detail-card">
                   <p className="doc-detail-label">Enrollment Submitted</p>
                   <p className="doc-detail-value">{formatDate(detail.enrollment_submitted_at)}</p>
+                </div>
+
+                {/* => Deep link to the full enrollment this document belongs to -
+                    => enrollment_public_id + enrollment_type both already come
+                    => back from documentModel.js, just weren't used until now */}
+                <div className="doc-detail-card">
+                  <p className="doc-detail-label">Linked Enrollment</p>
+                  <button
+                    type="button"
+                    className="doc-detail-link"
+                    onClick={() =>
+                      navigate(
+                        detail.enrollment_type === 'SHS'
+                          ? `/dashboard/enrollment/shs/${detail.enrollment_public_id}`
+                          : `/dashboard/enrollment/tesda/${detail.enrollment_public_id}`
+                      )
+                    }
+                  >
+                    View full enrollment <i className="ti ti-arrow-right" />
+                  </button>
                 </div>
               </>
             )}

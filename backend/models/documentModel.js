@@ -17,10 +17,12 @@ export const getDocumentsByStudentId = async (pool, studentId) => {
           'enrollment'         AS source,
           'TESDA'              AS enrollment_type,
           e.public_id          AS enrollment_public_id,
-          c.title              AS course_name
+          c.title              AS course_name,
+          NULL::VARCHAR(20)    AS track,
+          NULL::VARCHAR(60)    AS cluster
         FROM tesda_documents ed
         JOIN tesda_enrollments e ON ed.enrollment_id = e.enrollment_id
-        LEFT JOIN courses c ON e.course_id = c.course_id
+        LEFT JOIN tesda_courses c ON e.course_id = c.course_id
         WHERE e.student_id = $1
 
         UNION ALL
@@ -33,7 +35,9 @@ export const getDocumentsByStudentId = async (pool, studentId) => {
           'enrollment'         AS source,
           'SHS'                AS enrollment_type,
           e.public_id          AS enrollment_public_id,
-          NULL::VARCHAR(255)   AS course_name
+          NULL::VARCHAR(255)   AS course_name,
+          e.track              AS track,
+          e.cluster            AS cluster
         FROM shs_documents sd
         JOIN shs_enrollments e ON sd.enrollment_id = e.enrollment_id
         WHERE e.student_id = $1
@@ -65,7 +69,7 @@ export const getDocumentByPublicId = async (pool, publicId, studentId) => {
         e.submitted_at        AS enrollment_submitted_at
       FROM tesda_documents ed
       JOIN tesda_enrollments e  ON ed.enrollment_id = e.enrollment_id
-      LEFT JOIN courses c ON e.course_id = c.course_id
+      LEFT JOIN tesda_courses c ON e.course_id = c.course_id
       LEFT JOIN sectors s ON c.sector_id  = s.sector_id
       WHERE ed.public_id   = $1
       AND e.student_id   = $2`,
@@ -86,6 +90,8 @@ export const getDocumentByPublicId = async (pool, publicId, studentId) => {
         e.public_id           AS enrollment_public_id,
         NULL::VARCHAR(255)    AS course_name,
         NULL::VARCHAR(150)    AS sector,
+        e.track               AS track,
+        e.cluster             AS cluster,
         e.status              AS enrollment_status,
         e.submitted_at        AS enrollment_submitted_at
       FROM shs_documents sd
