@@ -171,7 +171,8 @@ async function initDB () {
       -- => sectors: TESDA industry sectors (e.g. ICT, Agriculture, Construction)
       CREATE TABLE IF NOT EXISTS sectors (
         sector_id  SERIAL       PRIMARY KEY,
-        sector     VARCHAR(150) NOT NULL
+        sector     VARCHAR(150) NOT NULL,
+        deleted_at TIMESTAMPTZ  NULL
       )
     `;
 
@@ -237,6 +238,22 @@ async function initDB () {
         course_id  INT         NOT NULL REFERENCES tesda_courses(course_id) ON DELETE CASCADE,
         code       VARCHAR(50) NOT NULL,
         competency TEXT        NOT NULL
+      )
+    `;
+
+    await sql`
+      CREATE TABLE IF NOT EXISTS tesda_job_opportunities (
+        job_id     SERIAL       PRIMARY KEY,
+        course_id  INT          NOT NULL REFERENCES tesda_courses(course_id) ON DELETE CASCADE,
+        job_title  VARCHAR(150) NOT NULL
+      )
+    `;
+
+    await sql`
+      CREATE TABLE IF NOT EXISTS shs_job_opportunities (
+        job_id     SERIAL       PRIMARY KEY,
+        course_id  INT          NOT NULL REFERENCES shs_courses(course_id) ON DELETE CASCADE,
+        job_title  VARCHAR(150) NOT NULL
       )
     `;
 
@@ -612,7 +629,8 @@ async function initDB () {
         value       VARCHAR(50)  UNIQUE NOT NULL,
         name        VARCHAR(150) NOT NULL,
         created_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
-        updated_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+        updated_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+        deleted_at  TIMESTAMPTZ  NULL
       )
     `;
 

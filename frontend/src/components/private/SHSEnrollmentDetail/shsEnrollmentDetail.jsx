@@ -158,6 +158,49 @@ function SHSEnrollmentDetail() {
 
           </div>
 
+          {/* => CLUSTER CURRICULUM - a cluster is a fixed 2-year curriculum,
+              => so this shows BOTH the Grade 11 and Grade 12 course the
+              => student will take under their chosen cluster, resolved
+              => server-side via shs_clusters -> shs_courses */}
+          <p className="enroll-detail-section-title">
+            Cluster Curriculum{detail.cluster_name ? ` – ${detail.cluster_name}` : ''}
+          </p>
+
+          {Array.isArray(detail.cluster_courses) && detail.cluster_courses.length > 0 ? (
+            <div className="enroll-detail-grid enroll-detail-grid--halves">
+              {detail.cluster_courses.map((course) => (
+                <div key={course.course_id} className="enroll-detail-card enroll-detail-card--course">
+                  <p className="enroll-detail-label">
+                    {course.grade_level}
+                    {/* => Course still shows in full for this student even if an
+                        => admin deactivated it after enrollment - this badge is
+                        => just a quiet heads-up, not a block on anything */}
+                    {course.status === 'inactive' && (
+                      <span className="enroll-detail-inactive-note"> · No longer offered</span>
+                    )}
+                  </p>
+                  <p className="enroll-detail-value">{course.title}</p>
+                  {course.description && (
+                    <p className="enroll-detail-subvalue">{course.description}</p>
+                  )}
+                  {Array.isArray(course.job_opportunities) && course.job_opportunities.length > 0 && (
+                    <div className="enroll-detail-tags">
+                      {course.job_opportunities.map((job, i) => (
+                        <span key={i} className="enroll-detail-tag">{job}</span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="enroll-detail-card enroll-detail-card--muted">
+              <p className="enroll-detail-value enroll-detail-value--muted">
+                Curriculum details not yet available for this cluster.
+              </p>
+            </div>
+          )}
+
           {/* => CLASS / BATCH - shs_enrollments.class_id -> shs_classes is now
               => wired up in the backend union query, so this renders real data
               => once an admin assigns a class, and the muted placeholder until then */}

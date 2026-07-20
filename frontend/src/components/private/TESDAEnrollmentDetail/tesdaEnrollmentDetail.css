@@ -300,6 +300,34 @@
   margin: 0;
 }
 
+/*  COURSE DESCRIPTION PARAGRAPH  */
+
+.enroll-detail-course-desc {
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  line-height: 1.6;
+  margin: 0 0 1rem;
+}
+
+/*  JOB OPPORTUNITY TAGS  */
+
+.enroll-detail-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.75rem;
+}
+
+.enroll-detail-tag {
+  display: inline-block;
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}
+
 /*  RWD  */
 
 @media (max-width: 768px) {
