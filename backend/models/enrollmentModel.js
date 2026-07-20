@@ -402,11 +402,30 @@ export const getEnrollmentByPublicId = async (pool, publicId, studentId) => {
           NULL::VARCHAR(150)       AS emergency_name,
           NULL::VARCHAR(60)        AS emergency_relationship,
           NULL::VARCHAR(11)        AS emergency_contact_no,
-          e.external_remarks
+          e.external_remarks,
+          -- => NEW: full TESDA course detail, pulled straight from tesda_courses
+          -- => instead of just title/sector like before
+          c.description             AS course_description,
+          c.accreditation_no,
+          c.date_accredited,
+          c.expiration_date,
+          c.amount                  AS course_amount,
+          c.hours                   AS course_hours,
+          c.cover_image_url,
+          job_opps.jobs              AS job_opportunities,
+          NULL::VARCHAR(150)        AS cluster_name,
+          NULL::JSON                AS cluster_courses
         FROM tesda_enrollments e
         LEFT JOIN tesda_courses c        ON e.course_id  = c.course_id
         LEFT JOIN sectors       s        ON c.sector_id  = s.sector_id
         LEFT JOIN tesda_classes cl       ON e.class_id   = cl.class_id
+        -- => LATERAL subquery collapses all job title rows for this course
+        -- => into one JSON array so the row count stays 1:1 with the enrollment
+        LEFT JOIN LATERAL (
+          SELECT json_agg(jo.job_title) AS jobs
+          FROM tesda_job_opportunities jo
+          WHERE jo.course_id = c.course_id
+        ) job_opps ON true
         WHERE e.public_id = $1 AND e.student_id = $2
 
         UNION ALL
@@ -439,9 +458,56 @@ export const getEnrollmentByPublicId = async (pool, publicId, studentId) => {
           e.emergency_name,
           e.emergency_relationship,
           e.emergency_contact_no,
-          e.external_remarks
+          e.external_remarks,
+          -- => NEW: TESDA-only columns, NULL on this branch to keep UNION ALL types aligned
+          NULL::TEXT                AS course_description,
+          NULL::VARCHAR(100)        AS accreditation_no,
+          NULL::DATE                AS date_accredited,
+          NULL::DATE                AS expiration_date,
+          NULL::NUMERIC(10,2)       AS course_amount,
+          NULL::INT                 AS course_hours,
+          NULL::TEXT                AS cover_image_url,
+          NULL::JSON                AS job_opportunities,
+          -- => NEW: resolved cluster display name + BOTH Grade 11 and
+          -- => Grade 12 course rows for whichever cluster the student enrolled in
+          scl.name                  AS cluster_name,
+          cluster_courses.courses    AS cluster_courses
         FROM shs_enrollments e
         LEFT JOIN shs_classes cl        ON e.class_id   = cl.class_id
+        -- => e.cluster stores the VALUE slug (e.g. 'ict-cluster'), so resolve
+        -- => it to shs_clusters to get cluster_id + a readable display name
+        LEFT JOIN shs_clusters scl       ON scl.value = e.cluster
+        -- => LATERAL subquery pulls every active shs_courses row sharing that
+        -- => cluster_id (i.e. the Grade 11 row AND the Grade 12 row) as one
+        -- => JSON array, each with its own nested job opportunities
+        LEFT JOIN LATERAL (
+          SELECT json_agg(
+            json_build_object(
+              'course_id',         sc.course_id,
+              'title',             sc.title,
+              'grade_level',       sc.grade_level,
+              'description',       sc.description,
+              'cover_image_url',   sc.cover_image_url,
+              'course_link',       sc.course_link,
+              'status',            sc.status,
+              'job_opportunities', (
+                SELECT json_agg(jo.job_title)
+                FROM shs_job_opportunities jo
+                WHERE jo.course_id = sc.course_id
+              )
+            ) ORDER BY sc.grade_level
+          ) AS courses
+          FROM shs_courses sc
+          -- => No status filter here on purpose. sc.status = 'active' only
+          -- => controls whether a course is SELECTABLE on the public
+          -- => enrollment form for NEW enrollees - it must not hide a
+          -- => course from a student who is already mid-cluster. If an
+          -- => admin deactivates a course partway through, the current
+          -- => batch keeps seeing it in full until they complete; only the
+          -- => NEXT batch's enrollment form (a separate query, not this one)
+          -- => will stop offering it.
+          WHERE sc.cluster_id = scl.cluster_id
+        ) cluster_courses ON true
         WHERE e.public_id = $1 AND e.student_id = $2
      ) combined
      LIMIT 1`,

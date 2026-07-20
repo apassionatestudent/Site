@@ -169,6 +169,42 @@ function TESDAEnrollmentDetail() {
 
           </div>
 
+          {/* => COURSE DETAILS - pulled from tesda_courses via course_id,
+              => shows the accreditation info and job outlook for the exact
+              => course the student is enrolled in, not just its title */}
+          <p className="enroll-detail-section-title">Course Details</p>
+
+          {detail.course_description && (
+            <p className="enroll-detail-course-desc">{detail.course_description}</p>
+          )}
+
+          <div className="enroll-detail-grid">
+            <div className="enroll-detail-card">
+              <p className="enroll-detail-label">Accreditation No.</p>
+              <p className="enroll-detail-value">{detail.accreditation_no ?? '-'}</p>
+            </div>
+            <div className="enroll-detail-card">
+              <p className="enroll-detail-label">Accredited / Expires</p>
+              <p className="enroll-detail-value">
+                {formatDate(detail.date_accredited)} - {formatDate(detail.expiration_date)}
+              </p>
+            </div>
+            <div className="enroll-detail-card">
+              <p className="enroll-detail-label">Training Hours</p>
+              <p className="enroll-detail-value">{detail.course_hours ? `${detail.course_hours} hrs` : '-'}</p>
+            </div>
+          </div>
+
+          {/* => Job opportunities - rendered as tags rather than a grid card
+              => since the count varies per course (2 to 10+) */}
+          {Array.isArray(detail.job_opportunities) && detail.job_opportunities.length > 0 && (
+            <div className="enroll-detail-tags">
+              {detail.job_opportunities.map((job, i) => (
+                <span key={i} className="enroll-detail-tag">{job}</span>
+              ))}
+            </div>
+          )}
+
           {/* => CLASS / BATCH - only 2 cards, so use the halves variant to
               => split the row evenly instead of the default 3-col grid */}
           <p className="enroll-detail-section-title">Class / Batch</p>
