@@ -1,0 +1,127 @@
+/* ============================================================
+   classes.css
+   Student-facing Classes list page.
+   => Colors now pull from index.css's :root[data-theme] tokens
+      instead of hardcoded hex, mirroring Documents.css's approach.
+   ============================================================ */
+
+.classes-page {
+  font-family: var(--font-body);
+  color: var(--text-primary);
+  padding: 2.5rem 2rem;
+  min-height: 100vh;
+}
+
+.classes-header {
+  margin-bottom: 2rem;
+}
+
+.classes-title {
+  font-family: var(--font-body);
+  font-size: 2rem;
+  font-weight: 400;
+  color: var(--text-primary);
+  margin: 0 0 0.35rem;
+  letter-spacing: -0.02em;
+}
+
+.classes-subtitle {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.classes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.classes-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 20px 24px;
+  cursor: pointer;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.classes-card:hover {
+  box-shadow: var(--card-glow);
+  border-color: var(--card-border-hover);
+}
+
+.classes-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.classes-card-header h2 {
+  font-family: var(--font-body);
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.classes-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+/* => Uses the same red-brand tag tokens as .page-hero-tag - adapts
+      automatically between the light and dark accent values */
+.classes-badge--tesda {
+  background-color: var(--tag-bg);
+  color: var(--tag-color);
+}
+
+/* => No dedicated "blue" token exists in index.css yet - kept as a
+      translucent overlay so it still reads fine on both card-bg values.
+      Same exception Documents.css already makes for its own badges. */
+.classes-badge--shs {
+  background-color: rgba(59, 130, 246, 0.12);
+  color: #3b82f6;
+}
+
+.classes-card-batch {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  margin: 8px 0 12px;
+}
+
+.classes-card-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.classes-card-icon {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+}
+
+.classes-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 60px 20px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.classes-empty-icon {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  opacity: 0.6;
+}

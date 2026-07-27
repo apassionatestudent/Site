@@ -114,8 +114,8 @@ const TESDAStep3 = ({ selected, onChange, othersText, onOthersTextChange, onBack
             type="text"
             className="ts3-others-input"
             placeholder="Please specify..."
-            value={othersText}
-            onChange={(e) => setOthersText(e.target.value)}
+            value={effectiveOthersText}
+            onChange={(e) => handleOthersTextChange(e.target.value)}
           />
         </div>
       )}

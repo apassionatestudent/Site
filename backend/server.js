@@ -1,3 +1,5 @@
+// publict site & student dashboard server.js
+
 import express from "express";
 import helmet from "helmet";
 import morgan from "morgan";
@@ -22,8 +24,17 @@ import shsClassesRouter from './routes/shsClasses.js';
 // => cluster, not an individual course - this route now returns a
 // => cluster's G11/G12 curriculum for display, not a selectable list
 import shsClustersRoute from './routes/shsClusters.js';
-import enrollmentRoutes from './routes/enrollmentRoutes.js';
-import documentRoutes from './routes/documentRoutes.js';
+// => Enrollment routes split into shared (combined my-enrollments/detail),
+//    tesda-only (submit), and shs-only (submit-shs) routers, and document
+//    routes relocated alongside them - see routes/Enrollments/
+import sharedEnrollmentRoutes from './routes/Enrollments/sharedEnrollmentRoutes.js';
+import tesdaEnrollmentRoutes from './routes/Enrollments/tesdaEnrollmentRoutes.js';
+import shsEnrollmentRoutes from './routes/Enrollments/shsEnrollmentRoutes.js';
+import documentRoutes from './routes/Enrollments/documentRoutes.js';
+// => Read-only student class schedule (Approved enrollments only) - mounted
+//    under /api/student-classes since /api/classes and /api/shs-classes
+//    are already taken by the enrollment-form batch pickers
+import classesRoutes from './routes/Classes/classesRoutes.js';
 
 import path from "path";
 
@@ -59,11 +70,24 @@ app.use("/api/shs-classes", shsClassesRouter);
 // => Register SHS courses route
 app.use('/api/shs-clusters', shsClustersRoute);
 
-// => Enrollment submission route
-app.use('/api/enrollment', enrollmentRoutes);
+// => Enrollment submission routes - three routers share the same
+//    '/api/enrollment' mount point since their paths don't overlap
+//    (/submit is TESDA-only, /submit-shs is SHS-only, and the shared
+//    router only owns /my-enrollments and /:publicId). This keeps every
+//    existing frontend URL identical to before the split.
+app.use('/api/enrollment', sharedEnrollmentRoutes);
+app.use('/api/enrollment', tesdaEnrollmentRoutes);
+app.use('/api/enrollment', shsEnrollmentRoutes);
+
+// => Student class schedule - read-only, students can view but never
+//    modify scheduling. Own prefix to avoid colliding with the
+//    enrollment-form batch pickers at /api/classes and /api/shs-classes.
+app.use('/api/student-classes', classesRoutes);
 
 // => Document proxy route - serves R2 files through auth-gated Express endpoint
 // => Raw R2 URLs are never exposed to the browser
+// => Moved into routes/Enrollments/ alongside enrollment routes since
+//    documents are always fetched across both enrollment types together
 app.use('/api/documents', documentRoutes);
 
 // => Required when deployed behind a reverse proxy (Render, Railway, etc.)
@@ -176,6 +200,19 @@ async function initDB () {
       )
     `;
 
+    // => national_certification_types - exists live in Neon but was never
+    //    mirrored here (created directly via SQL Editor, per your note).
+    //    Reconstructed minimally from tesda_courses' FK reference only -
+    //    if the real table has more columns, this IF NOT EXISTS won't add
+    //    them (per your own rule: it no-ops silently on existing tables).
+    //    Confirm this matches, or send the real columns and I'll correct it.
+    await sql`
+        CREATE TABLE IF NOT EXISTS national_certification_types (
+            certification_id SERIAL PRIMARY KEY,
+            name VARCHAR(150) NOT NULL
+        )
+    `;
+
     await sql`
       CREATE TABLE IF NOT EXISTS tesda_courses (
         course_id        SERIAL         PRIMARY KEY,
@@ -265,27 +302,61 @@ async function initDB () {
     `;
 
     await sql`
-      CREATE TABLE IF NOT EXISTS instructors (
-        instructor_id        SERIAL       PRIMARY KEY,
-        instructor_full_name VARCHAR(150) NOT NULL,
+      -- => Updated to match live Neon schema: status/deleted_at/remarks follow the
+      -- => same pattern as facilities, so RemarksActionModal works identically for
+      -- => both. handles_tesda/handles_shs gate which course checklist(s) show up
+      -- => in the admin form, and which join table(s) get rows for this instructor.
+      CREATE TABLE IF NOT EXISTS trainers (
+        trainer_id        SERIAL       PRIMARY KEY,
+        public_id            UUID         NOT NULL DEFAULT gen_random_uuid() UNIQUE,
+        trainer_full_name VARCHAR(150) NOT NULL,
         contact_number       VARCHAR(20)  NOT NULL,
 
         -- => Nullable: not required now but reserved for future use
         email                VARCHAR(255) NULL,
 
+        -- => day-to-day active/inactive, reversible - separate concern from deleted_at
+        status                VARCHAR(20)  NOT NULL DEFAULT 'active',
+
+        -- => soft delete, restorable - NULL means not deleted
+        deleted_at            TIMESTAMPTZ  NULL,
+
+        -- => last saved status-change / delete reason, overwritten each time
+        remarks               TEXT         NULL,
+
+        -- => can this instructor be assigned to TESDA courses, SHS courses, or both
+        handles_tesda         BOOLEAN      NOT NULL DEFAULT FALSE,
+        handles_shs           BOOLEAN      NOT NULL DEFAULT FALSE,
+
         -- => Audit trail
         created_by           INT          REFERENCES admins(admin_id) ON DELETE SET NULL,
         created_at           TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
-        updated_at           TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+        updated_at           TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+        -- => Who last edited this trainer - shown as "Last Updated By" on TrainerDetail
+        updated_by           INT          REFERENCES admins(admin_id) ON DELETE SET NULL
       )
     `;
 
     await sql`
-      CREATE TABLE IF NOT EXISTS tesda_classes (
-        class_id                    SERIAL      PRIMARY KEY,
+      -- => Which TESDA courses a trainer is qualified to handle.
+      -- => Mirrors facility_tesda_courses - course-level, not sector-level.
+      -- => Renamed from instructor_tesda_courses as part of the
+      -- => Instructor -> Trainer rename
+      CREATE TABLE IF NOT EXISTS trainer_tesda_courses (
+        trainer_id INTEGER NOT NULL REFERENCES trainers(trainer_id) ON DELETE CASCADE,
+        course_id  INTEGER NOT NULL REFERENCES tesda_courses(course_id) ON DELETE CASCADE,
+        PRIMARY KEY (trainer_id, course_id)
+      )
+    `;
+
+    await sql`
+      -- => Renamed from tesda_classes: stakeholders say "batch," not "class"
+      CREATE TABLE IF NOT EXISTS tesda_batches (
+        batch_id                    SERIAL      PRIMARY KEY,
         public_id                   UUID        NOT NULL DEFAULT gen_random_uuid() UNIQUE,
 
-        instructor_id               INT         REFERENCES instructors(instructor_id) ON DELETE SET NULL,
+        -- => Renamed from instructor_id as part of the Instructor -> Trainer rename
+        trainer_id                  INT         REFERENCES trainers(trainer_id) ON DELETE SET NULL,
         course_id                   INT         NOT NULL REFERENCES tesda_courses(course_id)  ON DELETE CASCADE,
 
         -- => Date only, no time component needed
@@ -298,7 +369,9 @@ async function initDB () {
         -- => Ongoing: class is currently running
         -- => Concluded: all discussions done, certificates given
         -- => Pending: class is set up but hasn't started yet
-        status                      VARCHAR(15) NOT NULL DEFAULT 'Pending' CHECK (status IN ('Pending', 'Ongoing', 'Concluded')),
+        -- => Dissolved: batch called off mid-enrollment - admin notifies
+        -- => enrolled students manually (e.g. via Messenger)
+        status                      VARCHAR(15) NOT NULL DEFAULT 'Pending' CHECK (status IN ('Pending', 'Ongoing', 'Concluded', 'Dissolved')),
 
         -- => Regular: paid by the enrollee - TESDA-Sponsored: paid by TESDA
         class_type                  VARCHAR(20) NOT NULL DEFAULT 'Regular' CHECK (class_type IN ('Regular', 'TESDA-Sponsored')),
@@ -324,20 +397,29 @@ async function initDB () {
       )
     `;
 
-    // => shs_classes: SHS's equivalent of tesda_classes, but keyed by
-    // => track + cluster instead of course_id, since SHS enrollees
-    // => pick a track/cluster, not a TESDA course. No instructor_id for now -
+    // => shs_batches: SHS's equivalent of tesda_batches, but keyed by
+    // => cluster instead of course_id, since SHS enrollees pick a
+    // => cluster, not a TESDA course. No instructor_id for now -
     // => flagged as an open question, easy to ALTER in later if needed.
-    // => No branch_id - single-branch institution, no branch distinction.
+    // => track column removed: only one track is offered, and it was
+    // => dropped from scope entirely per the thesis adviser's direction.
     await sql`
-      CREATE TABLE IF NOT EXISTS shs_classes (
-        class_id      SERIAL      PRIMARY KEY,
+      CREATE TABLE IF NOT EXISTS shs_batches (
+        batch_id      SERIAL      PRIMARY KEY,
         public_id     UUID        NOT NULL DEFAULT gen_random_uuid() UNIQUE,
 
-        -- => track/cluster left WITHOUT a CHECK - same reasoning as
-        -- => shs_enrollments.track/cluster: values are frontend-enforced
-        track         VARCHAR(30) NOT NULL,
-        cluster       VARCHAR(60) NULL,
+        -- => cluster left WITHOUT a CHECK - same reasoning as
+        -- => shs_enrollments.cluster: values are frontend-enforced
+        -- => NOT NULL: with track removed, cluster is now the only field
+        -- => distinguishing one SHS offering from another
+        cluster       VARCHAR(60) NOT NULL,
+
+        -- => Two trainer slots instead of one instructor_id: a batch spans
+        -- => both grade levels at once, and a trainer's TESDA-style
+        -- => qualification is grade-specific (trainer_shs_courses joins
+        -- => through shs_courses.grade_level), so one FK can't represent it
+        grade11_trainer_id INT REFERENCES trainers(trainer_id) ON DELETE SET NULL,
+        grade12_trainer_id INT REFERENCES trainers(trainer_id) ON DELETE SET NULL,
 
         school_year   VARCHAR(20) NOT NULL,
         -- => Both nullable - same reasoning as tesda_classes: start_date
@@ -345,7 +427,13 @@ async function initDB () {
         start_date    DATE        NULL,
         end_date      DATE        NULL,
 
-        status        VARCHAR(15) NOT NULL DEFAULT 'Pending' CHECK (status IN ('Pending', 'Ongoing', 'Concluded')),
+        -- => Dissolved: batch called off mid-enrollment - admin notifies
+        -- => enrolled students manually (e.g. via Messenger)
+        status        VARCHAR(15) NOT NULL DEFAULT 'Pending' CHECK (status IN ('Pending', 'Ongoing', 'Concluded', 'Dissolved')),
+
+        -- => Minimum students required before batch can begin - matches
+        -- => tesda_batches for consistency
+        required_number_of_students INT NOT NULL,
         max_students  INT         NOT NULL,
 
         created_by    INT         REFERENCES admins(admin_id) ON DELETE SET NULL,
@@ -464,7 +552,8 @@ async function initDB () {
         public_id             UUID          NOT NULL DEFAULT gen_random_uuid() UNIQUE,
         student_id            BIGINT        NOT NULL REFERENCES student_accounts(student_id) ON DELETE RESTRICT,
         course_id             INT           NULL REFERENCES tesda_courses(course_id)   ON DELETE SET NULL,
-        class_id              INT           NULL REFERENCES classes(class_id)    ON DELETE SET NULL,
+        -- => Repointed from the now-retired legacy classes table to tesda_batches
+        batch_id              INT           NULL REFERENCES tesda_batches(batch_id) ON DELETE SET NULL,
         fee_at_enrollment     NUMERIC(10,2) NULL,
         uli                   VARCHAR(20)   NULL,
 
@@ -623,10 +712,10 @@ async function initDB () {
     `;
 
     // => shs_clusters: normalized SHS cluster reference data, FK'd to its parent track
+    // => value column dropped, name is now the sole identifying label
     await sql`
       CREATE TABLE IF NOT EXISTS shs_clusters (
         cluster_id  SERIAL       PRIMARY KEY,
-        value       VARCHAR(50)  UNIQUE NOT NULL,
         name        VARCHAR(150) NOT NULL,
         created_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
         updated_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
@@ -681,7 +770,8 @@ async function initDB () {
         public_id                 UUID          NOT NULL DEFAULT gen_random_uuid() UNIQUE,
         student_id                BIGINT        NOT NULL REFERENCES student_accounts(student_id) ON DELETE RESTRICT,
         lrn                       VARCHAR(12)   NULL,
-        class_id                  INT           NULL REFERENCES shs_classes(class_id) ON DELETE SET NULL,
+        -- => Repointed from shs_classes to its renamed table shs_batches
+        batch_id                  INT           NULL REFERENCES shs_batches(batch_id) ON DELETE SET NULL,
 
         -- => course_id: links to the shs_courses catalog entry chosen at enrollment
         -- => Nullable since enrollments predating the course catalog feature won't have one
@@ -694,10 +784,9 @@ async function initDB () {
         school_year_completed      VARCHAR(20)   NOT NULL,
 
         -- => Strengthened SHS Enrollment Details
-        -- => track/cluster left WITHOUT a CHECK - values are already
-        -- => enforced by the frontend's radio group / <select>
-        track                      VARCHAR(30)   NOT NULL,
-        cluster                    VARCHAR(60)   NULL,
+        -- => cluster left WITHOUT a CHECK - values are already
+        -- => NOT NULL: with track removed, cluster is the sole identifier
+        cluster                    VARCHAR(60)   NOT NULL,
         electives                  TEXT          NULL,
 
         -- => Emergency Contact
@@ -772,7 +861,130 @@ async function initDB () {
       )
     `;
 
-    
+    await sql`
+      -- => facilities was previously created live in Neon only, never
+      -- => mirrored here - added now so a fresh deploy doesn't silently
+      -- => fail when facility_shs_courses below tries to reference it
+      CREATE TABLE IF NOT EXISTS facilities (
+        facility_id         SERIAL        PRIMARY KEY,
+        public_id           UUID          NOT NULL DEFAULT gen_random_uuid() UNIQUE,
+        name                VARCHAR(150)  NOT NULL,
+        capacity            INTEGER       NULL,
+
+        -- => true = usable for any course/cluster, no restriction rows needed
+        allows_all_courses  BOOLEAN       NOT NULL DEFAULT FALSE,
+
+        status              VARCHAR(20)   NOT NULL DEFAULT 'active',
+        deleted_at          TIMESTAMPTZ   NULL,
+        remarks             TEXT          NULL,
+
+        created_by          INT           NOT NULL REFERENCES admins(admin_id) ON DELETE SET NULL,
+        created_at          TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+        updated_at          TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+        updated_by          INT           REFERENCES admins(admin_id) ON DELETE SET NULL
+      );
+    `
+
+    await sql`
+      -- => Which TESDA courses a facility is restricted to - mirrors
+      -- => facility_shs_courses below, added alongside facilities since
+      -- => this was also never mirrored here
+      CREATE TABLE IF NOT EXISTS facility_tesda_courses (
+        facility_id INTEGER NOT NULL REFERENCES facilities(facility_id) ON DELETE CASCADE,
+        course_id   INTEGER NOT NULL REFERENCES tesda_courses(course_id) ON DELETE CASCADE,
+        PRIMARY KEY (facility_id, course_id)
+      );
+    `
+
+    await sql`
+      -- => Replaces facility_shs_clusters with facility_shs_courses. Course-level
+      --    restriction instead of cluster-level, since two courses in the same
+      --    cluster (e.g. Cookery vs Housekeeping under Hospitality and Tourism)
+      --    need different dedicated rooms.
+      CREATE TABLE IF NOT EXISTS facility_shs_courses (
+        facility_id INTEGER NOT NULL REFERENCES facilities(facility_id) ON DELETE CASCADE,
+        course_id INTEGER NOT NULL REFERENCES shs_courses(course_id) ON DELETE CASCADE,
+        PRIMARY KEY (facility_id, course_id)
+      );
+    `
+
+    await sql`
+      -- => Which SHS courses a trainer is qualified to handle.
+      -- => Mirrors facility_shs_courses - has to come after shs_courses exists,
+      -- => which is why this lives here instead of next to trainer_tesda_courses.
+      -- => Renamed from instructor_shs_courses as part of the
+      -- => Instructor -> Trainer rename
+      CREATE TABLE IF NOT EXISTS trainer_shs_courses (
+        trainer_id INTEGER NOT NULL REFERENCES trainers(trainer_id) ON DELETE CASCADE,
+        course_id  INTEGER NOT NULL REFERENCES shs_courses(course_id) ON DELETE CASCADE,
+        PRIMARY KEY (trainer_id, course_id)
+      )
+    `;
+
+    await sql`
+      -- => activity_logs: system-wide audit trail, not entity-specific.
+      -- => entity_type/entity_id nullable - pure system events (login,
+      -- => password reset) have no entity attached and leave both NULL.
+      -- => actor_id has no FK - it can point at either admins.admin_id or
+      -- => student_accounts.student_id depending on actor_type, and
+      -- => Postgres can't express a conditional FK across two tables.
+      -- => actor_name is a denormalized snapshot, kept accurate even if
+      -- => the actor's name later changes or the account is deleted.
+      CREATE TABLE IF NOT EXISTS activity_logs (
+          log_id          SERIAL PRIMARY KEY,
+          entity_type     VARCHAR(50),
+          entity_id       INTEGER,
+          actor_type      VARCHAR(15)   NOT NULL
+                          CHECK (actor_type IN ('Admin', 'Student', 'System')),
+          actor_id        INTEGER,
+          actor_name      VARCHAR(150)  NOT NULL DEFAULT 'Unknown',
+          action          TEXT          NOT NULL,
+          action_detail   TEXT,
+          created_at      TIMESTAMPTZ   NOT NULL DEFAULT NOW()
+      )
+    `;
+
+    await sql`
+      CREATE INDEX IF NOT EXISTS idx_activity_logs_entity
+      ON activity_logs (entity_type, entity_id)
+    `;
+
+    await sql`
+      CREATE INDEX IF NOT EXISTS idx_activity_logs_created_at
+      ON activity_logs (created_at DESC)
+    `;
+
+    await sql`
+      -- => class_sessions was previously created live in Neon only, never
+      -- => mirrored here. batch_type + batch_id are a polymorphic pair
+      -- => (points at either tesda_batches or shs_batches) - no FK
+      -- => constraint on batch_id since Postgres can't express a
+      -- => conditional FK across two tables, same reasoning as
+      -- => activity_logs.entity_type/entity_id above.
+      CREATE TABLE IF NOT EXISTS class_sessions (
+        session_id      SERIAL        PRIMARY KEY,
+        public_id       UUID          NOT NULL DEFAULT gen_random_uuid() UNIQUE,
+
+        batch_type      VARCHAR(10)   NOT NULL,
+        batch_id        INTEGER       NOT NULL,
+
+        session_type    VARCHAR(10)   NOT NULL,
+        facility_id     INTEGER       NULL REFERENCES facilities(facility_id) ON DELETE SET NULL,
+        mobile_location VARCHAR(255)  NULL,
+        meeting_link    VARCHAR(500)  NULL,
+
+        session_date    DATE          NOT NULL,
+        start_time      TIME          NOT NULL,
+        end_time        TIME          NOT NULL,
+
+        -- => Renamed from instructor_id as part of the Instructor -> Trainer rename
+        trainer_id      INTEGER       NULL REFERENCES trainers(trainer_id) ON DELETE SET NULL,
+
+        created_by      INTEGER       NOT NULL REFERENCES admins(admin_id) ON DELETE SET NULL,
+        remarks         TEXT          NULL,
+        created_at      TIMESTAMPTZ   NOT NULL DEFAULT NOW()
+      )
+    `;
 
     console.log("Database initialized successfully");
   } catch (error) {

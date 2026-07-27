@@ -53,6 +53,8 @@ const [tesdaPersonal, setTesdaPersonal] = useState({
   educAttainment: '',
   guardianName: '',
   guardianAddress: '',
+  // => required since student_guardian.guardian_contact_no is NOT NULL
+  guardianContactNo: '',
 });
 
 // => TESDA form data - Client Classification (Step 3)
@@ -263,9 +265,10 @@ const handleTesdaSubmit = async () => {
   // => Step 2: Personal
   Object.entries(tesdaPersonal).forEach(([k, v]) => formData.append(k, v));
 
-  // => Step 3: Classifications (array)
-  // => Send as a single JSON string - service parses it with JSON.parse()
-  formData.append('classifications', JSON.stringify(tesdaClassifications));
+  // => Step 3: Classifications - tesdaClassifications is a single string
+  // => (TESDAStep3 is single-select via radio buttons), wrapped in an array
+  // => here since insertClientClassifications expects Array.isArray() to pass
+  formData.append('classifications', JSON.stringify(tesdaClassifications ? [tesdaClassifications] : []));
 
   // => Step 4: NCAE 
   formData.append('ncaeData', JSON.stringify(tesdaNcae));

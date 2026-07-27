@@ -6,7 +6,8 @@ import "./SideBar.css";
 import AnnouncementsIcon from "../../../assets/icons/announcements.png";
 import AccountIcon from "../../../assets/icons/account.png";
 import DocumentsIcon from "../../../assets/icons/documents.png";
-import EnrollmentIcon from "../../../assets/icons/enroll.png";
+import EnrollmentIcon from "../../../assets/icons/enroll.png";  
+import ClassesIcon from "../../../assets/icons/classes.png";
 import SupportIcon from "../../../assets/icons/support.png";
 import LogsIcon from "../../../assets/icons/logs.png";
 import LogoutIcon from "../../../assets/icons/logout.png";
@@ -24,8 +25,9 @@ import Site from "../../../assets/icons/site.png";
 const NAV_ITEMS = [
   { id: "announcements", label: "Announcements", icon: AnnouncementsIcon, to: "dashboard/" },
   { id: "account",       label: "Account",       icon: AccountIcon,       to: "dashboard/account" },
-  { id: "documents",     label: "Documents",     icon: DocumentsIcon,     to: "dashboard/documents" },
   { id: "enrollment",    label: "Enrollment",    icon: EnrollmentIcon,    to: "dashboard/enrollment" },
+  { id: "documents",     label: "Documents",     icon: DocumentsIcon,     to: "dashboard/documents" },
+  { id: "classes",       label: "Classes",       icon: ClassesIcon,      to: "dashboard/classes" },
   { id: "support",       label: "Support Tickets", icon: SupportIcon,     to: "dashboard/supporttickets" },
   { id: "logs",          label: "Logs",          icon: LogsIcon,       to: "dashboard/logs" },
   {id: "back to site",   label: "Back to Site",  icon: Site,              to: "/"}

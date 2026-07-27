@@ -1,0 +1,153 @@
+/* ============================================================
+   shsClassDetail.css
+   Student-facing SHS class schedule detail page (read-only).
+   => Colors now pull from index.css's :root[data-theme] tokens
+      instead of hardcoded hex, mirroring Documents.css's approach.
+   ============================================================ */
+
+.class-detail-page {
+  font-family: var(--font-body);
+  color: var(--text-primary);
+  padding: 2.5rem 2rem;
+  min-height: 100vh;
+}
+
+.class-detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.class-detail-header h1 {
+  font-family: var(--font-body);
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--text-primary);
+}
+
+/* => Approved-status green has no equivalent token in index.css yet -
+      kept as a fixed semantic color the same way Documents.css keeps
+      its own badge colors fixed rather than theme-tied */
+.class-detail-status {
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 5px 14px;
+  border-radius: 20px;
+  background-color: #e6f4ea;
+  color: #1e7e34;
+  white-space: nowrap;
+}
+
+.class-detail-batchname {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  margin: 6px 0 28px;
+}
+
+.class-detail-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+  margin-bottom: 36px;
+}
+
+.class-detail-info-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+
+.class-detail-info-icon {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  margin-top: 2px;
+}
+
+.class-detail-info-label {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.class-detail-info-value {
+  display: block;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* => No dedicated link-blue token exists in index.css yet - kept as a
+      fixed color rather than repurposing the red --accent for links */
+.class-detail-info-link {
+  color: #1a56db;
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-decoration: none;
+}
+
+.class-detail-info-link:hover {
+  text-decoration: underline;
+}
+
+.class-detail-section-title {
+  font-family: var(--font-body);
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin: 0 0 16px;
+  color: var(--text-primary);
+}
+
+.class-detail-empty {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.class-detail-table-wrapper {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  overflow-x: auto;
+}
+
+.class-detail-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.class-detail-table thead {
+  background-color: var(--bg-secondary);
+}
+
+.class-detail-table th {
+  text-align: left;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  padding: 14px 20px;
+  white-space: nowrap;
+}
+
+.class-detail-table td {
+  padding: 14px 20px;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  border-top: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.class-detail-table-icon {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+  margin-right: 6px;
+  vertical-align: middle;
+}
