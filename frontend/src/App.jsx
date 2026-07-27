@@ -14,6 +14,8 @@ import Sidebar from './components/private/SideBar/SideBar.jsx';
 import TESDAEnrollmentDetail from './components/private/TESDAEnrollmentDetail/tesdaEnrollmentDetail.jsx';
 import SHSEnrollmentDetail   from './components/private/SHSEnrollmentDetail/shsEnrollmentDetail.jsx';
 import DocumentDetail from './components/private/DocumentDetail/DocumentDetail.jsx';
+import TESDAClassDetail from './components/private/TESDAClassDetail/tesdaClassDetail.jsx';
+import SHSClassDetail from './components/private/SHSClassDetail/shsClassDetail.jsx';
 
 // => import public pages
 import Home from './pages/public/Home/Home.jsx';
@@ -30,6 +32,7 @@ import Documents from './pages/private/Documents/Documents.jsx';
 import Enrollment from './pages/private/Enrollment/Enrollment.jsx';
 import SupportTickets from './pages/private/SupportTickets/SupportTickets.jsx';
 import Announcements from './pages/private/Announcements/Announcements.jsx';
+import Classes from './pages/private/Classes/classes.jsx';
 
 // => all routes that belong to the student dashboard
 const DASHBOARD_ROUTES = [
@@ -85,6 +88,12 @@ function App() {
                     {/* <Route path="enrollment/:publicId" element={<EnrollmentDetail />} /> */}
                     <Route path="enrollment/tesda/:publicId" element={<TESDAEnrollmentDetail />} />
                     <Route path="enrollment/shs/:publicId" element={<SHSEnrollmentDetail />} />
+
+                    {/* => Classes list shows only Approved enrollments' batches, unified across tracks */}
+                    <Route path="classes" element={<Classes />} />
+                    {/* => Detail routes split by track since TESDA and SHS batches differ in structure */}
+                    <Route path="classes/tesda/:publicId" element={<TESDAClassDetail />} />
+                    <Route path="classes/shs/:publicId" element={<SHSClassDetail />} />
 
                     <Route path="supporttickets" element={<SupportTickets />} />
                   </Routes>

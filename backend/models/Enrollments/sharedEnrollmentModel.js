@@ -1,20 +1,24 @@
+// => public/models/Enrollments/sharedEnrollmentModel.js
+// => Split out of the old enrollmentModel.js - this file holds only what's
+//    genuinely shared between TESDA and SHS: inserts into student_accounts /
+//    student_profile / student_address / student_guardian (shared identity
+//    tables, not owned by either enrollment type), and the combined
+//    UNION ALL list/detail queries used by the student dashboard.
 // => All insert functions receive `client` - a pg pool client inside a transaction
-// => Each function handles exactly one table
-
-
-// STUDENT ACCOUNT
-// => username is nullable - only set if student provided an email
-// => password_hash stays NULL until student sets up their account post-enrollment
-
+// => Read functions receive `pool` directly - mirrors adminEnrollmentModel.js pattern
 
 // => Month name to index map - mirrors TESDAStep2's MONTHS array
 // => TESDAStep2 sends birthMonth as a name (e.g. 'August'), not a number
+// => Only used by insertStudentProfile below, which both TESDA and SHS call
 const MONTHS = [
   'January', 'February', 'March', 'April',
   'May', 'June', 'July', 'August',
   'September', 'October', 'November', 'December',
 ];
 
+// STUDENT ACCOUNT
+// => username is nullable - only set if student provided an email
+// => password_hash stays NULL until student sets up their account post-enrollment
 export const insertStudentAccount = async (client, { email }) => {
   const result = await client.query(
     `INSERT INTO student_accounts (username, password_hash, is_email_confirmed, is_active, created_at)
@@ -25,12 +29,10 @@ export const insertStudentAccount = async (client, { email }) => {
   return result.rows[0].student_id;
 };
 
-
 // STUDENT PROFILE
 // => Anchored to student_id (not profile_id anymore)
 // => contact_no, facebook_link, email stored directly here
 // => birth_date stored as DATE - frontend sends YYYY-MM-DD
-
 export const insertStudentProfile = async (client, { studentId, body }) => {
   const result = await client.query(
     `INSERT INTO student_profile
@@ -69,12 +71,10 @@ export const insertStudentProfile = async (client, { studentId, body }) => {
   return result.rows[0].profile_id;
 };
 
-
 // STUDENT ADDRESS
 // => Now anchored to student_id directly (not profile_id)
 // => district_code auto-filled from city, may arrive as empty string - coerce to null
 // => province_code nullable for NCR
-
 export const insertStudentAddress = async (client, { studentId, body }) => {
   await client.query(
     `INSERT INTO student_address
@@ -92,211 +92,38 @@ export const insertStudentAddress = async (client, { studentId, body }) => {
   );
 };
 
-
 // STUDENT GUARDIAN
 // => Only inserted when the student is a minor (under 18)
 // => Anchored to student_id directly
 // => guardian_address is optional per MIS 03-01 2018
-
+// => note: only the TESDA submission flow currently calls this. SHS's
+//    equivalent guardian data goes through shs_family_members' Guardian
+//    role instead. Kept here rather than in tesdaEnrollmentModel.js since
+//    student_guardian is the same shared identity table the admin side
+//    treats as shared too - if SHS ever needs to write here, no file
+//    needs to move.
 export const insertStudentGuardian = async (client, { studentId, body }) => {
   if (!body.guardianName) return; // => skip if not a minor or not provided
 
   await client.query(
-    `INSERT INTO student_guardian (student_id, guardian_name, guardian_address)
-     VALUES ($1, $2, $3)`,
+    `INSERT INTO student_guardian (student_id, guardian_name, guardian_address, guardian_contact_no)
+     VALUES ($1, $2, $3, $4)`,
     [
       studentId,
       body.guardianName,
       body.guardianAddress || null,
+      body.guardianContactNo,
     ]
   );
 };
-
-// SHS ENROLLMENT
-// => Core SHS enrollment transaction record - academic history, track/
-// => cluster, emergency contact, and health info all live here (Step 2 + 3
-// => fields that AREN'T identity/address/family, which live in the shared
-// => student_profile/student_address tables or shs_family_members instead)
-export const insertShsEnrollment = async (client, { studentId, body, academicData, familyData }) => {
-  const status = academicData.class ? 'Pending' : 'Reserved';
-
-  // => course_id dropped from this INSERT: a cluster is a fixed 2-year
-  // => curriculum (G11 + G12 courses looked up via shs_courses.cluster_id),
-  // => not a single course the student chooses. Column stays in the table
-  // => (nullable) for historical rows, just no longer written here.
-  const result = await client.query(
-    `INSERT INTO shs_enrollments
-       (student_id, lrn, class_id,
-        last_school_attended, school_address, grade_level_completed, school_year_completed,
-        track, cluster, electives,
-        emergency_name, emergency_relationship, emergency_contact_no, emergency_address,
-        has_medical_condition, medical_condition_detail, allergies, maintenance_medication,
-        status, submitted_at)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,NOW())
-     RETURNING enrollment_id`,
-    [
-      studentId,
-      body.lrn,
-      academicData.class  || null,
-      academicData.lastSchoolAttended,
-      academicData.schoolAddress || null,
-      academicData.gradeLevelCompleted,
-      academicData.schoolYearCompleted,
-      academicData.track,
-      academicData.cluster || null,
-      academicData.electives || null,
-      familyData.emergencyName,
-      familyData.emergencyRelationship,
-      familyData.emergencyContactNo,
-      familyData.emergencyAddress,
-      familyData.hasMedicalCondition,
-      familyData.hasMedicalCondition === 'yes' ? (familyData.medicalConditionDetail || null) : null,
-      familyData.allergies || null,
-      familyData.maintenanceMedication || null,
-      status,
-    ]
-  );
-  return result.rows[0].enrollment_id;
-};
-
-// SHS FAMILY MEMBERS
-// => One row per Father/Mother/Guardian actually provided - shsFamily's flat
-// => fatherName/motherName/guardianName shape gets split into role-tagged rows here
-// => The DEFERRED constraint trigger on shs_family_members (checked at COMMIT,
-// => not per-row) validates the both-parents-or-guardian rule after this loop finishes
-
-export const insertShsFamilyMembers = async (client, { studentId, familyData }) => {
-  const members = [
-    familyData.fatherName && {
-      role: 'Father',
-      fullName: familyData.fatherName,
-      occupation: familyData.fatherOccupation || null,
-      contactNo: familyData.fatherContactNo || null,
-      relationshipToStudent: null, // => only Guardian rows carry this
-    },
-    familyData.motherName && {
-      role: 'Mother',
-      fullName: familyData.motherName,
-      occupation: familyData.motherOccupation || null,
-      contactNo: familyData.motherContactNo || null,
-      relationshipToStudent: null,
-    },
-    familyData.guardianName && {
-      role: 'Guardian',
-      fullName: familyData.guardianName,
-      occupation: familyData.guardianOccupation || null,
-      contactNo: familyData.guardianContactNo || null,
-      relationshipToStudent: familyData.guardianRelationship || null,
-    },
-  ].filter(Boolean); // => drops any role that wasn't provided
-
-  for (const m of members) {
-    await client.query(
-      `INSERT INTO shs_family_members
-         (student_id, role, full_name, occupation, contact_no, relationship_to_student)
-       VALUES ($1, $2, $3, $4, $5, $6)`,
-      [studentId, m.role, m.fullName, m.occupation, m.contactNo, m.relationshipToStudent]
-    );
-  }
-};
-
-
-// SHS DOCUMENTS
-// => Same shape/pattern as insertEnrollmentDocuments, wired to shs_enrollments
-// => and the separate shs_documents table instead of tesda_documents
-
-export const insertShsDocuments = async (client, { enrollmentId, docs }) => {
-  for (const doc of docs) {
-    await client.query(
-      // => is_original explicitly TRUE - same reasoning as insertEnrollmentDocuments
-      `INSERT INTO shs_documents (enrollment_id, document_type, document_key, uploaded_at, is_original)
-       VALUES ($1, $2, $3, NOW(), TRUE)`,
-      [enrollmentId, doc.type, doc.key]
-    );
-  }
-};
-
-
-// TESDA ENROLLMENT
-// => Replaces the old `enrollment` table insert
-// => ncae_taken stored as BOOLEAN; ncae_where/when only if ncae_taken is true
-// => scholarship_type / other_scholarship only if is_tesda_scholar is true
-
-export const insertTesdaEnrollment = async (client, { studentId, courseData, ncaeData, scholarshipData }) => {
-  // => Mirrors insertShsEnrollment's Reserve handling: 'reserve' isn't a real
-  // => class_id, it's the frontend's placeholder for "no open section yet."
-  const hasRealClass = courseData.courseClass && courseData.courseClass !== 'reserve';
-  const status = hasRealClass ? 'Pending' : 'Reserved';
-
-  const result = await client.query(
-    `INSERT INTO tesda_enrollments
-       (student_id, course_id, class_id, fee_at_enrollment,
-        ncae_taken, ncae_where, ncae_when,
-        is_tesda_scholar, scholarship_type, other_scholarship,
-        status, submitted_at)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11, NOW())
-     RETURNING enrollment_id`,
-    [
-      studentId,
-      courseData.course       || null,
-      hasRealClass ? courseData.courseClass : null,
-      courseData.courseFee    || null,
-      ncaeData.takenBefore === 'yes',
-      ncaeData.takenBefore === 'yes' ? (ncaeData.where || null) : null,
-      ncaeData.takenBefore === 'yes' ? (ncaeData.when  || null) : null,
-      scholarshipData.isScholar === 'yes',
-      scholarshipData.isScholar === 'yes' ? (scholarshipData.scholarshipType  || null) : null,
-      scholarshipData.isScholar === 'yes' ? (scholarshipData.otherScholarship || null) : null,
-      status,
-    ]
-  );
-  return result.rows[0].enrollment_id;
-};
-
-
-// TESDA CLIENT CLASSIFICATIONS
-// => One row per selected classification (Step 3 checkboxes)
-// => others_text only written when classification_value = 'others'
-
-export const insertClientClassifications = async (client, { enrollmentId, classifications, othersText }) => {
-  if (!Array.isArray(classifications) || classifications.length === 0) return;
-
-  for (const value of classifications) {
-    await client.query(
-      `INSERT INTO tesda_client_classifications (enrollment_id, classification_value, others_text)
-       VALUES ($1, $2, $3)`,
-      [
-        enrollmentId,
-        value,
-        value === 'others' ? (othersText || null) : null,
-      ]
-    );
-  }
-};
-
-
-// ENROLLMENT DOCUMENTS
-// => Per-enrollment copies of uploaded files
-// => Stores R2 object key - never a public URL
-// => Now references tesda_enrollments instead of the old enrollment table
-
-export const insertEnrollmentDocuments = async (client, { enrollmentId, docs }) => {
-  for (const doc of docs) {
-    await client.query(
-      // => is_original explicitly TRUE - these are the docs the student
-      //    submitted at enrollment time, locked from admin deletion
-      `INSERT INTO tesda_documents (enrollment_id, document_type, document_key, uploaded_at, is_original)
-       VALUES ($1, $2, $3, NOW(), TRUE)`,
-      [enrollmentId, doc.type, doc.key]
-    );
-  }
-};
-
 
 // STUDENT DOCS
 // => Permanent copies tied to the student account, not just this enrollment
 // => Stores R2 object key - never a public URL
-
+// => note: currently unused - both processTesdaEnrollmentSubmission and
+//    processShsEnrollmentSubmission intentionally skip this and rely on
+//    tesda_documents/shs_documents as the single source of truth. Kept
+//    here for whenever a separate profile-level document upload flow is built.
 export const insertStudentDocs = async (client, { studentId, docs }) => {
   for (const doc of docs) {
     await client.query(
@@ -306,7 +133,6 @@ export const insertStudentDocs = async (client, { studentId, docs }) => {
     );
   }
 };
-
 
 // GET ALL ENROLLMENTS FOR A STUDENT
 // => UNION ALL across tesda_enrollments and shs_enrollments - each branch
@@ -335,7 +161,7 @@ export const getEnrollmentsByStudentId = async (pool, studentId) => {
         FROM tesda_enrollments e
         LEFT JOIN tesda_courses c        ON e.course_id  = c.course_id
         LEFT JOIN sectors       s        ON c.sector_id  = s.sector_id
-        LEFT JOIN tesda_classes cl       ON e.class_id   = cl.class_id
+        LEFT JOIN tesda_batches cl       ON e.batch_id   = cl.batch_id
         WHERE e.student_id = $1
 
         UNION ALL
@@ -349,13 +175,14 @@ export const getEnrollmentsByStudentId = async (pool, studentId) => {
           NULL::VARCHAR(20)        AS class_type,
           NULL::VARCHAR(255)       AS course_name,
           NULL::VARCHAR(150)       AS sector,
-          e.track,
+          -- => track removed, shs_enrollments no longer has this column
+          NULL::VARCHAR(20)        AS track,
           e.cluster,
           e.school_year_completed,
           e.grade_level_completed,
           e.last_school_attended
         FROM shs_enrollments e
-        LEFT JOIN shs_classes cl        ON e.class_id   = cl.class_id
+        LEFT JOIN shs_batches cl        ON e.batch_id   = cl.batch_id
         WHERE e.student_id = $1
      ) combined
      ORDER BY submitted_at DESC`,
@@ -363,7 +190,6 @@ export const getEnrollmentsByStudentId = async (pool, studentId) => {
   );
   return result.rows;
 };
-
 
 // GET ONE ENROLLMENT BY PUBLIC UUID
 // => Same UNION ALL shape as getEnrollmentsByStudentId, extended with every
@@ -403,8 +229,7 @@ export const getEnrollmentByPublicId = async (pool, publicId, studentId) => {
           NULL::VARCHAR(60)        AS emergency_relationship,
           NULL::VARCHAR(11)        AS emergency_contact_no,
           e.external_remarks,
-          -- => NEW: full TESDA course detail, pulled straight from tesda_courses
-          -- => instead of just title/sector like before
+          -- => full TESDA course detail, pulled straight from tesda_courses
           c.description             AS course_description,
           c.accreditation_no,
           c.date_accredited,
@@ -418,7 +243,7 @@ export const getEnrollmentByPublicId = async (pool, publicId, studentId) => {
         FROM tesda_enrollments e
         LEFT JOIN tesda_courses c        ON e.course_id  = c.course_id
         LEFT JOIN sectors       s        ON c.sector_id  = s.sector_id
-        LEFT JOIN tesda_classes cl       ON e.class_id   = cl.class_id
+        LEFT JOIN tesda_batches cl       ON e.batch_id   = cl.batch_id
         -- => LATERAL subquery collapses all job title rows for this course
         -- => into one JSON array so the row count stays 1:1 with the enrollment
         LEFT JOIN LATERAL (
@@ -449,7 +274,8 @@ export const getEnrollmentByPublicId = async (pool, publicId, studentId) => {
           cl.start_date,
           cl.end_date,
           cl.groupchat_link,
-          e.track,
+          -- => track removed, shs_enrollments no longer has this column
+          NULL::VARCHAR(20)         AS track,
           e.cluster,
           e.school_year_completed,
           e.grade_level_completed,
@@ -459,7 +285,7 @@ export const getEnrollmentByPublicId = async (pool, publicId, studentId) => {
           e.emergency_relationship,
           e.emergency_contact_no,
           e.external_remarks,
-          -- => NEW: TESDA-only columns, NULL on this branch to keep UNION ALL types aligned
+          -- => TESDA-only columns, NULL on this branch to keep UNION ALL types aligned
           NULL::TEXT                AS course_description,
           NULL::VARCHAR(100)        AS accreditation_no,
           NULL::DATE                AS date_accredited,
@@ -468,15 +294,16 @@ export const getEnrollmentByPublicId = async (pool, publicId, studentId) => {
           NULL::INT                 AS course_hours,
           NULL::TEXT                AS cover_image_url,
           NULL::JSON                AS job_opportunities,
-          -- => NEW: resolved cluster display name + BOTH Grade 11 and
-          -- => Grade 12 course rows for whichever cluster the student enrolled in
+          -- => resolved cluster display name + BOTH Grade 11 and Grade 12
+          -- => course rows for whichever cluster the student enrolled in
           scl.name                  AS cluster_name,
           cluster_courses.courses    AS cluster_courses
         FROM shs_enrollments e
-        LEFT JOIN shs_classes cl        ON e.class_id   = cl.class_id
-        -- => e.cluster stores the VALUE slug (e.g. 'ict-cluster'), so resolve
-        -- => it to shs_clusters to get cluster_id + a readable display name
-        LEFT JOIN shs_clusters scl       ON scl.value = e.cluster
+        LEFT JOIN shs_batches cl        ON e.batch_id   = cl.batch_id
+        -- => Resolved directly via the cluster_id FK on shs_enrollments -
+        -- => the old join through e.cluster's text slug assumed shs_clusters
+        -- => had a matching "value" column, which it never did
+        LEFT JOIN shs_clusters scl       ON scl.cluster_id = e.cluster_id
         -- => LATERAL subquery pulls every active shs_courses row sharing that
         -- => cluster_id (i.e. the Grade 11 row AND the Grade 12 row) as one
         -- => JSON array, each with its own nested job opportunities
@@ -501,11 +328,7 @@ export const getEnrollmentByPublicId = async (pool, publicId, studentId) => {
           -- => No status filter here on purpose. sc.status = 'active' only
           -- => controls whether a course is SELECTABLE on the public
           -- => enrollment form for NEW enrollees - it must not hide a
-          -- => course from a student who is already mid-cluster. If an
-          -- => admin deactivates a course partway through, the current
-          -- => batch keeps seeing it in full until they complete; only the
-          -- => NEXT batch's enrollment form (a separate query, not this one)
-          -- => will stop offering it.
+          -- => course from a student who is already mid-cluster.
           WHERE sc.cluster_id = scl.cluster_id
         ) cluster_courses ON true
         WHERE e.public_id = $1 AND e.student_id = $2

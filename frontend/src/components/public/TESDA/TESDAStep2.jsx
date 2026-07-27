@@ -69,6 +69,7 @@ const TESDAStep2 = ({ data, onChange, onBack, onNext }) => {
     birthplaceCity: false,
     educAttainment: false,
     guardianName: false,
+    guardianContactNo: false,
   });
 
   // => Computed age from birthdate fields (formatted string, for display)
@@ -194,8 +195,9 @@ const TESDAStep2 = ({ data, onChange, onBack, onNext }) => {
     if (!isBirthNCR && !data.birthplaceProvince) return 'missing';
     if (!data.birthplaceCity) return 'missing';
     if (!data.educAttainment) return 'missing';
-    // => Guardian name required if student is a minor
+    // => Guardian name and contact number required if student is a minor
     if (isMinor && !data.guardianName) return 'missing';
+    if (isMinor && !/^09\d{9}$/.test(data.guardianContactNo || '')) return 'missing';
     return 'valid';
   };
 
@@ -213,6 +215,7 @@ const TESDAStep2 = ({ data, onChange, onBack, onNext }) => {
       birthplaceCity: !data.birthplaceCity,
       educAttainment: !data.educAttainment,
       guardianName: isMinor && !data.guardianName,
+      guardianContactNo: isMinor && !/^09\d{9}$/.test(data.guardianContactNo || ''),
     });
 
     if (validate() !== 'valid') {
@@ -233,6 +236,7 @@ const TESDAStep2 = ({ data, onChange, onBack, onNext }) => {
       birthplaceCity: false,
       educAttainment: false,
       guardianName: false,
+      guardianContactNo: false,
     });
     setShowErrors(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -529,6 +533,24 @@ const TESDAStep2 = ({ data, onChange, onBack, onNext }) => {
                 placeholder="e.g. 123 Rizal St., Brgy. San Jose, Manila"
                 value={data.guardianAddress}
                 onChange={(e) => onChange('guardianAddress', e.target.value)}
+              />
+            </div>
+            <div className="ts2-field-group">
+              <label className="ts2-label">
+                Guardian Contact No. <span className="ts2-req">*</span>
+              </label>
+              <input
+                type="text"
+                className={`ts2-input ${fieldErrors.guardianContactNo ? 'ts2-input--error' : ''}`}
+                placeholder="e.g. 09XXXXXXXXX"
+                value={data.guardianContactNo}
+                maxLength={11}
+                onChange={(e) => {
+                  // => Strip non-digits, enforce 09 prefix and 11-digit max, same as Step 1's contactNo
+                  const raw = e.target.value.replace(/\D/g, '').slice(0, 11);
+                  onChange('guardianContactNo', raw);
+                  clearError('guardianContactNo');
+                }}
               />
             </div>
           </div>

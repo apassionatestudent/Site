@@ -85,7 +85,11 @@ function Enrollment() {
   return (
     <div className="enroll-page">
       <div className="enroll-header">
-        <h1 className="enroll-title">Enrollment</h1>
+        {/* => Pluralizes only once the student has more than one enrollment - 
+            stays "Enrollment" for zero or exactly one */}
+        <h1 className="enroll-title">
+          {enrollments.length > 1 ? 'Enrollments' : 'Enrollment'}
+        </h1>
         <p className="enroll-subtitle">
           Click on any enrollment to view its full details.
         </p>

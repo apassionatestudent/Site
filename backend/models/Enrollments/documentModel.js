@@ -1,5 +1,12 @@
+// => public/models/Enrollments/documentModel.js
+// => Relocated from models/documentModel.js into the Enrollments folder -
+//    logic is completely unchanged, this file had no relative imports to
+//    adjust. Not split by TESDA/SHS: getDocumentsByStudentId is already a
+//    UNION ALL across tesda_documents and shs_documents, and
+//    getDocumentByPublicId already checks both tables (plus student_docs)
+//    in sequence. Both functions are inherently combined operations.
 // => Handles all DB queries related to document listing and detail
-// => Mirrors the same query style as enrollmentModel.js
+// => Mirrors the same query style as sharedEnrollmentModel.js
 // => All queries receive `pool` as a param - no module-level pool import needed
 
 // GET ALL DOCUMENTS FOR A STUDENT
