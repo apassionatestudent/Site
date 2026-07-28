@@ -14,6 +14,7 @@ import {
   insertShsEnrollment,
   insertShsFamilyMembers,
   insertShsDocuments,
+  findClusterNameById,
 } from '../../models/Enrollments/shsEnrollmentModel.js';
 
 export const processShsEnrollmentSubmission = async (body, files) => {
@@ -40,6 +41,12 @@ export const processShsEnrollmentSubmission = async (body, files) => {
   // => instead of letting a raw Postgres constraint-violation reach the client
   if (!['none', 'yes'].includes(familyData.hasMedicalCondition)) {
     throw Object.assign(new Error('Medical condition status is required.'), { statusCode: 400 });
+  }
+
+  // => academicData.cluster is now a cluster_id (SHSStep2.jsx fetches
+  // => clusters by id), required for the cluster_id FK on shs_enrollments
+  if (!academicData.cluster) {
+    throw Object.assign(new Error('Cluster selection is required.'), { statusCode: 400 });
   }
 
   // => Upload files to R2 BEFORE the DB transaction - same reasoning as
@@ -74,6 +81,14 @@ export const processShsEnrollmentSubmission = async (body, files) => {
   try {
     await client.query('BEGIN');
 
+    // => Resolve cluster_id -> name early, inside the transaction, so an
+    // => invalid/stale cluster_id fails fast with a clear 400 instead of
+    // => hitting the NOT NULL constraint on shs_enrollments.cluster later
+    const clusterName = await findClusterNameById(client, academicData.cluster);
+    if (!clusterName) {
+      throw Object.assign(new Error('Selected cluster was not found.'), { statusCode: 400 });
+    }
+
     // => 1. Create account - same shared function TESDA uses, since
     // => student_accounts isn't program-specific
     const studentId = await insertStudentAccount(client, { email: body.email });
@@ -89,7 +104,7 @@ export const processShsEnrollmentSubmission = async (body, files) => {
     await insertStudentAddress(client, { studentId, body });
 
     // => 4. Core SHS enrollment record (academic + track/cluster + emergency + health)
-    const enrollmentId = await insertShsEnrollment(client, { studentId, body, academicData, familyData });
+    const enrollmentId = await insertShsEnrollment(client, { studentId, body, academicData, familyData, clusterName });
 
     // => 5. Family members - one row each for whichever of Father/Mother/
     // => Guardian were provided. The DEFERRED constraint trigger on

@@ -19,11 +19,12 @@ import studentAuthRouter from './routes/studentAuth.js';
 
 import tesdaCourseRoutes from "./routes/TESDAEnrollment/tesdaCourseRoutes.js";
 import tesdaBatchRoutes from "./routes/TESDAEnrollment/tesdaBatchRoutes.js";
-import shsClassesRouter from './routes/shsClasses.js';
+
+import shsBatchesRouter from './routes/SHSEnrollment/shsBatchRoutes.js';
 // => Renamed from shsCourses -> shsClusters: SHS students enroll into a
 // => cluster, not an individual course - this route now returns a
 // => cluster's G11/G12 curriculum for display, not a selectable list
-import shsClustersRoute from './routes/shsClusters.js';
+import shsClustersRoute from './routes/SHSEnrollment/shsClusterRoutes.js';
 // => Enrollment routes split into shared (combined my-enrollments/detail),
 //    tesda-only (submit), and shs-only (submit-shs) routers, and document
 //    routes relocated alongside them - see routes/Enrollments/
@@ -72,8 +73,9 @@ app.use("/api/courses", tesdaCourseRoutes);
 // => Register TESDA batches route - path stays /api/classes so the
 // => frontend's existing fetch calls don't need to change
 app.use("/api/classes", tesdaBatchRoutes);
-// => Register SHS classes route
-app.use("/api/shs-classes", shsClassesRouter);
+// => Register SHS batches route - renamed from shs-classes to match the
+// => shs_classes -> shs_batches table rename
+app.use("/api/shs-batches", shsBatchesRouter);
 // => Register SHS courses route
 app.use('/api/shs-clusters', shsClustersRoute);
 
@@ -416,11 +418,18 @@ async function initDB () {
         batch_id      SERIAL      PRIMARY KEY,
         public_id     UUID        NOT NULL DEFAULT gen_random_uuid() UNIQUE,
 
-        -- => cluster left WITHOUT a CHECK - same reasoning as
-        -- => shs_enrollments.cluster: values are frontend-enforced
-        -- => NOT NULL: with track removed, cluster is now the only field
-        -- => distinguishing one SHS offering from another
+        -- => Legacy free-text cluster label - superseded by cluster_id
+        -- => below. Kept only because older rows still populate it; new
+        -- => code should never read/write this column.
         cluster       VARCHAR(60) NOT NULL,
+
+        -- => cluster_id: proper FK, replaces the free-text cluster column above
+        cluster_id    INT         NOT NULL REFERENCES shs_clusters(cluster_id) ON DELETE RESTRICT,
+
+        -- => Always-incrementing per cluster, never reused after dissolution -
+        -- => powers batch_name below (e.g. "Batch 3")
+        batch_sequence INT        NOT NULL,
+        batch_name    VARCHAR(150) NOT NULL,
 
         -- => Two trainer slots instead of one instructor_id: a batch spans
         -- => both grade levels at once, and a trainer's TESDA-style
@@ -428,6 +437,10 @@ async function initDB () {
         -- => through shs_courses.grade_level), so one FK can't represent it
         grade11_trainer_id INT REFERENCES trainers(trainer_id) ON DELETE SET NULL,
         grade12_trainer_id INT REFERENCES trainers(trainer_id) ON DELETE SET NULL,
+
+        -- => Flips true once Grade 11 finishes, used by the cron
+        -- => auto-promotion job to roll the batch into Grade 12
+        grade11_completed BOOLEAN NOT NULL DEFAULT FALSE,
 
         school_year   VARCHAR(20) NOT NULL,
         -- => Both nullable - same reasoning as tesda_classes: start_date

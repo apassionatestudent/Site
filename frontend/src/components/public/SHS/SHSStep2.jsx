@@ -10,15 +10,10 @@ import Info from '../../Info.jsx';
 // => Academic Track removed - Prime Academy only offers the Technical
 // => Professional Track per the SY 2026-2027 flyer, so the track choice
 // => is gone from the UI entirely (hardcoded to 'tech_prof' in Enroll.jsx).
-// => Clusters no longer carry a hardcoded `specializations` list - that
-// => was static text disconnected from shs_courses. Curriculum (which
-// => courses, and whether they're Grade 11 or Grade 12) is now fetched
-// => live from /api/shs-clusters and rendered inline per cluster below.
-const CLUSTERS = [
-  { value: 'construction_building_tech', label: 'Construction and Building Technology' },
-  { value: 'industrial_technologies', label: 'Industrial Technologies' },
-  { value: 'hospitality_tourism', label: 'Hospitality and Tourism' },
-];
+// => Hardcoded CLUSTERS array removed - shs_clusters.value was dropped in
+// => the DB migration, name is now the sole identifying label, and
+// => cluster_id is the only stable key. Clusters are fetched live below
+// => from /api/shs-clusters instead.
 
 // => Capitalizes first letter of each word, lowercases the rest - same
 // => helper duplicated in SHSStep1/SHSStep3 (kept per-file, not a shared
@@ -80,63 +75,81 @@ const SHSStep2 = ({ data, onChange, documents, onDocumentsChange, onBack, onNext
   // => (wrong file type vs. missing/incomplete) instead of one generic line
   const [docTypeErrors, setDocTypeErrors] = useState({});
 
-  // => Live class list for the currently selected track+cluster -
-  // => refetched whenever either changes. Empty array (after a
-  // => completed fetch) means "no open class yet" -> Reserve path.
-  const [shsClasses, setShsClasses] = useState([]);
-  const [classesLoading, setClassesLoading] = useState(false);
-  const [classesFetched, setClassesFetched] = useState(false);
+  // => Live cluster list (cluster_id + name), fetched once on mount -
+  // => replaces the old hardcoded CLUSTERS array now that shs_clusters.value
+  // => has been dropped and cluster_id is the only stable identifier.
+  const [clusters, setClusters] = useState([]);
+  const [clustersLoading, setClustersLoading] = useState(true);
 
-  // => Live curriculum for ALL clusters, fetched once on mount and keyed
-  // => by cluster value - shown inline in each cluster card below (which
-  // => courses, tagged Grade 11 / Grade 12) instead of the old hardcoded
-  // => `specializations` text. Fetched upfront (not on-select) so the
-  // => info is visible in the picker itself, before the student chooses.
+  // => Live batch list for the currently selected cluster - refetched
+  // => whenever cluster changes. Empty array (after a completed fetch)
+  // => means "no open batch yet" -> Reserve path.
+  const [shsBatches, setShsBatches] = useState([]);
+  const [batchesLoading, setBatchesLoading] = useState(false);
+  const [batchesFetched, setBatchesFetched] = useState(false);
+
+  // => Live curriculum for ALL clusters, fetched once the cluster list is
+  // => in, keyed by cluster_id - shown inline in each cluster card below
+  // => (which courses, tagged Grade 11 / Grade 12).
   const [clusterCourses, setClusterCourses] = useState({});
   const [clusterCoursesLoading, setClusterCoursesLoading] = useState(false);
 
+  // => Fetch the cluster list once on mount
   useEffect(() => {
-    // => Nothing to fetch yet until track is chosen
-    if (!data.track) {
-      setShsClasses([]);
-      setClassesFetched(false);
-      return;
-    }
-
-    setClassesLoading(true);
-    const params = new URLSearchParams({ track: data.track });
-    if (data.cluster) params.append('cluster', data.cluster);
-
-    fetch(`/api/shs-classes?${params.toString()}`)
+    setClustersLoading(true);
+    fetch('/api/shs-clusters')
       .then((res) => res.json())
-      .then((list) => {
-        setShsClasses(list);
-        setClassesFetched(true);
-      })
-      .catch((err) => console.error('Failed to fetch SHS classes:', err))
-      .finally(() => setClassesLoading(false));
-  }, [data.track, data.cluster]);
+      .then((list) => setClusters(list))
+      .catch((err) => console.error('Failed to fetch SHS clusters:', err))
+      .finally(() => setClustersLoading(false));
+  }, []);
 
-  // => True once we've actually checked and confirmed there's nothing open -
-  // => used to decide whether "no class selected" is valid (Reserve) or an error
-  const noClassesAvailable = classesFetched && shsClasses.length === 0;
-
+  // => Once the cluster list is in, fetch each cluster's curriculum
+  // => (which courses, tagged Grade 11 / Grade 12) keyed by cluster_id
   useEffect(() => {
+    if (clusters.length === 0) return;
+
     setClusterCoursesLoading(true);
     Promise.all(
-      CLUSTERS.map(({ value }) =>
-        fetch(`/api/shs-clusters?cluster=${encodeURIComponent(value)}`)
+      clusters.map(({ cluster_id }) =>
+        fetch(`/api/shs-clusters/${cluster_id}/courses`)
           .then((res) => res.json())
-          .then((list) => [value, list])
+          .then((list) => [cluster_id, list])
           .catch((err) => {
-            console.error(`Failed to fetch curriculum for cluster "${value}":`, err);
-            return [value, []];
+            console.error(`Failed to fetch curriculum for cluster ${cluster_id}:`, err);
+            return [cluster_id, []];
           })
       )
     )
       .then((entries) => setClusterCourses(Object.fromEntries(entries)))
       .finally(() => setClusterCoursesLoading(false));
-  }, []);
+  }, [clusters]);
+
+  // => Batches are cluster-scoped only now (track was dropped from
+  // => shs_batches), so this gates on data.cluster instead of data.track
+  useEffect(() => {
+    if (!data.cluster) {
+      setShsBatches([]);
+      setBatchesFetched(false);
+      return;
+    }
+
+    setBatchesLoading(true);
+    const params = new URLSearchParams({ clusterId: data.cluster });
+
+    fetch(`/api/shs-batches?${params.toString()}`)
+      .then((res) => res.json())
+      .then((list) => {
+        setShsBatches(list);
+        setBatchesFetched(true);
+      })
+      .catch((err) => console.error('Failed to fetch SHS batches:', err))
+      .finally(() => setBatchesLoading(false));
+  }, [data.cluster]);
+
+  // => True once we've actually checked and confirmed there's nothing open -
+  // => used to decide whether "no batch selected" is valid (Reserve) or an error
+  const noBatchesAvailable = batchesFetched && shsBatches.length === 0;
 
   const clearError = (field) => {
     setFieldErrors(prev => ({ ...prev, [field]: false }));
@@ -166,7 +179,7 @@ const SHSStep2 = ({ data, onChange, documents, onDocumentsChange, onBack, onNext
     if (!data.cluster) return 'missing';
     // => Class only required if there's actually one to pick - if the fetch
     // => came back empty, that's the valid Reserve path, not a missing field
-    if (!data.class && !noClassesAvailable) return 'missing';
+    if (!data.class && !noBatchesAvailable) return 'missing';
     if (!allDocumentsValid()) return 'missing';
     return 'valid';
   };
@@ -213,7 +226,7 @@ const SHSStep2 = ({ data, onChange, documents, onDocumentsChange, onBack, onNext
       gradeLevelCompleted: !data.gradeLevelCompleted,
       schoolYearCompleted: !data.schoolYearCompleted,
       cluster: !data.cluster,
-      class: !data.class && !noClassesAvailable,
+      class: !data.class && !noBatchesAvailable,
     });
 
     // => Build docErrors from REQUIRED_DOCUMENTS rather than hand-listing
@@ -297,47 +310,50 @@ const SHSStep2 = ({ data, onChange, documents, onDocumentsChange, onBack, onNext
       </div>
 
       {/* => Select Cluster - Track selection removed entirely (only
-           Technical Professional Track is offered). Curriculum (which
-           courses, tagged Grade 11 / Grade 12) is fetched live per cluster
-           and shown right in the card, replacing the old hardcoded
-           `specializations` bullets. */}
+           Technical Professional Track is offered). Cluster list is now
+           fetched live from /api/shs-clusters (id + name) instead of a
+           hardcoded array, since shs_clusters.value was dropped from the DB. */}
       <div className="shs2-field-group">
         <label className="shs2-label">Select Cluster <span className="shs2-req">*</span> <span className="shs2-hint-inline">(Choose 1 cluster)</span> <Info content="Sample content" /></label>
         <div className={`shs2-cluster-list ${fieldErrors.cluster ? 'shs2-radio--error' : ''}`}>
-          {CLUSTERS.map(({ value, label }) => {
-            const courses = clusterCourses[value] || [];
-            return (
-              <label key={value} className="shs2-cluster-option">
-                <input
-                  type="radio"
-                  name="cluster"
-                  value={value}
-                  checked={data.cluster === value}
-                  onChange={(e) => { onChange('cluster', e.target.value); clearError('cluster'); }}
-                />
-                <span className="shs2-cluster-text">
-                  <span className="shs2-cluster-label">{label}</span>
-                  {clusterCoursesLoading ? (
-                    <span className="shs2-cluster-specs">Loading curriculum…</span>
-                  ) : courses.length === 0 ? (
-                    <span className="shs2-cluster-specs">Curriculum not yet published for this cluster.</span>
-                  ) : (
-                    <span className="shs2-cluster-specs">
-                      {courses.map(({ course_id, title, grade_level, course_link }) => (
-                        <span key={course_id} className="shs2-cluster-spec">
-                          • {course_link ? (
-                            <a href={course_link} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>{title}</a>
-                          ) : title}
-                          {' '}
-                          <span className="shs2-cluster-spec-grade">({grade_level})</span>
-                        </span>
-                      ))}
-                    </span>
-                  )}
-                </span>
-              </label>
-            );
-          })}
+          {clustersLoading ? (
+            <span className="shs2-cluster-specs">Loading clusters…</span>
+          ) : (
+            clusters.map(({ cluster_id, name }) => {
+              const courses = clusterCourses[cluster_id] || [];
+              return (
+                <label key={cluster_id} className="shs2-cluster-option">
+                  <input
+                    type="radio"
+                    name="cluster"
+                    value={cluster_id}
+                    checked={String(data.cluster) === String(cluster_id)}
+                    onChange={(e) => { onChange('cluster', e.target.value); clearError('cluster'); }}
+                  />
+                  <span className="shs2-cluster-text">
+                    <span className="shs2-cluster-label">{name}</span>
+                    {clusterCoursesLoading ? (
+                      <span className="shs2-cluster-specs">Loading curriculum…</span>
+                    ) : courses.length === 0 ? (
+                      <span className="shs2-cluster-specs">Curriculum not yet published for this cluster.</span>
+                    ) : (
+                      <span className="shs2-cluster-specs">
+                        {courses.map(({ course_id, title, grade_level, course_link }) => (
+                          <span key={course_id} className="shs2-cluster-spec">
+                            • {course_link ? (
+                              <a href={course_link} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>{title}</a>
+                            ) : title}
+                            {' '}
+                            <span className="shs2-cluster-spec-grade">({grade_level})</span>
+                          </span>
+                        ))}
+                      </span>
+                    )}
+                  </span>
+                </label>
+              );
+            })
+          )}
         </div>
       </div>
 
@@ -346,9 +362,9 @@ const SHSStep2 = ({ data, onChange, documents, onDocumentsChange, onBack, onNext
           Select Class <span className="shs2-req">*</span>
         </label>
 
-        {/* => Reserve path: fetch completed, track+cluster selected, but
+        {/* => Reserve path: fetch completed, cluster selected, but
              nothing open yet - show a static notice instead of a dropdown */}
-        {noClassesAvailable ? (
+        {noBatchesAvailable ? (
           <div className="shs2-reserve-notice">
             <i className="ti ti-clock" /> No open class yet for this selection - your enrollment will be marked as <strong>Reserved</strong> until one is available.
           </div>
@@ -356,18 +372,18 @@ const SHSStep2 = ({ data, onChange, documents, onDocumentsChange, onBack, onNext
           <select
             className={`shs2-select ${fieldErrors.class ? 'shs2-input--error' : ''}`}
             value={data.class}
-            disabled={!data.track || classesLoading}
+            disabled={!data.cluster || batchesLoading}
             onChange={(e) => {
               onChange('class', e.target.value);
               clearError('class');
             }}
           >
             <option value="">
-              {classesLoading ? 'Loading classes...' : 'Select class'}
+              {batchesLoading ? 'Loading classes...' : 'Select class'}
             </option>
-            {shsClasses.map(({ class_id, start_date, end_date }) => (
-              <option key={class_id} value={class_id}>
-                {new Date(start_date).toLocaleDateString()} – {new Date(end_date).toLocaleDateString()}
+            {shsBatches.map(({ batch_id, batch_name }) => (
+              <option key={batch_id} value={batch_id}>
+                {batch_name}
               </option>
             ))}
           </select>
