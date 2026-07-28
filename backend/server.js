@@ -13,12 +13,12 @@ import jwt from 'jsonwebtoken';
 
 
 import locationRoutes, { loadLocationCache } from './routes/location.js';
-import referenceRoutes from './routes/reference.js';
+import referenceRoutes from './routes/reference.js';  
 
 import studentAuthRouter from './routes/studentAuth.js';
 
-import coursesRouter from "./routes/courses.js";
-import classRouter from "./routes/classes.js";
+import tesdaCourseRoutes from "./routes/TESDAEnrollment/tesdaCourseRoutes.js";
+import tesdaBatchRoutes from "./routes/TESDAEnrollment/tesdaBatchRoutes.js";
 import shsClassesRouter from './routes/shsClasses.js';
 // => Renamed from shsCourses -> shsClusters: SHS students enroll into a
 // => cluster, not an individual course - this route now returns a
@@ -67,10 +67,11 @@ app.use('/api/location', locationRoutes);
 app.use('/api/reference', referenceRoutes);
 app.use('/api/student-auth', studentAuthRouter);
 
-// => Register courses route
-app.use("/api/courses", coursesRouter);
-// => Register classes route
-app.use("/api/classes", classRouter);
+// => Register TESDA courses route
+app.use("/api/courses", tesdaCourseRoutes);
+// => Register TESDA batches route - path stays /api/classes so the
+// => frontend's existing fetch calls don't need to change
+app.use("/api/classes", tesdaBatchRoutes);
 // => Register SHS classes route
 app.use("/api/shs-classes", shsClassesRouter);
 // => Register SHS courses route

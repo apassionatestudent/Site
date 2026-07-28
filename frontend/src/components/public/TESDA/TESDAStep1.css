@@ -1,4 +1,13 @@
 /* ============================================================
+   TESDAStep1.css
+   Learner / Manpower Profile (ts1-) + Personal Information (ts2-)
+   Merged so this file's name matches the component that uses it -
+   TESDAStep1.jsx used to also pull in a separate TESDAStep2.css file,
+   which was confusing since nothing named "Step 2" exists anymore.
+   Follows Enroll.css token system
+   ============================================================ */
+
+/* ============================================================
    TESDAStep1.css - Learner / Manpower Profile
    Follows Enroll.css token system
    ============================================================ */
@@ -194,4 +203,244 @@
   .ts1-name-row,
   .ts1-g3,
   .ts1-g2 { grid-template-columns: 1fr; }
+}
+
+/* ============================================================
+   TESDAStep2.css - Personal Information
+   Follows Enroll.css token system
+   ============================================================ */
+
+.ts2-wrap {
+  font-family: var(--font-body);
+  padding: 1.8rem 2rem 1rem;
+  background: var(--enroll-body-bg);
+  color: var(--text-primary);
+}
+
+.ts2-section-title {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--enroll-section-title-color);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 1.4rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--enroll-section-border);
+  font-family: var(--font-body);
+  opacity: 0.85;
+}
+
+.ts2-section-note {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-muted);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.ts2-grid {
+  display: grid;
+  gap: 0 1.2rem;
+}
+
+.ts2-g2 { grid-template-columns: 1fr 1fr; }
+/* .ts2-g3 { grid-template-columns: 1fr 1fr 1fr; } */
+/* .ts2-g3 { grid-template-columns: 0.5fr 1fr 1fr; }  */
+
+/* Container holding Birth Region, Birth Province (optional), and Birth City */
+.ts2-g3 {
+  display: flex;
+  flex-direction: row; 
+  gap: 16px; 
+  width: 100%;
+}
+
+/* Forces all visible child fields to grow and share space equally */
+.ts2-g3 > .ts2-field-group {
+  flex: 1;
+  width: 100%;
+}
+
+/* => 4-column for birthdate: Month + Day + Year + Age */
+.ts2-g4 { grid-template-columns: 1fr 1fr 1fr 0.6fr; }
+
+.ts2-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 1.2rem;
+}
+
+.ts2-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--enroll-label-color);
+  font-family: var(--font-body);
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.ts2-req {
+  color: var(--req-asterisk);
+  font-size: 14px;
+}
+
+.ts2-input,
+.ts2-select {
+  height: 40px;
+  border: 1px solid var(--enroll-field-border);
+  border-radius: 6px;
+  padding: 0 12px;
+  font-size: 15px;
+  font-family: var(--font-body);
+  background: var(--card-bg);
+  color: var(--text-primary);
+  outline: none;
+  width: 100%;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.ts2-input:focus,
+.ts2-select:focus {
+  border-color: var(--enroll-field-focus);
+  box-shadow: 0 0 0 3px rgba(139, 26, 26, 0.1);
+}
+
+/* => Read-only fields like age */
+.ts2-input--readonly {
+  background: var(--bg-secondary);
+  cursor: default;
+  color: var(--text-secondary);
+}
+
+.ts2-select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 32px;
+  cursor: pointer;
+}
+
+.ts2-select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* => Radio group - mirrors Enroll.css pattern */
+/* => Matches the visual weight of the select dropdowns beside it */
+.ts2-radio-group {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+  height: 40px;
+  border: 1px solid var(--enroll-field-border);
+  border-radius: 6px;
+  padding: 0 12px;
+  background: var(--card-bg);
+}
+
+.ts2-radio-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14.5px;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  cursor: pointer;
+}
+
+.ts2-radio-label input[type="radio"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.ts2-error-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: rgba(192, 57, 43, 0.08);
+  border: 1px solid #c0392b;
+  border-radius: 6px;
+  color: #c0392b;
+  font-size: 13.5px;
+  font-family: var(--font-body);
+  margin-top: 1rem;
+}
+
+.ts2-nav {
+  display: flex;
+  gap: 1.5rem;
+  padding: 1rem 0 0.5rem;
+  margin-top: 0.5rem;
+  border-top: 1px solid var(--enroll-actions-border);
+}
+
+.ts2-btn-back,
+.ts2-btn-next {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 24px;
+  border-radius: 6px;
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  transition: background 0.15s, color 0.15s, transform 0.1s;
+}
+
+.ts2-btn-back {
+  background: transparent;
+  color: var(--enroll-label-color);
+  border: 1px solid var(--enroll-field-border);
+}
+
+.ts2-btn-back:hover {
+  background: var(--enroll-field-border);
+  color: var(--text-primary);
+}
+
+.ts2-btn-next {
+  background: var(--enroll-btn-bg);
+  color: #fff;
+  border: none;
+}
+
+.ts2-btn-next:hover { background: var(--enroll-btn-hover); }
+.ts2-btn-next:active { transform: scale(0.98); }
+
+/* => Red border on invalid fields - mirrors ts1-input--error */
+.ts2-input--error {
+  border-color: #c0392b !important;
+  box-shadow: 0 0 0 3px rgba(192, 57, 43, 0.12);
+}
+
+/* => Red outline wrapper for radio groups that are unfilled */
+.ts2-radio--error {
+  border: 1px solid #c0392b;
+  border-radius: 6px;
+  padding: 6px 10px;
+  box-shadow: 0 0 0 3px rgba(192, 57, 43, 0.08);
+}
+
+@media (max-width: 700px) {
+  .ts2-wrap { padding: 1.2rem; }
+  .ts2-g2 { grid-template-columns: 1fr; }
+  .ts2-g3 { grid-template-columns: 1fr 1fr; }
+  .ts2-g4 { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 420px) {
+  .ts2-g3,
+  .ts2-g4 { grid-template-columns: 1fr; }
 }

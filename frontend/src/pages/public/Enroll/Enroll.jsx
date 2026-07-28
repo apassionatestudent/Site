@@ -4,8 +4,6 @@ import './Enroll.css';
 import TESDAStep1 from '../../../components/public/TESDA/TESDAStep1';
 import TESDAStep2 from '../../../components/public/TESDA/TESDAStep2';
 import TESDAStep3 from '../../../components/public/TESDA/TESDAStep3';
-import TESDAStep4 from '../../../components/public/TESDA/TESDAStep4';
-import TESDAStep5 from '../../../components/public/TESDA/TESDAStep5';
 
 // => New: SHS step imports, mirrors the TESDA import block above
 import SHSStep1 from '../../../components/public/SHS/SHSStep1';
@@ -245,7 +243,7 @@ const handleTesdaFileChange = useCallback((key, file) => {
 // => TESDA navigation helpers
 const tesdaGoNext = () => {
   
-  setTesdaStep(prev => Math.min(prev + 1, 5));
+  setTesdaStep(prev => Math.min(prev + 1, 3));
   window.scrollTo({ top: 0, behavior: 'smooth' });
 };
 
@@ -451,19 +449,17 @@ const handleTesdaSubmit = async () => {
           {/* => TESDA Progress indicator */}
           <div className="tesda-progress">
             <div className="tesda-progress-text">
-              Step {tesdaStep} of 5 &mdash;{' '}
+              Step {tesdaStep} of 3 &mdash;{' '}
               <span className="tesda-progress-label">
-                {tesdaStep === 1 && 'Learner / Manpower Profile'}
-                {tesdaStep === 2 && 'Personal Information'}
-                {tesdaStep === 3 && 'Client Classification'}
-                {tesdaStep === 4 && 'NCAE / YP4SC'}
-                {tesdaStep === 5 && 'Course, Scholarship & Legal Consent'}
+                {tesdaStep === 1 && 'Personal & Contact Information'}
+                {tesdaStep === 2 && 'Classification & Assessment History'}
+                {tesdaStep === 3 && 'Course, Scholarship & Legal Consent'}
               </span>
             </div>
             <div className="tesda-progress-bar">
               <div
                 className="tesda-progress-fill"
-                style={{ width: `${(tesdaStep / 5) * 100}%` }}
+                style={{ width: `${(tesdaStep / 3) * 100}%` }}
               />
             </div>
           </div>
@@ -471,16 +467,22 @@ const handleTesdaSubmit = async () => {
           {/* => TESDA Steps */}
           {tesdaStep === 1 && (
             <TESDAStep1
-              data={tesdaProfile}
-              onChange={(key, val) => setTesdaProfile(prev => ({ ...prev, [key]: val }))}
+              profileData={tesdaProfile}
+              onProfileChange={(key, val) => setTesdaProfile(prev => ({ ...prev, [key]: val }))}
+              personalData={tesdaPersonal}
+              onPersonalChange={(key, val) => setTesdaPersonal(prev => ({ ...prev, [key]: val }))}
               onNext={tesdaGoNext}
             />
           )}
 
           {tesdaStep === 2 && (
             <TESDAStep2
-              data={tesdaPersonal}
-              onChange={(key, val) => setTesdaPersonal(prev => ({ ...prev, [key]: val }))}
+              selected={tesdaClassifications}
+              onChange={setTesdaClassifications}
+              othersText={tesdaOthersText}
+              onOthersTextChange={setTesdaOthersText}
+              ncaeData={tesdaNcae}
+              onNcaeChange={(key, val) => setTesdaNcae(prev => ({ ...prev, [key]: val }))}
               onBack={tesdaGoBack}
               onNext={tesdaGoNext}
             />
@@ -488,26 +490,6 @@ const handleTesdaSubmit = async () => {
 
           {tesdaStep === 3 && (
             <TESDAStep3
-              selected={tesdaClassifications}
-              onChange={setTesdaClassifications}
-              othersText={tesdaOthersText}
-              onOthersTextChange={setTesdaOthersText}
-              onBack={tesdaGoBack}
-              onNext={tesdaGoNext}
-            />
-          )}
-
-          {tesdaStep === 4 && (
-            <TESDAStep4
-              data={tesdaNcae}
-              onChange={(key, val) => setTesdaNcae(prev => ({ ...prev, [key]: val }))}
-              onBack={tesdaGoBack}
-              onNext={tesdaGoNext}
-            />
-          )}
-
-          {tesdaStep === 5 && (
-            <TESDAStep5
               data={tesdaCourse}
               onChange={(key, val) => setTesdaCourse(prev => ({ ...prev, [key]: val }))}
               files={tesdaFiles}
