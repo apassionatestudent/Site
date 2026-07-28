@@ -3,11 +3,25 @@
 //    all called from processShsEnrollmentSubmission in shsEnrollmentService.js
 
 // SHS ENROLLMENT
+
+// => Looks up a cluster's display name by id - used to populate the
+// => legacy shs_enrollments.cluster text column alongside cluster_id below.
+// => Runs on the same transaction client as the rest of the submission,
+// => not the separate sql tag models/SHSEnrollment/shsClusterModel.js uses,
+// => since this needs to participate in the same BEGIN/COMMIT.
+export const findClusterNameById = async (client, clusterId) => {
+  const result = await client.query(
+    `SELECT name FROM shs_clusters WHERE cluster_id = $1 AND deleted_at IS NULL`,
+    [clusterId]
+  );
+  return result.rows[0]?.name || null;
+};
+
 // => Core SHS enrollment transaction record - academic history, track/
 // => cluster, emergency contact, and health info all live here (Step 2 + 3
 // => fields that AREN'T identity/address/family, which live in the shared
 // => student_profile/student_address tables or shs_family_members instead)
-export const insertShsEnrollment = async (client, { studentId, body, academicData, familyData }) => {
+export const insertShsEnrollment = async (client, { studentId, body, academicData, familyData, clusterName }) => {
   const status = academicData.class ? 'Pending' : 'Reserved';
 
   // => course_id dropped from this INSERT: a cluster is a fixed 2-year
@@ -18,11 +32,11 @@ export const insertShsEnrollment = async (client, { studentId, body, academicDat
     `INSERT INTO shs_enrollments
        (student_id, lrn, batch_id,
         last_school_attended, school_address, grade_level_completed, school_year_completed,
-        cluster, electives,
+        cluster, cluster_id, electives,
         emergency_name, emergency_relationship, emergency_contact_no, emergency_address,
         has_medical_condition, medical_condition_detail, allergies, maintenance_medication,
         status, submitted_at)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,NOW())
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,NOW())
      RETURNING enrollment_id`,
     [
       studentId,
@@ -32,8 +46,15 @@ export const insertShsEnrollment = async (client, { studentId, body, academicDat
       academicData.schoolAddress || null,
       academicData.gradeLevelCompleted,
       academicData.schoolYearCompleted,
-      // => track removed, shs_enrollments no longer has this column since only one track is offered
-      academicData.cluster || null,
+      // => Legacy text column - populated from the cluster's name (resolved
+      // => in shsEnrollmentService.js via cluster_id), not written directly
+      // => from academicData anymore
+      clusterName,
+      // => cluster_id: the actual FK. This is what academicData.cluster now
+      // => holds since SHSStep2.jsx switched to fetching clusters by id -
+      // => previously this column was never written, which is why every
+      // => submission was failing against its NOT NULL constraint
+      academicData.cluster,
       academicData.electives || null,
       familyData.emergencyName,
       familyData.emergencyRelationship,
