@@ -1,0 +1,131 @@
+/* ============================================================
+   refundDetail.css
+   Student-facing single refund detail page.
+   ============================================================ */
+
+.refund-detail-page {
+  font-family: var(--font-body);
+  color: var(--text-primary);
+  padding: 2.5rem 2rem;
+  max-width: 720px;
+}
+
+.refund-detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 1.5rem;
+}
+
+.refund-detail-header h1 {
+  font-size: 1.6rem;
+  margin: 0;
+}
+
+.refund-detail-status {
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 5px 14px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+.refund-detail-status--completed {
+  background-color: rgba(22, 163, 74, 0.12);
+  color: #15803d;
+}
+
+.refund-detail-status--voided {
+  background-color: rgba(185, 28, 28, 0.1);
+  color: #991b1b;
+}
+
+.refund-detail-course {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  margin: 6px 0 24px;
+}
+
+.refund-detail-amount-block {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 24px;
+}
+
+.refund-detail-amount-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.refund-detail-amount-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.refund-detail-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.refund-detail-info-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.refund-detail-info-icon {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  margin-top: 2px;
+}
+
+.refund-detail-info-label {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.refund-detail-info-value {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.refund-detail-section {
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+  margin-top: 16px;
+}
+
+.refund-detail-section--voided {
+  border-top-color: rgba(185, 28, 28, 0.2);
+}
+
+.refund-detail-section-title {
+  font-size: 1rem;
+  margin: 0 0 8px;
+}
+
+.refund-detail-text {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.refund-detail-void-date {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 8px;
+}

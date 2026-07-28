@@ -1,0 +1,167 @@
+/* ============================================================
+   payments.css
+   Student-facing Payments/Refunds list page.
+   => Colors pull from index.css's :root[data-theme] tokens,
+      same approach as classes.css.
+   ============================================================ */
+
+.payments-page {
+  font-family: var(--font-body);
+  color: var(--text-primary);
+  padding: 2.5rem 2rem;
+  min-height: 100vh;
+}
+
+.payments-header {
+  margin-bottom: 1.5rem;
+}
+
+.payments-title {
+  font-family: var(--font-body);
+  font-size: 2rem;
+  font-weight: 400;
+  color: var(--text-primary);
+  margin: 0 0 0.35rem;
+  letter-spacing: -0.02em;
+}
+
+.payments-subtitle {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+/* => Tabs bar */
+.payments-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.payments-tab {
+  appearance: none;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 10px 18px;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  border-bottom: 2px solid transparent;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.payments-tab:hover {
+  color: var(--text-primary);
+}
+
+.payments-tab--active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  font-weight: 600;
+}
+
+.payments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.payments-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 20px 24px;
+  cursor: pointer;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.payments-card:hover {
+  box-shadow: var(--card-glow);
+  border-color: var(--card-border-hover);
+}
+
+.payments-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.payments-card-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.payments-card-heading h2 {
+  font-family: var(--font-body);
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.payments-card-icon {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+
+/* => Status badges - green for Completed, red for Voided, matching the
+      project's established save/danger color pattern from Classes.css */
+.payments-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+.payments-badge--completed {
+  background-color: rgba(22, 163, 74, 0.12);
+  color: #15803d;
+}
+
+.payments-badge--voided {
+  background-color: rgba(185, 28, 28, 0.1);
+  color: #991b1b;
+}
+
+.payments-card-course {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  margin: 8px 0 12px;
+}
+
+.payments-card-footer {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.payments-card-amount {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.payments-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 60px 20px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.payments-empty-icon {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  opacity: 0.6;
+}

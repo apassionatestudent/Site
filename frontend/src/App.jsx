@@ -33,6 +33,9 @@ import Enrollment from './pages/private/Enrollment/Enrollment.jsx';
 import SupportTickets from './pages/private/SupportTickets/SupportTickets.jsx';
 import Announcements from './pages/private/Announcements/Announcements.jsx';
 import Classes from './pages/private/Classes/classes.jsx';
+import Payments from './pages/private/Payments/payments.jsx';
+import PaymentDetail from './components/private/Payments/PaymentDetail/paymentDetail.jsx';
+import RefundDetail from './components/private/Payments/RefundDetail/refundDetail.jsx';
 
 // => all routes that belong to the student dashboard
 const DASHBOARD_ROUTES = [
@@ -42,6 +45,8 @@ const DASHBOARD_ROUTES = [
   '/dashboard/enrollment',
   '/dashboard/support',
   '/dashboard/announcements',
+  '/dashboard/classes',
+  '/dashboard/payments',
 ];
 
 function App() {
@@ -96,6 +101,10 @@ function App() {
                     <Route path="classes/shs/:publicId" element={<SHSClassDetail />} />
 
                     <Route path="supporttickets" element={<SupportTickets />} />
+
+                    <Route path="payments" element={<Payments />} />
+                    <Route path="payments/refunds/:publicId" element={<RefundDetail />} />
+                    <Route path="payments/:publicId" element={<PaymentDetail />} />
                   </Routes>
                 )
                 : <Navigate to="/login" replace />
