@@ -36,6 +36,12 @@ import documentRoutes from './routes/Enrollments/documentRoutes.js';
 //    are already taken by the enrollment-form batch pickers
 import classesRoutes from './routes/Classes/classesRoutes.js';
 
+// Payments
+// => Read-only student payment/refund history - students can view but
+//    never create, edit, or void records. Own prefix since payments
+//    are not scoped under enrollment or classes routes.
+import paymentsRoutes from './routes/Payments/paymentsRoutes.js';
+
 import path from "path";
 
 dotenv.config();
@@ -95,7 +101,8 @@ app.use('/api/documents', documentRoutes);
 // => proxy's own IP. Without this, ALL visitors share one rate-limit bucket.
 // app.set('trust proxy', 1); => not to be used just yet since I'm still testing locally without a proxy, but will be needed in production for rate limiting to work correctly.
 
-
+// payments 
+app.use('/api/payments', paymentsRoutes);
 
 async function initDB () {
   try {
@@ -985,6 +992,114 @@ async function initDB () {
         created_at      TIMESTAMPTZ   NOT NULL DEFAULT NOW()
       )
     `;
+
+    await sql`
+      -- => Sequence backing auto-generated OR numbers, must exist
+      -- => before the payments table default references it.
+      CREATE SEQUENCE IF NOT EXISTS payments_or_seq START WITH 1
+    `;
+
+    // => payments: OTC payment records for TESDA Regular, non-scholar
+    // => enrollments only. SHS enrollments (DepEd-covered) and TESDA-scholar
+    // => enrollments (TESDA-covered) never get a row here - that eligibility
+    // => check lives in the service layer, not a DB constraint.
+    await sql`
+      CREATE TABLE IF NOT EXISTS payments (
+        payment_id      SERIAL        PRIMARY KEY,
+        public_id       UUID          NOT NULL DEFAULT gen_random_uuid() UNIQUE,
+
+        enrollment_id   INTEGER       NOT NULL REFERENCES tesda_enrollments(enrollment_id) ON DELETE RESTRICT,
+
+        -- => Auto-generated, sequential, unique. Format: OR-000001
+        or_number       VARCHAR(20)   NOT NULL UNIQUE DEFAULT ('OR-' || LPAD(nextval('payments_or_seq')::text, 6, '0')),
+
+        amount          NUMERIC(10,2) NOT NULL CHECK (amount > 0),
+        payment_date    DATE          NOT NULL DEFAULT CURRENT_DATE,
+        payment_method  VARCHAR(20)   NOT NULL DEFAULT 'OTC',
+
+        status          VARCHAR(15)   NOT NULL DEFAULT 'Completed'
+                        CHECK (status IN ('Completed', 'Voided')),
+        void_reason     TEXT          NULL,
+        voided_by       INTEGER       NULL REFERENCES admins(admin_id) ON DELETE SET NULL,
+        voided_at       TIMESTAMPTZ   NULL,
+
+        remarks         TEXT          NULL,
+
+        created_by      INTEGER       NOT NULL REFERENCES admins(admin_id) ON DELETE SET NULL,
+        created_at      TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+        updated_at      TIMESTAMPTZ   NOT NULL DEFAULT NOW()
+      )
+    `;
+
+    await sql`
+      DO $$ BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_trigger WHERE tgname = 'payments_set_updated_at'
+        ) THEN
+          CREATE TRIGGER payments_set_updated_at
+          BEFORE UPDATE ON payments
+          FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+        END IF;
+      END $$
+    `;
+
+    await sql`
+      CREATE INDEX IF NOT EXISTS idx_payments_enrollment ON payments (enrollment_id)
+    `;
+
+    await sql`
+      CREATE INDEX IF NOT EXISTS idx_payments_status ON payments (status)
+    `;
+
+    await sql`
+      CREATE INDEX IF NOT EXISTS idx_payments_created_at ON payments (created_at DESC)
+    `;
+
+    await sql`
+      CREATE SEQUENCE IF NOT EXISTS refunds_refund_number_seq START WITH 1
+    `;
+
+    // => refunds: OTC only for now. Void mechanism mirrors payments exactly.
+    await sql`
+      CREATE TABLE IF NOT EXISTS refunds (
+        refund_id         SERIAL        PRIMARY KEY,
+        public_id         UUID          NOT NULL DEFAULT gen_random_uuid() UNIQUE,
+
+        enrollment_id     INTEGER       NOT NULL REFERENCES tesda_enrollments(enrollment_id) ON DELETE RESTRICT,
+
+        refund_number     VARCHAR(20)   NOT NULL UNIQUE DEFAULT ('RF-' || LPAD(nextval('refunds_refund_number_seq')::text, 6, '0')),
+
+        refund_type       VARCHAR(15)   NOT NULL CHECK (refund_type IN ('Percentage', 'Fixed')),
+        percentage_value  NUMERIC(5,2)  NULL CHECK (percentage_value > 0 AND percentage_value <= 100),
+        amount            NUMERIC(10,2) NOT NULL CHECK (amount > 0),
+
+        refund_method     VARCHAR(20)   NOT NULL DEFAULT 'OTC',
+        reason            TEXT          NOT NULL,
+        remarks           TEXT          NULL,
+
+        status            VARCHAR(15)   NOT NULL DEFAULT 'Completed' CHECK (status IN ('Completed', 'Voided')),
+        void_reason       TEXT          NULL,
+        voided_by         INTEGER       NULL REFERENCES admins(admin_id) ON DELETE SET NULL,
+        voided_at         TIMESTAMPTZ   NULL,
+
+        created_by        INTEGER       NOT NULL REFERENCES admins(admin_id) ON DELETE SET NULL,
+        created_at        TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+        updated_at        TIMESTAMPTZ   NOT NULL DEFAULT NOW()
+      )
+    `;
+
+    await sql`
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'refunds_set_updated_at') THEN
+          CREATE TRIGGER refunds_set_updated_at
+          BEFORE UPDATE ON refunds
+          FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+        END IF;
+      END $$
+    `;
+
+    await sql`CREATE INDEX IF NOT EXISTS idx_refunds_enrollment ON refunds (enrollment_id)`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_refunds_status ON refunds (status)`;
 
     console.log("Database initialized successfully");
   } catch (error) {

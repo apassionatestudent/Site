@@ -12,6 +12,7 @@ import SupportIcon from "../../../assets/icons/support.png";
 import LogsIcon from "../../../assets/icons/logs.png";
 import LogoutIcon from "../../../assets/icons/logout.png";
 import DefaultAvatar from "../../../assets/icons/default-avatar.png";
+import Payments from "../../../assets/icons/payments.png";
 import Site from "../../../assets/icons/site.png";
 
 /*
@@ -27,9 +28,10 @@ const NAV_ITEMS = [
   { id: "account",       label: "Account",       icon: AccountIcon,       to: "dashboard/account" },
   { id: "enrollment",    label: "Enrollment",    icon: EnrollmentIcon,    to: "dashboard/enrollment" },
   { id: "documents",     label: "Documents",     icon: DocumentsIcon,     to: "dashboard/documents" },
-  { id: "classes",       label: "Classes",       icon: ClassesIcon,      to: "dashboard/classes" },
+  { id: "classes",       label: "Classes",       icon: ClassesIcon,       to: "dashboard/classes" },
   { id: "support",       label: "Support Tickets", icon: SupportIcon,     to: "dashboard/supporttickets" },
-  { id: "logs",          label: "Logs",          icon: LogsIcon,       to: "dashboard/logs" },
+  { id: "payments",      label: "Payments",      icon: Payments,          to: "dashboard/payments" },
+  { id: "logs",          label: "Logs",          icon: LogsIcon,          to: "dashboard/logs" },
   {id: "back to site",   label: "Back to Site",  icon: Site,              to: "/"}
 ];
 

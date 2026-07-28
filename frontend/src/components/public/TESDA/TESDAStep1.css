@@ -39,7 +39,7 @@
 .ts1-g3 {
   display: flex;
   flex-direction: row; /* Keeps them on the same line */
-  gap: 16px; /* Adjust this to match your form's spacing */
+  gap: 16px; 
   width: 100%;
 }
 
