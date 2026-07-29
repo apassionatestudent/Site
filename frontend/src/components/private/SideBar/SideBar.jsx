@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import axiosStudent from "../../../utils/axiosStudent";
+import ConfirmModal from "../ConfirmModal/ConfirmModal.jsx";
 import "./SideBar.css";
 
 import AnnouncementsIcon from "../../../assets/icons/announcements.png";
@@ -23,8 +24,11 @@ import Site from "../../../assets/icons/site.png";
   - Logout remains a button because it's an action (not navigation).
 */
 
+// => "end" controls exact-path matching per nav item
+// => announcements and back-to-site need end:true since their paths are prefixes of every other route
+// => classes/enrollment/documents/payments must stay unmarked (prefix match) so nested detail routes keep the parent highlighted
 const NAV_ITEMS = [
-  { id: "announcements", label: "Announcements", icon: AnnouncementsIcon, to: "dashboard/" },
+  { id: "announcements", label: "Announcements", icon: AnnouncementsIcon, to: "dashboard/", end: true },
   { id: "account",       label: "Account",       icon: AccountIcon,       to: "dashboard/account" },
   { id: "enrollment",    label: "Enrollment",    icon: EnrollmentIcon,    to: "dashboard/enrollment" },
   { id: "documents",     label: "Documents",     icon: DocumentsIcon,     to: "dashboard/documents" },
@@ -32,7 +36,7 @@ const NAV_ITEMS = [
   { id: "support",       label: "Support Tickets", icon: SupportIcon,     to: "dashboard/supporttickets" },
   { id: "payments",      label: "Payments",      icon: Payments,          to: "dashboard/payments" },
   { id: "logs",          label: "Logs",          icon: LogsIcon,          to: "dashboard/logs" },
-  {id: "back to site",   label: "Back to Site",  icon: Site,              to: "/"}
+  { id: "back to site",  label: "Back to Site",  icon: Site,              to: "/", end: true }
 ];
 
 const Sidebar = ({
@@ -41,10 +45,12 @@ const Sidebar = ({
   onNavClick     = () => {},
 }) => {
   const [hoveredItem, setHoveredItem] = useState(null);
+  // => Controls whether the logout confirmation modal is visible
+  const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
   const navigate = useNavigate();
 
   // => Clears the localStorage flag, calls the backend to clear the httpOnly cookie,
-  // => then redirects to /login
+  // => then redirects to /login. Only ever called after the student confirms.
   const handleLogout = async () => {
     try {
       await axiosStudent.post('/student-auth/logout', {});
@@ -55,6 +61,7 @@ const Sidebar = ({
       // => Clear both storages on logout regardless of which one was used on login
       localStorage.removeItem('isLoggedIn');
       sessionStorage.removeItem('isLoggedIn');
+      setIsLogoutConfirmOpen(false);
       navigate('/login');
     }
   };
@@ -84,7 +91,7 @@ const Sidebar = ({
 
       <nav className="sidebar-nav" aria-label="Main navigation">
         <ul className="sidebar-nav-list">
-          {NAV_ITEMS.map(({ id, label, icon, to }) => (
+          {NAV_ITEMS.map(({ id, label, icon, to, end }) => (
             <li key={id}>
               <NavLink
                 to={to}
@@ -92,21 +99,10 @@ const Sidebar = ({
                 onClick={() => onNavClick(id)}
                 onMouseEnter={() => setHoveredItem(id)}
                 onMouseLeave={() => setHoveredItem(null)}
-                end
+                end={!!end}
               >
                 <img src={icon} alt={`${label} icon`} className="sidebar-nav-icon" />
                 <span className="sidebar-nav-label">{label}</span>
-
-                {/* Optional: render DOM active bar via children prop instead of CSS-only:
-                    children={({ isActive }) => (
-                      <>
-                        <img ... />
-                        <span ...>{label}</span>
-                        {isActive && <span className="sidebar-active-bar" aria-hidden="true" />}
-                      </>
-                    )}
-                    If you prefer that pattern, replace img/span above with the children render-prop.
-                */}
               </NavLink>
             </li>
           ))}
@@ -119,12 +115,20 @@ const Sidebar = ({
         <div className="sidebar-divider" />
         <button
           className="sidebar-nav-item sidebar-nav-item--logout"
-          onClick={handleLogout}
+          onClick={() => setIsLogoutConfirmOpen(true)}
         >
           <img src={LogoutIcon} alt="Logout icon" className="sidebar-nav-icon" />
           <span className="sidebar-nav-label">Logout</span>
         </button>
       </div>
+
+      {/* => Confirms intent before clearing the session, avoids accidental logout from a misclick */}
+      <ConfirmModal
+        isOpen={isLogoutConfirmOpen}
+        message="Are you sure you want to log out?"
+        onConfirm={handleLogout}
+        onCancel={() => setIsLogoutConfirmOpen(false)}
+      />
     </aside>
   );
 };
