@@ -85,6 +85,43 @@
   border-color: var(--accent);
 }
 
+/* => Wraps the password input so the eye icon can be absolutely positioned inside it */
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+/* => Leaves room on the right so typed text never runs under the icon */
+.password-input-wrapper input {
+  width: 100%;
+  padding-right: 2.75rem;
+}
+
+/* => Reset default button styling since this sits inside a styled input row */
+.password-toggle-btn {
+  position: absolute;
+  right: 0.75rem;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.password-toggle-icon {
+  width: 1.15rem;
+  height: 1.15rem;
+  opacity: 0.65;
+  transition: opacity 0.2s;
+}
+
+.password-toggle-btn:hover .password-toggle-icon {
+  opacity: 1;
+}
+
 /* .login-forgot {
   text-align: right;
   margin-top: -0.2rem;

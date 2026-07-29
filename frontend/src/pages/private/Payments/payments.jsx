@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import axiosStudent from "../../../utils/axiosStudent";
 import toast from "react-hot-toast";
 import "./payments.css";
 
@@ -22,8 +22,8 @@ const Payments = () => {
       try {
         // => fetch both on mount so switching tabs is instant, no reload flicker
         const [paymentsRes, refundsRes] = await Promise.all([
-          axios.get("http://localhost:5000/api/payments/my-payments", { withCredentials: true }),
-          axios.get("http://localhost:5000/api/payments/my-refunds", { withCredentials: true }),
+          axiosStudent.get("/payments/my-payments"),
+          axiosStudent.get("/payments/my-refunds"),
         ]);
         setPayments(paymentsRes.data.payments || []);
         setRefunds(refundsRes.data.refunds || []);

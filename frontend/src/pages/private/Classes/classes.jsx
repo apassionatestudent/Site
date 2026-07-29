@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import axiosStudent from "../../../utils/axiosStudent";
 import toast from "react-hot-toast";
 import "./classes.css";
 
@@ -17,10 +17,7 @@ const Classes = () => {
   useEffect(() => {
     const fetchBatches = async () => {
       try {
-        const res = await axios.get(
-          "http://localhost:5000/api/student-classes/my-batches",
-          { withCredentials: true }
-        );
+        const res = await axiosStudent.get("/student-classes/my-batches");
         setBatches(res.data.batches || []);
       } catch (error) {
         console.error("Fetch classes error:", error);
