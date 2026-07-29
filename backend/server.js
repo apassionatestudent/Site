@@ -43,6 +43,11 @@ import classesRoutes from './routes/Classes/classesRoutes.js';
 //    are not scoped under enrollment or classes routes.
 import paymentsRoutes from './routes/Payments/paymentsRoutes.js';
 
+// Dashboard Badges
+// => Combined announcement + support ticket counts for the sidebar bubbles
+// => Own route since it doesn't belong to any single domain (reads from two tables)
+import dashboardBadgesRoutes from './routes/DashboardBadges/dashboardBadgesRoutes.js';
+
 import path from "path";
 
 dotenv.config();
@@ -106,6 +111,10 @@ app.use('/api/documents', documentRoutes);
 
 // payments 
 app.use('/api/payments', paymentsRoutes);
+
+// => Sidebar badge counts - single combined endpoint, own route since it
+//    spans announcements and support_tickets rather than belonging to one domain
+app.use('/api/dashboard-badges', dashboardBadgesRoutes);
 
 async function initDB () {
   try {
@@ -1114,6 +1123,69 @@ async function initDB () {
 
     await sql`CREATE INDEX IF NOT EXISTS idx_refunds_enrollment ON refunds (enrollment_id)`;
     await sql`CREATE INDEX IF NOT EXISTS idx_refunds_status ON refunds (status)`;
+
+    // => Admin-authored announcements shown to all students, badge count = active rows
+    await sql`
+      CREATE TABLE IF NOT EXISTS announcements (
+        announcement_id  SERIAL        PRIMARY KEY,
+        public_id        UUID          NOT NULL DEFAULT gen_random_uuid() UNIQUE,
+
+        title            VARCHAR(200)  NOT NULL,
+        message          TEXT          NOT NULL,
+        is_active        BOOLEAN       NOT NULL DEFAULT TRUE,
+
+        created_by       INTEGER       NOT NULL REFERENCES admins(admin_id) ON DELETE RESTRICT,
+        created_at       TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+        updated_at       TIMESTAMPTZ   NOT NULL DEFAULT NOW()
+      )
+    `;
+
+    await sql`
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'announcements_set_updated_at') THEN
+          CREATE TRIGGER announcements_set_updated_at
+          BEFORE UPDATE ON announcements
+          FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+        END IF;
+      END $$
+    `;
+
+    // => Only need to filter fast on is_active for the badge count and the list view
+    await sql`CREATE INDEX IF NOT EXISTS idx_announcements_active ON announcements (is_active)`;
+
+    // => Student-submitted support tickets, badge count = this student's Open/In Progress rows
+    await sql`
+      CREATE TABLE IF NOT EXISTS support_tickets (
+        ticket_id        SERIAL        PRIMARY KEY,
+        public_id        UUID          NOT NULL DEFAULT gen_random_uuid() UNIQUE,
+
+        student_id       BIGINT        NOT NULL REFERENCES student_accounts(student_id) ON DELETE CASCADE,
+
+        subject          VARCHAR(200)  NOT NULL,
+        message          TEXT          NOT NULL,
+        status           VARCHAR(15)   NOT NULL DEFAULT 'Open' CHECK (status IN ('Open', 'In Progress', 'Resolved', 'Closed')),
+
+        resolved_by      INTEGER       NULL REFERENCES admins(admin_id) ON DELETE SET NULL,
+        resolved_at      TIMESTAMPTZ   NULL,
+
+        created_at       TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+        updated_at       TIMESTAMPTZ   NOT NULL DEFAULT NOW()
+      )
+    `;
+
+    await sql`
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'support_tickets_set_updated_at') THEN
+          CREATE TRIGGER support_tickets_set_updated_at
+          BEFORE UPDATE ON support_tickets
+          FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+        END IF;
+      END $$
+    `;
+
+    // => Badge count query filters by student_id + status together, so index both
+    await sql`CREATE INDEX IF NOT EXISTS idx_support_tickets_student ON support_tickets (student_id)`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_support_tickets_status ON support_tickets (status)`;
 
     console.log("Database initialized successfully");
   } catch (error) {
