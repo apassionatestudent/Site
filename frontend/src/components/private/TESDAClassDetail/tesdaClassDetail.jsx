@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import axios from "axios";
+import axiosStudent from "../../../utils/axiosStudent";
 import toast from "react-hot-toast";
 import "./tesdaClassDetail.css";
 
@@ -21,10 +21,7 @@ const TESDAClassDetail = () => {
   useEffect(() => {
     const fetchDetail = async () => {
       try {
-        const res = await axios.get(
-          `http://localhost:5000/api/student-classes/tesda/${publicId}`,
-          { withCredentials: true }
-        );
+        const res = await axiosStudent.get(`/student-classes/tesda/${publicId}`);
         setBatch(res.data.batch);
         setSessions(res.data.sessions || []);
       } catch (error) {

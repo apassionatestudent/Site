@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import axios from "axios";
+import axiosStudent from "../../../utils/axiosStudent";
 import "./SideBar.css";
 
 import AnnouncementsIcon from "../../../assets/icons/announcements.png";
@@ -47,11 +47,7 @@ const Sidebar = ({
   // => then redirects to /login
   const handleLogout = async () => {
     try {
-      await axios.post(
-        'http://localhost:5000/api/student-auth/logout',
-        {},
-        { withCredentials: true } // => required so the backend can clear the httpOnly cookie
-      );
+      await axiosStudent.post('/student-auth/logout', {});
     } catch (error) {
       // => Even if the backend call fails, still clear the frontend state
       console.error('Logout error:', error);

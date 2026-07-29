@@ -1,9 +1,11 @@
 import React, { useState } from "react";
-import axios from "axios";
+import axiosStudent from "../../../utils/axiosStudent.js";
 import { Link, useNavigate } from 'react-router-dom';
 import './Login.css';
 
 import WarningIcon from '../../../assets/icons/warning.png';
+import EyeIcon from '../../../assets/icons/eye.png';
+import EyeOffIcon from '../../../assets/icons/eye-off.png';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -26,6 +28,9 @@ export default function Login() {
   // => Controls visibility of the Remember Me warning modal
   const [showRememberModal, setShowRememberModal] = useState(false);
 
+  // => Toggles whether the password field shows plain text or dots
+  const [showPassword, setShowPassword] = useState(false);
+
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
@@ -35,10 +40,9 @@ export default function Login() {
 
     try {
       // => username in the backend maps to email in the frontend form
-      await axios.post(
-        'http://localhost:5000/api/student-auth/login',
-        { username: form.email, password: form.password },
-        { withCredentials: true } // => required so the cookie is saved in the browser
+      await axiosStudent.post(
+        '/student-auth/login',
+        { username: form.email, password: form.password }
       );
 
       // => if rememberMe is checked, persist the flag across browser sessions
@@ -84,14 +88,30 @@ export default function Login() {
 
           <div className="form-group">
             <label>Password</label>
-            <input
-              type="password"
-              name="password"
-              value={form.password}
-              onChange={handleChange}
-              placeholder="••••••••"
-              required
-            />
+            {/* => wrapper needed so the eye icon can sit inside the input visually */}
+            <div className="password-input-wrapper">
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                value={form.password}
+                onChange={handleChange}
+                placeholder="••••••••"
+                required
+              />
+              <button
+                type="button"
+                className="password-toggle-btn"
+                onClick={() => setShowPassword((prev) => !prev)}
+                // => prevents this button from submitting the form
+                tabIndex={-1}
+              >
+                <img
+                  src={showPassword ? EyeOffIcon : EyeIcon}
+                  alt={showPassword ? "Hide password" : "Show password"}
+                  className="password-toggle-icon"
+                />
+              </button>
+            </div>
           </div>
 
           <div className="login-forgot">

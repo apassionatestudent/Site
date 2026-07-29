@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import axios from "axios";
+import axiosStudent from "../../../../utils/axiosStudent";
 import toast from "react-hot-toast";
 import "./paymentDetail.css";
 
@@ -20,10 +20,7 @@ const PaymentDetail = () => {
   useEffect(() => {
     const fetchDetail = async () => {
       try {
-        const res = await axios.get(
-          `http://localhost:5000/api/payments/${publicId}`,
-          { withCredentials: true }
-        );
+        const res = await axiosStudent.get(`/payments/${publicId}`);
         setPayment(res.data.payment);
       } catch (error) {
         console.error("Fetch payment detail error:", error);
