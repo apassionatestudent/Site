@@ -18,6 +18,9 @@ import referenceRoutes from './routes/reference.js';
 import studentAuthRouter from './routes/studentAuth.js';
 
 import tesdaCourseRoutes from "./routes/TESDAEnrollment/tesdaCourseRoutes.js";
+import tesdaCoursesRoutes from './routes/Courses/tesdaCoursesRoutes.js';
+// => Note the "s" - tesdaCoursesRoutes (public catalog) is separate from
+// => tesdaCourseRoutes (enrollment form dropdown), different mount points
 import tesdaBatchRoutes from "./routes/TESDAEnrollment/tesdaBatchRoutes.js";
 
 import shsBatchesRouter from './routes/SHSEnrollment/shsBatchRoutes.js';
@@ -75,6 +78,9 @@ app.use('/api/student-auth', studentAuthRouter);
 
 // => Register TESDA courses route
 app.use("/api/courses", tesdaCourseRoutes);
+// => Public TESDA course catalog - list + detail-by-title, separate from
+// => /api/courses which only feeds the enrollment form's course dropdown
+app.use('/api/public/tesda-courses', tesdaCoursesRoutes);
 // => Register TESDA batches route - path stays /api/classes so the
 // => frontend's existing fetch calls don't need to change
 app.use("/api/classes", tesdaBatchRoutes);
@@ -1031,10 +1037,10 @@ async function initDB () {
         payment_id      SERIAL        PRIMARY KEY,
         public_id       UUID          NOT NULL DEFAULT gen_random_uuid() UNIQUE,
 
-        // => enrollment_type: 'TESDA' | 'SHS' - which enrollment table
-        //    enrollment_id points at. No DB-level FK possible across two
-        //    tables, enforced at the service layer instead, same pattern
-        //    as class_sessions.batch_type / activity_logs.entity_type.
+        -- => enrollment_type: 'TESDA' | 'SHS' - which enrollment table
+        --    enrollment_id points at. No DB-level FK possible across two
+        --    tables, enforced at the service layer instead, same pattern
+        --    as class_sessions.batch_type / activity_logs.entity_type.
         enrollment_type VARCHAR(10)   NOT NULL DEFAULT 'TESDA',
         enrollment_id   INTEGER       NOT NULL,
 
@@ -1093,10 +1099,10 @@ async function initDB () {
         refund_id         SERIAL        PRIMARY KEY,
         public_id         UUID          NOT NULL DEFAULT gen_random_uuid() UNIQUE,
 
-        // => enrollment_type: 'TESDA' | 'SHS' - which enrollment table
-        //    enrollment_id points at. No DB-level FK possible across two
-        //    tables, enforced at the service layer instead, same pattern
-        //    as class_sessions.batch_type / activity_logs.entity_type.
+        -- => enrollment_type: 'TESDA' | 'SHS' - which enrollment table
+        --    enrollment_id points at. No DB-level FK possible across two
+        --    tables, enforced at the service layer instead, same pattern
+        --    as class_sessions.batch_type / activity_logs.entity_type.
         enrollment_type   VARCHAR(10)   NOT NULL DEFAULT 'TESDA',
         enrollment_id     INTEGER       NOT NULL,
 

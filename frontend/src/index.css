@@ -213,8 +213,11 @@ html {
   --tag-bg: rgba(102, 9, 17, 0.4);
   --tag-border: #660911;
   --tag-color: #ff6b7a;
-  --accent: #ab0916;
-  --accent-hover: #8a0d17;
+  /* => Swapped from the original values - resting state is now the
+     => calmer maroon, hover is the brighter red, so hover actually
+     => feels like an escalation instead of both being near-identical */
+  --accent: #8a0d17;
+  --accent-hover: #ab0916;
   --accent-span: #ff6b7a;
   --btn-secondary-color: #fff;
   --btn-secondary-border: #444;
