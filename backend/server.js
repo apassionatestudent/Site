@@ -1031,7 +1031,12 @@ async function initDB () {
         payment_id      SERIAL        PRIMARY KEY,
         public_id       UUID          NOT NULL DEFAULT gen_random_uuid() UNIQUE,
 
-        enrollment_id   INTEGER       NOT NULL REFERENCES tesda_enrollments(enrollment_id) ON DELETE RESTRICT,
+        // => enrollment_type: 'TESDA' | 'SHS' - which enrollment table
+        //    enrollment_id points at. No DB-level FK possible across two
+        //    tables, enforced at the service layer instead, same pattern
+        //    as class_sessions.batch_type / activity_logs.entity_type.
+        enrollment_type VARCHAR(10)   NOT NULL DEFAULT 'TESDA',
+        enrollment_id   INTEGER       NOT NULL,
 
         -- => Auto-generated, sequential, unique. Format: OR-000001
         or_number       VARCHAR(20)   NOT NULL UNIQUE DEFAULT ('OR-' || LPAD(nextval('payments_or_seq')::text, 6, '0')),
@@ -1088,7 +1093,12 @@ async function initDB () {
         refund_id         SERIAL        PRIMARY KEY,
         public_id         UUID          NOT NULL DEFAULT gen_random_uuid() UNIQUE,
 
-        enrollment_id     INTEGER       NOT NULL REFERENCES tesda_enrollments(enrollment_id) ON DELETE RESTRICT,
+        // => enrollment_type: 'TESDA' | 'SHS' - which enrollment table
+        //    enrollment_id points at. No DB-level FK possible across two
+        //    tables, enforced at the service layer instead, same pattern
+        //    as class_sessions.batch_type / activity_logs.entity_type.
+        enrollment_type   VARCHAR(10)   NOT NULL DEFAULT 'TESDA',
+        enrollment_id     INTEGER       NOT NULL,
 
         refund_number     VARCHAR(20)   NOT NULL UNIQUE DEFAULT ('RF-' || LPAD(nextval('refunds_refund_number_seq')::text, 6, '0')),
 
