@@ -27,6 +27,11 @@ const BASE_REQUIREMENTS = [
 const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png'];
 const MAX_SIZE_MB = 5;
 
+// => Fixed reservation fee, only collected for Regular (non-sponsored)
+// => TESDA batches. This is a deduction from the course amount, not an
+// => additional charge - remaining balance = course amount - this.
+const RESERVATION_FEE = 1000;
+
 // => This is old TESDAStep5's content, renumbered to Step 3 in the new 3-step flow.
 // => No logic changed - course selection, uploads, scholarship, and privacy consent stay exactly as they were.
 const TESDAStep3 = ({
@@ -52,6 +57,11 @@ const TESDAStep3 = ({
 
   // => Tracks selected course object for displaying the fee
   const [selectedCourse, setSelectedCourse] = useState(null);
+
+  // => Tracks selected batch object so the fee breakdown can be gated by
+  // => class_type (Regular vs TESDA-Sponsored) instead of showing on
+  // => course selection alone
+  const [selectedBatch, setSelectedBatch] = useState(null);
 
   const [showErrors, setShowErrors] = useState(false);
   const [fileErrors, setFileErrors] = useState({});
@@ -237,6 +247,9 @@ const TESDAStep3 = ({
               // => Reset class when course changes
               onChange('courseClass', '');
               setClasses([]);
+              // => Reset batch selection too, since it no longer matches
+              // => the newly selected course
+              setSelectedBatch(null);
               // => Find and store the full course record (title, amount,
               // => sector) from the already-loaded courses list
               const found = courses.find(c => String(c.course_id) === String(courseId));
@@ -255,18 +268,15 @@ const TESDAStep3 = ({
               </option>
             ))}
           </select>
-          {/* => Fee + Sector shown below the course dropdown once selected.
-               Sector is read-only - just informs the student which sector
-               their chosen course falls under (courses.sector_id) */}
+          {/* => Sector shown below the course dropdown once selected -
+               read-only, just informs the student which sector their
+               chosen course falls under (courses.sector_id). Fee moved
+               to the Batch dropdown since it depends on class_type
+               (Regular vs TESDA-Sponsored), which lives on the batch. */}
           {selectedCourse && (
-            <>
-              <span className="ts5-fee">
-                Fee: <strong>₱{Number(selectedCourse.amount).toLocaleString('en-PH')}</strong>
-              </span>
-              <span className="ts5-hint">
-                Sector: <strong>{selectedCourse.sector || 'Unassigned'}</strong>
-              </span>
-            </>
+            <span className="ts5-hint">
+              Sector: <strong>{selectedCourse.sector || 'Unassigned'}</strong>
+            </span>
           )}
         </div>
 
@@ -279,7 +289,14 @@ const TESDAStep3 = ({
             className={`ts5-select ${fieldErrors.courseClass ? 'ts5-select--error' : ''}`}
             value={data.courseClass}
             onChange={(e) => {
-              onChange('courseClass', e.target.value);
+              const batchId = e.target.value;
+              onChange('courseClass', batchId);
+              // => Find and store the full batch record (class_type) so
+              // => the fee breakdown below can be gated correctly.
+              // => "reserve" isn't a real batch_id so this resolves to
+              // => null in that case, which is correct - no fee to show.
+              const foundBatch = classes.find(cl => String(cl.batch_id) === String(batchId));
+              setSelectedBatch(foundBatch || null);
               clearError('courseClass');
             }}
             disabled={!data.course || classesLoading}
@@ -301,15 +318,20 @@ const TESDAStep3 = ({
                  response shape - the old class_id name no longer exists in
                  the API response after the tesda_classes -> tesda_batches
                  rename, so this was silently breaking batch selection */}
-            {classes.map(cl => (
-              <option key={cl.batch_id} value={cl.batch_id}>
-                {new Date(cl.start_date).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}
-                {' → '}
-                {new Date(cl.end_date).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}
-                {' · '}
-                {cl.remaining_slots} slot{cl.remaining_slots !== 1 ? 's' : ''} left
-              </option>
-            ))}
+            {classes.map(cl => {
+              // => Pending batches can have NULL start_date/end_date until
+              // => the admin firms up a schedule - show "Dates TBA" instead
+              // => of an Invalid Date string in that case
+              const dateRange = (cl.start_date && cl.end_date)
+                ? `${new Date(cl.start_date).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })} → ${new Date(cl.end_date).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}`
+                : 'Dates TBA';
+
+              return (
+                <option key={cl.batch_id} value={cl.batch_id}>
+                  {cl.batch_name} · {dateRange} · {cl.remaining_slots} slot{cl.remaining_slots !== 1 ? 's' : ''} left
+                </option>
+              );
+            })}
           </select>
 
           {/* => Reserve hint below batch dropdown */}
@@ -318,6 +340,35 @@ const TESDAStep3 = ({
               No batches available. Select <strong>Reserve a Slot</strong> to
               be notified when one opens.
             </span>
+          )}
+
+          {/* => Fee breakdown - only renders once both a course and a
+               real batch (not "reserve") are selected. Regular batches
+               show the reservation fee as a deduction from the course
+               amount, not on top of it. TESDA-Sponsored batches still
+               show the course amount, but labeled as covered by TESDA. */}
+          {selectedCourse && selectedBatch && (
+            <div className="ts5-fee-breakdown">
+              {selectedBatch.class_type === 'Regular' ? (
+                <>
+                  <span className="ts5-fee-line">
+                    Course Amount: <strong>₱{Number(selectedCourse.amount).toLocaleString('en-PH')}</strong>
+                  </span>
+                  <span className="ts5-fee-line">
+                    Reservation Fee (to be paid once your enrollment status changes to "Reviewed"): <strong>₱{RESERVATION_FEE.toLocaleString('en-PH')}</strong>
+                  </span>
+                  <span className="ts5-fee-line ts5-fee-line--balance">
+                    Remaining Balance: <strong>₱{Number(selectedCourse.amount - RESERVATION_FEE).toLocaleString('en-PH')}</strong>
+                  </span>
+                </>
+              ) : (
+                <span className="ts5-fee-line">
+                  Course Amount: <strong>₱{Number(selectedCourse.amount).toLocaleString('en-PH')}</strong>
+                  {' '}
+                  <span className="ts5-fee-sponsored-tag">Covered by TESDA</span>
+                </span>
+              )}
+            </div>
           )}
         </div>
 

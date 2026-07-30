@@ -26,6 +26,17 @@ export const getOpenBatchesByCourseId = async (courseId) => {
       cb.required_number_of_students,
       cb.remarks,
 
+      -- => Regular / TESDA-Sponsored - drives whether the enrollment form
+      -- => shows the course amount + reservation fee breakdown, or just
+      -- => the course amount labeled as covered by TESDA
+      cb.class_type,
+
+      -- => e.g. "Computer System Servicing (NCII) (Batch #2)" - shown in
+      -- => the batch dropdown so students can tell batches of the same
+      -- => course apart even when dates aren't set yet (Pending batches
+      -- => can have NULL start_date/end_date)
+      cb.batch_name,
+
       -- => Pending and Approved enrollments both hold a claim on a seat -
       -- => Rejected/Reserved do not (Reserved rows have batch_id NULL
       -- => anyway, so they'd never match this batch regardless).
