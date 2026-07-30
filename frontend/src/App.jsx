@@ -20,7 +20,11 @@ import SHSClassDetail from './components/private/SHSClassDetail/shsClassDetail.j
 // => import public pages
 import Home from './pages/public/Home/Home.jsx';
 import About from './pages/public/About/About.jsx';
+
 import Courses from './pages/public/Courses/Courses.jsx';
+import TESDACourses from './pages/public/Courses/TESDACourses/tesdaCourses.jsx';
+import TESDACourseDetail from './components/public/TESDACourseDetail/tesdaCourseDetail.jsx';
+
 import Enroll from './pages/public/Enroll/Enroll.jsx';
 import Contact from './pages/public/Contact/Contact.jsx';
 import Login from './pages/public/Login/Login.jsx';
@@ -70,7 +74,11 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/home" element={<Home />} />
           <Route path="/about" element={<About />} />
+          
           <Route path="/courses" element={<Courses />} />
+          <Route path="/courses/tesda" element={<TESDACourses />} />
+          <Route path="/courses/tesda/:title" element={<TESDACourseDetail />} />
+
           <Route path="/enroll" element={<Enroll />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/login" element={<Login />} />

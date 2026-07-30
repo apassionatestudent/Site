@@ -1,41 +1,40 @@
+import { Link } from 'react-router-dom';
 import './Courses.css';
 
-const courses = [
-  { id: 1, title: 'Food & Beverage Service', duration: '3 months', level: 'Beginner', desc: 'Master the fundamentals of professional food and beverage service.' },
-  { id: 2, title: 'Housekeeping Operations', duration: '2 months', level: 'Beginner', desc: 'Learn industry-standard housekeeping procedures and management.' },
-  { id: 3, title: 'Front Office Management', duration: '3 months', level: 'Intermediate', desc: 'Develop skills in reservations, guest relations, and front desk operations.' },
-  { id: 4, title: 'Culinary Arts', duration: '6 months', level: 'Intermediate', desc: 'Hands-on training in professional kitchen operations and cuisine preparation.' },
-  { id: 5, title: 'Hotel Management', duration: '6 months', level: 'Advanced', desc: 'Comprehensive training covering all aspects of hotel operations and leadership.' },
-  { id: 6, title: 'Events Management', duration: '3 months', level: 'Intermediate', desc: 'Plan and execute professional events from corporate to social gatherings.' },
-];
-
+// => Landing page for course browsing - visitor picks a track first,
+// => then drills into that track's dedicated course list page
 export default function Courses() {
   return (
     <main className="courses">
       <section className="page-hero" data-watermark="COURSES">
-          <div className="page-hero-inner">
-            <span className="page-hero-tag">Courses</span>
-            <h1>Master Your Craft</h1>
-            <p className="page-hero-sub">
-              Enroll in our TESDA-accredited programs designed to prepare you for National Certification and opportunities.
-            </p>
-          </div>
-          <div className="page-hero-rule" />
+        <div className="page-hero-inner">
+          <span className="page-hero-tag">Courses</span>
+          <h1>Master Your Craft</h1>
+          <p className="page-hero-sub">
+            Enroll in one of our programs designed to prepare you for National Certification and opportunities.
+          </p>
+        </div>
+        <div className="page-hero-rule" />
       </section>
 
+      <section className="courses-picker">
+        <p className="courses-picker-label">Which program are you interested in?</p>
 
-      <section className="courses-grid">
-        {courses.map(course => (
-          <div key={course.id} className="course-card">
-            <div className="course-card-header">
-              <span className={`course-level level-${course.level.toLowerCase()}`}>{course.level}</span>
-              <span className="course-duration">{course.duration}</span>
-            </div>
-            <h3>{course.title}</h3>
-            <p>{course.desc}</p>
-            <a href="/enroll" className="course-enroll-btn">Enroll Now</a>
-          </div>
-        ))}
+        <div className="courses-picker-grid">
+          {/* => Senior High School track - build-out for this comes later */}
+          <Link to="/courses/shs" className="courses-picker-card">
+            <h3>Senior High School</h3>
+            <p>Grade 11 and 12, Academic and Technical-Vocational tracks</p>
+            <span className="courses-picker-cta">View SHS Courses</span>
+          </Link>
+
+          {/* => TESDA track */}
+          <Link to="/courses/tesda" className="courses-picker-card">
+            <h3>TESDA Course</h3>
+            <p>Technical-Vocational training, NC I to NC III</p>
+            <span className="courses-picker-cta">View TESDA Courses</span>
+          </Link>
+        </div>
       </section>
     </main>
   );

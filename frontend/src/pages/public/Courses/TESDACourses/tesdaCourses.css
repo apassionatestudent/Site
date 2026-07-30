@@ -1,0 +1,101 @@
+.tesda-courses {
+  color: var(--text-primary);
+  min-height: 100vh;
+}
+
+.tesda-courses-status {
+  text-align: center;
+  padding: 3rem 2rem;
+  color: var(--text-secondary);
+}
+
+.tesda-courses-error {
+  color: #f87171;
+}
+
+.tesda-courses-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+  padding: 4rem 2rem;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+/* => Uses the same card tokens as your Courses picker cards, so it
+   => automatically follows the light/dark theme toggle */
+.course-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 1rem;
+  padding: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
+}
+
+.course-card:hover {
+  border-color: var(--card-border-hover);
+  transform: translateY(-4px);
+  box-shadow: var(--card-glow);
+}
+
+.course-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* => Single maroon capsule for every NC level, reuses the same tag
+   => tokens as the page-hero-tag pill so it matches the rest of the site
+   => and follows the light/dark theme automatically */
+.course-level {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.3rem 0.9rem;
+  border-radius: 2rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  background: var(--tag-bg);
+  border: 1px solid var(--tag-border);
+  color: var(--tag-color);
+}
+
+.course-duration {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.course-card h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--card-h3);
+  font-family: var(--font-display);
+}
+
+.course-card p {
+  color: var(--card-p);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  flex: 1;
+}
+
+.course-enroll-btn {
+  display: inline-block;
+  margin-top: 0.5rem;
+  background: var(--accent);
+  color: #fff;
+  padding: 0.6rem 1.25rem;
+  border-radius: 0.5rem;
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: center;
+  transition: background 0.3s;
+}
+
+.course-enroll-btn:hover {
+  background: var(--accent-hover);
+}
