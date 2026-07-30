@@ -4,6 +4,7 @@ import clockIcon from '../../../assets/icons/clock.png';
 import awardIcon from '../../../assets/icons/award.png';
 import briefcaseIcon from '../../../assets/icons/briefcase.png';
 import listIcon from '../../../assets/icons/list.png';
+import BackButton from '../BackButton/BackButton.jsx';
 import './tesdaCourseDetail.css';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -37,14 +38,17 @@ export default function TESDACourseDetail() {
   if (error) {
     return (
       <main className="tesda-course-detail">
+        <BackButton destination="TESDA Courses" />
         <p className="tesda-course-detail-error">{error}</p>
-        <Link to="/courses/tesda">Back to Courses</Link>
       </main>
     );
   }
 
   return (
     <main className="tesda-course-detail">
+      {/* => Defaults to navigate(-1), so it returns to wherever the visitor came
+         => from (the TESDA list, a search result, etc.) rather than a fixed route */}
+      <BackButton destination="TESDA Courses" />
       <section className="tesda-course-hero">
         <span className="tesda-course-badge">
           <img src={awardIcon} alt="" className="tesda-course-icon" /> {course.nc_level || 'Unrated'}

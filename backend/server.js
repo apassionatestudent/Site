@@ -21,6 +21,10 @@ import tesdaCourseRoutes from "./routes/TESDAEnrollment/tesdaCourseRoutes.js";
 import tesdaCoursesRoutes from './routes/Courses/tesdaCoursesRoutes.js';
 // => Note the "s" - tesdaCoursesRoutes (public catalog) is separate from
 // => tesdaCourseRoutes (enrollment form dropdown), different mount points
+import shsCoursesRoutes from './routes/Courses/shsCoursesRoutes.js';
+// => Public SHS course catalog - list + detail-by-title, separate from
+// => /api/shs-clusters which only returns a cluster's curriculum for
+// => the enrollment form, not individual course browsing
 import tesdaBatchRoutes from "./routes/TESDAEnrollment/tesdaBatchRoutes.js";
 
 import shsBatchesRouter from './routes/SHSEnrollment/shsBatchRoutes.js';
@@ -81,6 +85,8 @@ app.use("/api/courses", tesdaCourseRoutes);
 // => Public TESDA course catalog - list + detail-by-title, separate from
 // => /api/courses which only feeds the enrollment form's course dropdown
 app.use('/api/public/tesda-courses', tesdaCoursesRoutes);
+// => Public SHS course catalog, mirrors the TESDA mount above
+app.use('/api/public/shs-courses', shsCoursesRoutes);
 // => Register TESDA batches route - path stays /api/classes so the
 // => frontend's existing fetch calls don't need to change
 app.use("/api/classes", tesdaBatchRoutes);
