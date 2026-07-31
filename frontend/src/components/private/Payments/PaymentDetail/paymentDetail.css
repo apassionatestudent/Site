@@ -7,7 +7,10 @@
   font-family: var(--font-body);
   color: var(--text-primary);
   padding: 2.5rem 2rem;
-  max-width: 720px;
+  /* => no width/max-width set at all - a block element fills its
+        parent's content box by default, so this genuinely tracks
+        whatever room app-main-dashboard actually gives it, on any
+        screen size, with no magic number to keep adjusting */
 }
 
 .payment-detail-header {
@@ -19,6 +22,10 @@
 }
 
 .payment-detail-header h1 {
+  /* => index.css sets a global h1-h6 rule to --font-display; this
+        overrides it back to --font-body for this page's title, same
+        override pattern used elsewhere in the project */
+  font-family: var(--font-body);
   font-size: 1.6rem;
   margin: 0;
 }
@@ -54,8 +61,8 @@
   padding: 20px 24px;
   display: flex;
   flex-direction: column;
+  justify-content: center;
   gap: 4px;
-  margin-bottom: 24px;
 }
 
 .payment-detail-amount-label {
@@ -128,4 +135,87 @@
   font-size: 0.8rem;
   color: var(--text-muted);
   margin-top: 8px;
+}
+
+.payment-detail-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.payment-detail-download-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.payment-detail-download-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.payment-detail-download-icon {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+}
+
+/* => Amount and Balance side by side on wide screens, stacked on
+      narrow ones - see media query at the end of this file */
+.payment-detail-summary-grid {
+  display: grid;
+  grid-template-columns: minmax(220px, 340px) 1fr;
+  gap: 20px;
+  margin-bottom: 24px;
+  align-items: stretch;
+}
+
+.payment-detail-balance-block {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 20px 24px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 16px;
+  align-content: center;
+}
+
+.payment-detail-balance-figure {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.payment-detail-balance-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.payment-detail-balance-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.payment-detail-balance-figure--remaining .payment-detail-balance-value {
+  color: var(--accent);
+}
+
+@media (max-width: 720px) {
+  .payment-detail-summary-grid {
+    grid-template-columns: 1fr;
+  }
 }

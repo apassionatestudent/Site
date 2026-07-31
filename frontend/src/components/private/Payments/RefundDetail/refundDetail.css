@@ -7,7 +7,8 @@
   font-family: var(--font-body);
   color: var(--text-primary);
   padding: 2.5rem 2rem;
-  max-width: 720px;
+  /* => no width/max-width - same reasoning as PaymentDetail, fills
+        whatever room the parent actually gives it */
 }
 
 .refund-detail-header {
@@ -19,6 +20,9 @@
 }
 
 .refund-detail-header h1 {
+  /* => overrides index.css's global h1-h6 --font-display rule back to
+        --font-body, same as PaymentDetail's title */
+  font-family: var(--font-body);
   font-size: 1.6rem;
   margin: 0;
 }
@@ -54,8 +58,8 @@
   padding: 20px 24px;
   display: flex;
   flex-direction: column;
+  justify-content: center;
   gap: 4px;
-  margin-bottom: 24px;
 }
 
 .refund-detail-amount-label {
@@ -128,4 +132,85 @@
   font-size: 0.8rem;
   color: var(--text-muted);
   margin-top: 8px;
+}
+
+.refund-detail-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.refund-detail-download-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.refund-detail-download-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.refund-detail-download-icon {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+}
+
+.refund-detail-summary-grid {
+  display: grid;
+  grid-template-columns: minmax(220px, 340px) 1fr;
+  gap: 20px;
+  margin-bottom: 24px;
+  align-items: stretch;
+}
+
+.refund-detail-balance-block {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 20px 24px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 16px;
+  align-content: center;
+}
+
+.refund-detail-balance-figure {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.refund-detail-balance-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.refund-detail-balance-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.refund-detail-balance-figure--remaining .refund-detail-balance-value {
+  color: var(--accent);
+}
+
+@media (max-width: 720px) {
+  .refund-detail-summary-grid {
+    grid-template-columns: 1fr;
+  }
 }

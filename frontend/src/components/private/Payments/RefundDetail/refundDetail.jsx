@@ -8,6 +8,7 @@ import BackButton from "../../BackButton/BackButton.jsx";
 import ReceiptIcon from "../../../../assets/icons/receipt.png";
 import CalendarIcon from "../../../../assets/icons/calendar.png";
 import EnrollmentIcon from "../../../../assets/icons/enroll.png";
+import DownloadIcon from "../../../../assets/icons/download.png";
 
 const RefundDetail = () => {
   const { publicId } = useParams();
@@ -16,6 +17,12 @@ const RefundDetail = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // => Same reset-before-fetch fix as PaymentDetail - prevents a
+    // => previous refund's real data from lingering on screen while a
+    // => new publicId's request is in flight.
+    setRefund(null);
+    setLoading(true);
+
     const fetchDetail = async () => {
       try {
         const res = await axiosStudent.get(`/payments/refund/${publicId}`);
@@ -40,6 +47,25 @@ const RefundDetail = () => {
       ? new Date(date).toLocaleString("en-US", { year: "numeric", month: "long", day: "numeric", hour: "numeric", minute: "2-digit" })
       : "N/A";
 
+  // => Same server-side ownership scoping as PaymentDetail's handler -
+  // => the backend checks req.student.student_id, not anything sent here.
+  const handleDownloadReceipt = async () => {
+    try {
+      const res = await axiosStudent.get(`/payments/refund/${publicId}/receipt`, { responseType: "blob" });
+      const url = window.URL.createObjectURL(new Blob([res.data], { type: "application/pdf" }));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", `Receipt-${refund.refund_number}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Download receipt error:", error);
+      toast.error("Unable to download the receipt right now.");
+    }
+  };
+
   if (loading) return <div className="refund-detail-page">Loading...</div>;
   if (!refund) return null;
 
@@ -49,19 +75,48 @@ const RefundDetail = () => {
 
       <div className="refund-detail-header">
         <h1>{refund.refund_number}</h1>
-        <span className={`refund-detail-status refund-detail-status--${refund.status.toLowerCase()}`}>
-          {refund.status}
-        </span>
+        <div className="refund-detail-header-actions">
+          <span className={`refund-detail-status refund-detail-status--${refund.status.toLowerCase()}`}>
+            {refund.status}
+          </span>
+          <button type="button" className="refund-detail-download-btn" onClick={handleDownloadReceipt}>
+            <img src={DownloadIcon} alt="" className="refund-detail-download-icon" />
+            Download Receipt
+          </button>
+        </div>
       </div>
 
       <p className="refund-detail-course">
         {refund.course_title || "Untitled Course"}
+        {refund.nc_level ? ` (${refund.nc_level})` : ""}
         {refund.batch_name ? ` \u00b7 ${refund.batch_name}` : ""}
       </p>
 
       <div className="refund-detail-amount-block">
         <span className="refund-detail-amount-label">Amount Refunded</span>
         <span className="refund-detail-amount-value">{formatCurrency(refund.amount)}</span>
+      </div>
+
+      {/* => Balance snapshot AFTER this refund was applied - same
+            fee_at_enrollment / total_misc_fee / total_paid / remaining_balance
+            fields the backend now attaches to every refund detail row */}
+      <div className="refund-detail-balance-block">
+        <div className="refund-detail-balance-row">
+          <span>Course Fee</span>
+          <span>{formatCurrency(refund.fee_at_enrollment)}</span>
+        </div>
+        <div className="refund-detail-balance-row">
+          <span>Misc Fees</span>
+          <span>{formatCurrency(refund.total_misc_fee)}</span>
+        </div>
+        <div className="refund-detail-balance-row">
+          <span>Total Paid to Date</span>
+          <span>{formatCurrency(refund.total_paid)}</span>
+        </div>
+        <div className="refund-detail-balance-row refund-detail-balance-row--remaining">
+          <span>Remaining Balance</span>
+          <span>{formatCurrency(refund.remaining_balance)}</span>
+        </div>
       </div>
 
       <div className="refund-detail-info-grid">
