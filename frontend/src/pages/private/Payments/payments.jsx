@@ -7,6 +7,7 @@ import "./payments.css";
 import ReceiptIcon from "../../../assets/icons/receipt.png";
 import RefundIconImg from "../../../assets/icons/refund.png";
 import EmptyPaymentsIcon from "../../../assets/icons/empty-classes.png";
+import BalanceIcon from "../../../assets/icons/balance.png";
 
 // => Read-only history view. Backend already scopes both lists to the
 // => logged-in student, so nothing here needs a student_id filter.
@@ -14,19 +15,25 @@ const Payments = () => {
   const [activeTab, setActiveTab] = useState("payments"); // => 'payments' | 'refunds'
   const [payments, setPayments] = useState([]);
   const [refunds, setRefunds] = useState([]);
+  const [balances, setBalances] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchAll = async () => {
       try {
-        // => fetch both on mount so switching tabs is instant, no reload flicker
-        const [paymentsRes, refundsRes] = await Promise.all([
+        // => fetch all three on mount so switching tabs is instant, no
+        // => reload flicker. Backend scopes every one of these to the
+        // => logged-in student via req.student.student_id from the JWT
+        // => cookie, never from anything the client sends.
+        const [paymentsRes, refundsRes, balancesRes] = await Promise.all([
           axiosStudent.get("/payments/my-payments"),
           axiosStudent.get("/payments/my-refunds"),
+          axiosStudent.get("/payments/my-balances"),
         ]);
         setPayments(paymentsRes.data.payments || []);
         setRefunds(refundsRes.data.refunds || []);
+        setBalances(balancesRes.data.balances || []);
       } catch (error) {
         console.error("Fetch payments error:", error);
         toast.error("Unable to load your payment history right now.");
@@ -69,6 +76,52 @@ const Payments = () => {
         </p>
       </div>
 
+      {balances.length > 0 && (
+        <div className="balance-summary">
+          <h2 className="balance-summary-title">Your Balance</h2>
+          <div className="balance-summary-list">
+            {balances.map((b) => {
+              // => pg numeric columns arrive as strings, Number() first
+              const totalDue = Number(b.fee_at_enrollment || 0) + Number(b.total_misc_fee || 0);
+              const netPaid = Number(b.total_paid || 0) - Number(b.total_refunded || 0);
+              const remaining = Number(b.remaining_balance || 0);
+
+              return (
+                <div key={b.enrollment_public_id} className="balance-card">
+                  <div className="balance-card-heading">
+                    <img src={BalanceIcon} alt="" className="balance-card-icon" />
+                    <div>
+                      <h3>
+                        {b.course_title || "Untitled Course"}
+                        {b.nc_level ? ` (${b.nc_level})` : ""}
+                      </h3>
+                      <p className="balance-card-batch">
+                        {b.batch_sequence ? `${b.batch_name} (Batch ${b.batch_sequence})` : b.batch_name}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="balance-card-figures">
+                    <div className="balance-figure">
+                      <span className="balance-figure-label">Total Due</span>
+                      <span className="balance-figure-value">{formatCurrency(totalDue)}</span>
+                    </div>
+                    <div className="balance-figure">
+                      <span className="balance-figure-label">Paid</span>
+                      <span className="balance-figure-value">{formatCurrency(netPaid)}</span>
+                    </div>
+                    <div className={`balance-figure ${remaining > 0 ? "balance-figure--owed" : "balance-figure--settled"}`}>
+                      <span className="balance-figure-label">Remaining Balance</span>
+                      <span className="balance-figure-value">{formatCurrency(remaining)}</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       <div className="payments-tabs">
         <button
           className={`payments-tab ${activeTab === "payments" ? "payments-tab--active" : ""}`}
@@ -109,6 +162,7 @@ const Payments = () => {
 
               <p className="payments-card-course">
                 {p.course_title || "Untitled Course"}
+                {p.nc_level ? ` (${p.nc_level})` : ""}
                 {p.batch_name ? ` \u00b7 ${p.batch_name}` : ""}
               </p>
 
@@ -136,6 +190,7 @@ const Payments = () => {
 
               <p className="payments-card-course">
                 {r.course_title || "Untitled Course"}
+                {r.nc_level ? ` (${r.nc_level})` : ""}
                 {r.batch_name ? ` \u00b7 ${r.batch_name}` : ""}
               </p>
 
