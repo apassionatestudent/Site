@@ -10,15 +10,22 @@ import errorIcon     from "../../../assets/icons/warning.png";
 import informationIcon from "../../../assets/icons/information.png";
 import checkmarkIcon from "../../../assets/icons/checkmark.png";
 import rejectedIcon  from "../../../assets/icons/rejected.png";
+import droppedIcon   from "../../../assets/icons/dropped.png"; 
+import assessmentIcon from "../../../assets/icons/assessment.png"; 
 
 // => Maps each status to a CSS modifier class for color-coding
+// => Matches the ALLOWED_STATUSES set used on the admin side exactly -
+//    'Completed' renamed to 'For Assessment', 'Reviewed' and
+//    'Failed Assessment' added
 const statusClass = {
   'Pending':             'status--pending',
+  'Reviewed':            'status--reviewed', // => new: reviewed, no issues, awaiting physical docs
   'Approved':            'status--approved',
   'Needs Clarification': 'status--clarification',
   'Rejected':            'status--rejected',
   'Dropped':             'status--dropped',
-  'Completed':           'status--completed',
+  'For Assessment':      'status--for-assessment', // => renamed from 'Completed'
+  'Failed Assessment':   'status--failed-assessment', // => new: did not pass assessment
   'Reserved':            'status--reserved',
 };
 
@@ -110,6 +117,67 @@ function SHSEnrollmentDetail() {
             <div className="enroll-notice enroll-notice--remarks">
               <img src={informationIcon} alt="" className="enroll-notice-icon" />
               <p><strong>Note from the admin:</strong> {detail.external_remarks}</p>
+            </div>
+          )}
+
+          {/* => Status-specific notice banners for the student - one banner
+              => per status in the admin's STATUS_OPTIONS, so the student
+              => always sees guidance no matter what status the admin sets.
+              => Moved here (above Enrollment Info) so it's the first thing
+              => seen after the admin's remarks, instead of being buried at
+              => the bottom of the page below Emergency Contact. */}
+          {detail.status === 'Pending' && (
+            <div className="enroll-notice enroll-notice--pending">
+              <img src={loadingIcon} alt="" className="enroll-notice-icon" />
+              Your enrollment is under review. We'll notify you once it's processed.
+            </div>
+          )}
+          {detail.status === 'Reviewed' && (
+            <div className="enroll-notice enroll-notice--reviewed">
+              <img src={informationIcon} alt="" className="enroll-notice-icon" />
+              Your enrollment has been reviewed with no issues. Please submit physical photocopies of your documents along with the original copies for verification to complete your enrollment.
+            </div>
+          )}
+          {detail.status === 'Approved' && (
+            <div className="enroll-notice enroll-notice--approved">
+              <img src={checkmarkIcon} alt="" className="enroll-notice-icon" />
+              Your enrollment has been approved. Please check the Classes and Groupchat link for further details.
+            </div>
+          )}
+          {detail.status === 'Needs Clarification' && (
+            <div className="enroll-notice enroll-notice--clarification">
+              <img src={errorIcon} alt="" className="enroll-notice-icon" />
+              The admin requires additional information. Please check the email/remarks for further details. You can also contact us during business hours or submit a support ticket which will be responded within business hours.
+            </div>
+          )}
+          {detail.status === 'Rejected' && (
+            <div className="enroll-notice enroll-notice--rejected">
+              <img src={rejectedIcon} alt="" className="enroll-notice-icon" />
+              Your enrollment was not approved. Please contact the training center for details.
+            </div>
+          )}
+          {detail.status === 'Dropped' && (
+            <div className="enroll-notice enroll-notice--dropped">
+              <img src={droppedIcon} alt="" className="enroll-notice-icon" />
+              You have been marked as dropped from this program. Please contact the training center if you believe this is a mistake.
+            </div>
+          )}
+          {detail.status === 'For Assessment' && (
+            <div className="enroll-notice enroll-notice--for-assessment">
+              <img src={assessmentIcon} alt="" className="enroll-notice-icon" />
+              Your training is complete. You have been scheduled for competency assessment. Please coordinate with the training center for the schedule and requirements.
+            </div>
+          )}
+          {detail.status === 'Failed Assessment' && (
+            <div className="enroll-notice enroll-notice--failed-assessment">
+              <img src={rejectedIcon} alt="" className="enroll-notice-icon" />
+              You did not pass the competency assessment. Please contact the training center to discuss your next steps.
+            </div>
+          )}
+          {detail.status === 'Reserved' && (
+            <div className="enroll-notice enroll-notice--reserved">
+              <img src={loadingIcon} alt="" className="enroll-notice-icon" />
+              There is no open class section available yet. Your enrollment will be processed once a section becomes available.
             </div>
           )}
 
@@ -268,31 +336,6 @@ function SHSEnrollmentDetail() {
             </div>
           </div>
 
-          {/* => Status-specific notice banners for the student */}
-          {detail.status === 'Pending' && (
-            <div className="enroll-notice enroll-notice--pending">
-              <img src={loadingIcon} alt="" className="enroll-notice-icon" />
-              Your enrollment is under review. We'll notify you once it's processed.
-            </div>
-          )}
-          {detail.status === 'Approved' && (
-            <div className="enroll-notice enroll-notice--approved">
-              <img src={checkmarkIcon} alt="" className="enroll-notice-icon" />
-              Your enrollment has been approved. Please coordinate with the training center for next steps.
-            </div>
-          )}
-          {detail.status === 'Needs Clarification' && (
-            <div className="enroll-notice enroll-notice--clarification">
-              <img src={errorIcon} alt="" className="enroll-notice-icon" />
-              The admin requires additional information. Please check your email or contact the training center.
-            </div>
-          )}
-          {detail.status === 'Rejected' && (
-            <div className="enroll-notice enroll-notice--rejected">
-              <img src={rejectedIcon} alt="" className="enroll-notice-icon" />
-              Your enrollment was not approved. Please contact the training center for details.
-            </div>
-          )}
         </div>
       )}
     </div>
