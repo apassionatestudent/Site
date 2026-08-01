@@ -11,6 +11,7 @@
 import express from 'express';
 import { protectStudent } from '../../middleware/studentAuth.js';
 import { readLimiter, submissionLimiter, floodLimiter } from '../../middleware/rateLimiters.js';
+import { csrfProtection } from '../../middleware/studentCsrf.js';
 import { getMyAccount, updateMyProfile, changeMyPassword } from '../../controllers/Account/accountController.js';
 
 const router = express.Router();
@@ -20,9 +21,9 @@ const router = express.Router();
 router.get('/', floodLimiter, protectStudent, readLimiter, getMyAccount);
 
 // => PATCH /api/account/profile - Form 1: contact info + address
-router.patch('/profile', floodLimiter, protectStudent, submissionLimiter, updateMyProfile);
+router.patch('/profile', floodLimiter, protectStudent, csrfProtection, submissionLimiter, updateMyProfile);
 
 // => PATCH /api/account/password - Form 2: password reset, separate endpoint per your direction
-router.patch('/password', floodLimiter, protectStudent, submissionLimiter, changeMyPassword);
+router.patch('/password', floodLimiter, protectStudent, csrfProtection, submissionLimiter, changeMyPassword);
 
 export default router;

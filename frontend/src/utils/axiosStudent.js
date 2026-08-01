@@ -8,6 +8,18 @@ const axiosStudent = axios.create({
   withCredentials: true, // => always send the JWT httpOnly cookie
 });
 
+// => Request interceptor: attaches the CSRF token on every outgoing
+// => request, mirrors axiosAdmin.js. Checks localStorage first since a
+// => Remember Me student's token lives there (30-day session survives tab
+// => close); falls back to sessionStorage for non-Remember-Me students.
+axiosStudent.interceptors.request.use((config) => {
+  const csrfToken = localStorage.getItem('csrfToken') || sessionStorage.getItem('csrfToken');
+  if (csrfToken) {
+    config.headers['x-csrf-token'] = csrfToken;
+  }
+  return config;
+});
+
 // => Response interceptor: if the backend ever returns 401, the JWT cookie
 // => has expired or been cleared server-side. The frontend's isLoggedIn
 // => flag can go stale in that case, so this clears it and forces the
@@ -20,6 +32,8 @@ axiosStudent.interceptors.response.use(
       // => flag in either localStorage or sessionStorage
       localStorage.removeItem('isLoggedIn');
       sessionStorage.removeItem('isLoggedIn');
+      localStorage.removeItem('csrfToken');
+      sessionStorage.removeItem('csrfToken');
 
       // => avoid redirect loop if the 401 came from the login page itself
       if (window.location.pathname !== '/login') {

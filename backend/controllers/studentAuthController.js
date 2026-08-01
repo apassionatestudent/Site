@@ -1,6 +1,10 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { Student } from '../models/studentModel.js';
+// => generateCsrfToken/invalidateCsrfToken live in middleware but are
+// => called here since issuing/revoking tokens is a controller
+// => responsibility - mirrors adminAuthController.js's pattern exactly
+import { generateCsrfToken, invalidateCsrfToken } from '../middleware/studentCsrf.js';
 
 // => for sending login notification emails and such
 import { sendEmail } from '../utils/sendEmail.js';
@@ -116,13 +120,20 @@ export const loginStudent = async (req, res) => {
         const token = generateStudentToken(student);
         res.cookie('token', token, loginCookieOptions);
 
+        // => CSRF token expiry mirrors the login cookie's own duration -
+        // => otherwise a Remember Me student's mutations would silently
+        // => start failing after 8h while their session cookie is still
+        // => valid for weeks
+        const csrfToken = generateCsrfToken(loginCookieOptions.maxAge);
+
         return res.status(200).json({
             student: {
                 student_id: student.student_id,
                 public_id:  student.public_id,
                 username:   student.username,
                 is_active:  student.is_active,
-            }
+            },
+            csrfToken,
         });
 
     } catch (error) {
@@ -133,6 +144,12 @@ export const loginStudent = async (req, res) => {
 
 // => POST /api/student-auth/logout
 export const logoutStudent = (req, res) => {
+    // => Invalidate the CSRF token so it can't be reused after logout
+    const csrfToken = req.headers['x-csrf-token'];
+    if (csrfToken) {
+        invalidateCsrfToken(csrfToken);
+    }
+
     // => Overwrites the token cookie with an empty string to clear it
     res.cookie('token', '', { ...cookieOptions, maxAge: 1 });
     return res.status(200).json({ message: 'Logged out successfully' });
