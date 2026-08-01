@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { Student } from '../models/Student.js';
+import { Student } from '../models/studentModel.js';
 
 // => for sending login notification emails and such
 import { sendEmail } from '../utils/sendEmail.js';
@@ -82,11 +82,6 @@ export const loginStudent = async (req, res) => {
         // => Reject if account is suspended
         if (!student.is_active) {
             return res.status(403).json({ message: 'Your account has been deactivated. Please contact support.' });
-        }
-
-        // => Reject if email is not yet confirmed
-        if (!student.is_email_confirmed) {
-            return res.status(403).json({ message: 'Please confirm your email before logging in.' });
         }
 
         // => Reject if no password has been set yet

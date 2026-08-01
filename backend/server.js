@@ -39,6 +39,10 @@ import sharedEnrollmentRoutes from './routes/Enrollments/sharedEnrollmentRoutes.
 import tesdaEnrollmentRoutes from './routes/Enrollments/tesdaEnrollmentRoutes.js';
 import shsEnrollmentRoutes from './routes/Enrollments/shsEnrollmentRoutes.js';
 import documentRoutes from './routes/Enrollments/documentRoutes.js';
+// => Student Account settings - profile/address edit + password reset.
+//    Own top-level folder since it isn't enrollment-specific and, unlike
+//    every other student route, it's WRITE-capable.
+import accountRoutes from './routes/Account/accountRoutes.js';
 // => Read-only student class schedule (Approved enrollments only) - mounted
 //    under /api/student-classes since /api/classes and /api/shs-classes
 //    are already taken by the enrollment-form batch pickers
@@ -116,6 +120,11 @@ app.use('/api/student-classes', classesRoutes);
 //    documents are always fetched across both enrollment types together
 app.use('/api/documents', documentRoutes);
 
+// => Student Account settings - the first WRITE-capable student routes,
+//    everything else on the student side is read-only. GET returns the
+//    combined profile+address view, PATCH handles the two separate forms.
+app.use('/api/account', accountRoutes);
+
 // => Required when deployed behind a reverse proxy (Render, Railway, etc.)
 // => so req.ip reflects the real client IP from X-Forwarded-For, not the
 // => proxy's own IP. Without this, ALL visitors share one rate-limit bucket.
@@ -144,10 +153,6 @@ async function initDB () {
 
         -- => NULL by default: only gets filled once the student sets a password after confirming email
         password_hash       TEXT NULL,
-
-        -- => Tracks whether the student clicked the confirmation link sent to their email
-        -- => Defaults to FALSE; unconfirmed accounts should not be allowed to log in
-        is_email_confirmed  BOOLEAN NOT NULL DEFAULT FALSE,
 
         -- => Admins can flip this to FALSE to suspend a suspicious or policy-violating account
         -- => Defaults to TRUE on creation
@@ -179,6 +184,20 @@ async function initDB () {
       END $$
     `;
 
+    // => is_email_confirmed removed: ownership of the email is proven by
+    // => the student clicking the emailed set-password link itself, so a
+    // => separate confirmation flag was redundant. Safe to run repeatedly.
+    await sql`
+      DO $$ BEGIN
+        IF EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_name = 'student_accounts' AND column_name = 'is_email_confirmed'
+        ) THEN
+          ALTER TABLE student_accounts DROP COLUMN is_email_confirmed;
+        END IF;
+      END $$
+    `;
+
     await sql`
       -- => Reusable trigger function: sets updated_at to NOW() on any row update
       CREATE OR REPLACE FUNCTION set_updated_at()
@@ -204,19 +223,36 @@ async function initDB () {
       END $$
     `;
 
+    // => chk_password_requires_confirmed_email removed along with
+    // => is_email_confirmed - the constraint referenced that column, so it
+    // => can't exist anymore either. This migration drops it in any
+    // => environment where it was already created before the column
+    // => removal (e.g. production). Harmless no-op if it was never created.
     await sql`
-      -- => Optional constraint: prevents a password from being saved on an unconfirmed account
-      -- => Checks pg_constraint first since ADD CONSTRAINT IF NOT EXISTS is not supported in PostgreSQL
       DO $$ BEGIN
-        IF NOT EXISTS (
+        IF EXISTS (
           SELECT 1 FROM pg_constraint
           WHERE conname = 'chk_password_requires_confirmed_email'
         ) THEN
           ALTER TABLE student_accounts
-          ADD CONSTRAINT chk_password_requires_confirmed_email
-          CHECK (
-            password_hash IS NULL OR is_email_confirmed = TRUE
-          );
+          DROP CONSTRAINT chk_password_requires_confirmed_email;
+        END IF;
+      END $$
+    `;
+
+    // => student_address.student_id was declared UNIQUE in this file's
+    // => CREATE TABLE text from the start, but that text only applies to
+    // => a freshly created table - the live table predates it and never
+    // => actually got the constraint. accountModel.js's upsertAddress()
+    // => relies on ON CONFLICT (student_id), which requires this to exist.
+    await sql`
+      DO $$ BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_constraint
+          WHERE conname = 'student_address_student_id_key'
+        ) THEN
+          ALTER TABLE student_address
+          ADD CONSTRAINT student_address_student_id_key UNIQUE (student_id);
         END IF;
       END $$
     `;

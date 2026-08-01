@@ -1,0 +1,272 @@
+/*
+   ACCOUNT SETTINGS PAGE
+   Inherits theme variables from index.css (:root[data-theme]) and reuses
+   the --enroll-* tokens already defined there, same as TESDAStep1.css.
+*/
+
+/*  PAGE WRAPPER  */
+
+.acct-page {
+  font-family: var(--font-body);
+  color: var(--text-primary);
+  padding: 2.5rem 2rem;
+  min-height: 100vh;
+}
+
+/*  HEADER  */
+
+.acct-header {
+  margin-bottom: 2rem;
+}
+
+.acct-title {
+  font-family: var(--font-body);
+  font-size: 2rem;
+  font-weight: 400;
+  color: var(--text-primary);
+  margin: 0 0 0.35rem;
+  letter-spacing: -0.02em;
+}
+
+.acct-subtitle {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+/*  EMPTY / LOADING / ERROR STATE - mirrors .enroll-empty  */
+
+.acct-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 4rem;
+  color: var(--text-muted);
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+}
+
+.acct-empty-icon {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+}
+
+/*  CARD SECTIONS  */
+
+.acct-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 1.6rem 1.8rem 1.8rem;
+  margin-bottom: 1.5rem;
+}
+
+.acct-card-title {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--enroll-section-title-color);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin: 0 0 1.2rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--enroll-section-border);
+  font-family: var(--font-body);
+  opacity: 0.85;
+}
+
+.acct-card-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.6rem;
+}
+
+.acct-card-title-row .acct-card-title {
+  margin: 0;
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.acct-lock-icon {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  opacity: 0.75;
+}
+
+/* => Note explaining why Personal Information is locked - sits between
+   => the section title and the read-only fields */
+.acct-locked-note {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin: 0 0 1.4rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--enroll-section-border);
+}
+
+/*  GRID LAYOUTS - same pattern as ts1-grid / ts1-g2 / ts1-g3  */
+
+.acct-grid {
+  display: grid;
+  gap: 0 1.2rem;
+}
+
+.acct-g2 { grid-template-columns: 1fr 1fr; }
+.acct-g3 { grid-template-columns: 1fr 1fr 1fr; }
+
+/*  FIELDS  */
+
+.acct-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 1.2rem;
+}
+
+.acct-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--enroll-label-color);
+  font-family: var(--font-body);
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.acct-req {
+  color: var(--req-asterisk);
+  font-size: 14px;
+}
+
+.acct-input,
+.acct-select {
+  height: 40px;
+  border: 1px solid var(--enroll-field-border);
+  border-radius: 6px;
+  padding: 0 12px;
+  font-size: 15px;
+  font-family: var(--font-body);
+  background: var(--card-bg);
+  color: var(--text-primary);
+  outline: none;
+  width: 100%;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.acct-input:focus,
+.acct-select:focus {
+  border-color: var(--enroll-field-focus);
+  box-shadow: 0 0 0 3px rgba(139, 26, 26, 0.1);
+}
+
+.acct-select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 32px;
+  cursor: pointer;
+}
+
+.acct-select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* => Locked/read-only field variant - visually distinct from editable
+   => inputs so it's obvious at a glance which fields can't be touched */
+.acct-input--locked {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  cursor: not-allowed;
+}
+
+/* => Red border on invalid fields - mirrors ts1-input--error */
+.acct-input--error {
+  border-color: #c0392b !important;
+  box-shadow: 0 0 0 3px rgba(192, 57, 43, 0.12);
+}
+
+/* => Inline field error message - mirrors ts1-field-error */
+.acct-field-error {
+  font-size: 12px;
+  color: #c0392b;
+  margin-top: 2px;
+  font-family: var(--font-body);
+}
+
+/* => Combined error banner - mirrors ts1-error-banner */
+.acct-error-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: rgba(192, 57, 43, 0.08);
+  border: 1px solid #c0392b;
+  border-radius: 6px;
+  color: #c0392b;
+  font-size: 13.5px;
+  font-family: var(--font-body);
+  margin-top: 1rem;
+}
+
+/* => Note explaining why Region/Province are locked to Cebu */
+.acct-address-note {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  line-height: 1.6;
+  margin: 0 0 1rem;
+}
+
+/*  ACTIONS  */
+
+.acct-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 1rem;
+  margin-top: 0.5rem;
+  border-top: 1px solid var(--enroll-actions-border);
+}
+
+.acct-btn-save {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 28px;
+  background: var(--enroll-btn-bg);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s, opacity 0.15s;
+  letter-spacing: 0.02em;
+}
+
+.acct-btn-save:hover:not(:disabled) { background: var(--enroll-btn-hover); }
+.acct-btn-save:active:not(:disabled) { transform: scale(0.98); }
+.acct-btn-save:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/*  RWD - same breakpoints as ts1/shs1  */
+
+@media (max-width: 700px) {
+  .acct-page { padding: 1.5rem 1rem; }
+  .acct-card { padding: 1.3rem 1.2rem 1.5rem; }
+  .acct-g2 { grid-template-columns: 1fr; }
+  .acct-g3 { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 420px) {
+  .acct-g3 { grid-template-columns: 1fr; }
+}
