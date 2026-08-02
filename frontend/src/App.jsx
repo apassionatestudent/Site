@@ -34,7 +34,7 @@ import Login from './pages/public/Login/Login.jsx';
 
 // => import private (dashboard) pages
 import Dashboard from './pages/private/Dashboard/Dashboard.jsx';
-import Account from './pages/private/Account/Account.jsx';
+import Account from './pages/private/Account/account.jsx';
 import Documents from './pages/private/Documents/Documents.jsx';
 import Enrollment from './pages/private/Enrollment/Enrollment.jsx';
 import SupportTickets from './pages/private/SupportTickets/SupportTickets.jsx';

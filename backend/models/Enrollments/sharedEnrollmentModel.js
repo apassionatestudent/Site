@@ -21,8 +21,8 @@ const MONTHS = [
 // => password_hash stays NULL until student sets up their account post-enrollment
 export const insertStudentAccount = async (client, { email }) => {
   const result = await client.query(
-    `INSERT INTO student_accounts (username, password_hash, is_email_confirmed, is_active, created_at)
-     VALUES ($1, NULL, FALSE, TRUE, NOW())
+    `INSERT INTO student_accounts (username, password_hash, is_active, created_at)
+     VALUES ($1, NULL, TRUE, NOW())
      RETURNING student_id`,
     [email || null]
   );

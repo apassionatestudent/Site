@@ -40,17 +40,21 @@ export default function Login() {
 
     try {
       // => username in the backend maps to email in the frontend form
-      await axiosStudent.post(
+      const { data } = await axiosStudent.post(
         '/student-auth/login',
-        { username: form.email, password: form.password }
+        { username: form.email, password: form.password, rememberMe }
       );
 
-      // => if rememberMe is checked, persist the flag across browser sessions
-      // => if not, use sessionStorage which clears when the tab is closed
+      // => if rememberMe is checked, persist the flag AND the CSRF token
+      // => across browser sessions; if not, sessionStorage clears both
+      // => when the tab is closed - keeps the two in sync so a mutation
+      // => never fails while the student still appears logged in
       if (rememberMe) {
         localStorage.setItem('isLoggedIn', 'true');
+        localStorage.setItem('csrfToken', data.csrfToken);
       } else {
         sessionStorage.setItem('isLoggedIn', 'true');
+        sessionStorage.setItem('csrfToken', data.csrfToken);
       }
 
       // => redirect to dashboard on successful login

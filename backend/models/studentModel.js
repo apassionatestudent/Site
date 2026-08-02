@@ -27,11 +27,10 @@ export const Student = {
     },
 
     // => Create a new student account
-    // => is_email_confirmed is set to TRUE temporarily for Postman testing
     create: async (username, password_hash) => {
         const result = await sql`
-            INSERT INTO student_accounts (username, password_hash, is_email_confirmed)
-            VALUES (${username}, ${password_hash}, TRUE)
+            INSERT INTO student_accounts (username, password_hash)
+            VALUES (${username}, ${password_hash})
             RETURNING student_id, public_id, username, is_active, created_at
         `;
         return result.rows[0] || null;
