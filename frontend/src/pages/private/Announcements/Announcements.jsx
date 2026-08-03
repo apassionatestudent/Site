@@ -1,41 +1,80 @@
-import React from 'react';
+import { useEffect, useState } from 'react';
+import axiosStudent from '../../../utils/axiosStudent.js';
+import AnnouncementDetail from '../../../components/private/AnnouncementDetail/announcementDetail.jsx';
+import toast from 'react-hot-toast';
+import './Announcements.css';
+
+
+// => Reusing the same icon set as Enrollment.jsx for visual consistency
+// => across dashboard pages, rather than sourcing new icons per page
+import loadingIcon from '../../../assets/icons/loading.png';
+import errorIcon from '../../../assets/icons/warning.png';
+import emptyIcon from '../../../assets/icons/clipboard.png';
 
 const Announcements = () => {
-  const announcements = [
-    {
-      id: 1,
-      title: 'Welcome to the Announcement Center',
-      message: 'This is where important updates will appear for all users.',
-      date: '2026-05-13',
-    },
-    {
-      id: 2,
-      title: 'System Maintenance',
-      message: 'Scheduled maintenance will occur this weekend. Please save your work.',
-      date: '2026-05-14',
-    },
-  ];
+  const [announcements, setAnnouncements] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // => AbortController guards against setting state after unmount,
+    // => matters extra here since StrictMode double-invokes effects in dev
+    const controller = new AbortController();
+
+    const fetchAnnouncements = async () => {
+      try {
+        const response = await axiosStudent.get('/announcements', {
+          signal: controller.signal,
+        });
+        setAnnouncements(response.data);
+      } catch (error) {
+        if (error.name !== 'CanceledError') {
+          console.error('Error fetching announcements:', error);
+          toast.error('Failed to load announcements');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAnnouncements();
+    return () => controller.abort();
+  }, []);
 
   return (
     <div className="announcements-page">
-      <header>
-        <h1>Announcements</h1>
-        <p>Latest updates and news for the community.</p>
+      <header className="announcements-header">
+        <h1 className="announcements-title">Announcements</h1>
+        <p className="announcements-subtitle">Latest updates and news from 3A Prime Hospitality Training and Assessment Center Inc.</p>
       </header>
 
-      <section className="announcement-list">
-        {announcements.length === 0 ? (
-          <p>No announcements available.</p>
-        ) : (
-          announcements.map((announcement) => (
-            <article key={announcement.id} className="announcement-item">
-              <h2>{announcement.title}</h2>
-              <p>{announcement.message}</p>
-              <small>{announcement.date}</small>
-            </article>
-          ))
-        )}
-      </section>
+      {loading && (
+        <div className="announcement-empty">
+          <img src={loadingIcon} alt="loading..." className="announcement-empty-icon" />
+          <p>Loading announcements...</p>
+        </div>
+      )}
+
+      {!loading && announcements.length === 0 && (
+        <div className="announcement-empty">
+          <img src={emptyIcon} alt="" className="announcement-empty-icon" />
+          <p>No announcements yet.</p>
+        </div>
+      )}
+
+      {!loading && announcements.length > 0 && (
+        <section className="announcement-feed">
+          {/* => No click-to-expand, every announcement renders in full,
+              => students just scroll the feed. Index feeds the staggered
+              => fade-in animation, same pattern as Enrollment.jsx cards */}
+          {announcements.map((announcement, index) => (
+            <AnnouncementDetail
+              key={announcement.public_id}
+              announcement={announcement}
+              index={index}
+            />
+          ))}
+        </section>
+      )}
     </div>
   );
 };

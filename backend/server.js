@@ -69,6 +69,11 @@ import dashboardBadgesRoutes from './routes/DashboardBadges/dashboardBadgesRoute
 import cmsPageRoutes from './routes/Pages/cmsPageRoutes.js';
 import faqRoutes from './routes/Pages/faqRoutes.js';
 
+// Announcements (Student Dashboard feed)
+// => Full announcement list, separate from dashboardBadgesRoutes which only
+//    returns the unread count for the sidebar bubble
+import announcementRoutes from './routes/Announcements/announcementRoutes.js';
+
 import path from "path";
 
 dotenv.config();
@@ -154,6 +159,8 @@ app.use('/api/dashboard-badges', dashboardBadgesRoutes);
 // => Public Pages - Privacy Policy (by slug) and FAQs, read-only, no auth
 app.use('/api/public/pages', cmsPageRoutes);
 app.use('/api/public/faqs', faqRoutes);
+
+app.use('/api/announcements', announcementRoutes);
 
 async function initDB () {
   try {
