@@ -44,13 +44,18 @@ function validateTicketPayload({ fullName, contactNumber, email, concernType, co
     throw new ValidationError("Contact number must start with 09 and be exactly 11 digits.");
   }
 
-  if (!email || !EMAIL_REGEX.test(email.trim())) {
-    throw new ValidationError("A valid email address is required.");
+  if (!email || !email.trim()) {
+    throw new ValidationError("Email is required.");
   }
 
-  // => Matches the email VARCHAR(255) column
+  // => Length check runs BEFORE the regex test, bounding input size before
+  // => it ever reaches EMAIL_REGEX
   if (email.trim().length > 255) {
     throw new ValidationError("Email address is too long.");
+  }
+
+  if (!EMAIL_REGEX.test(email.trim())) {
+    throw new ValidationError("Please enter a valid email address.");
   }
 
   if (!concernType || !ALLOWED_CONCERN_TYPES.includes(concernType)) {
