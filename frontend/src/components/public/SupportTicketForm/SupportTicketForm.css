@@ -1,0 +1,168 @@
+.support-ticket-section {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 3rem 2rem 5rem;
+}
+
+.support-ticket-intro {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.8;
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+.support-ticket-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  background: var(--enroll-content-bg);
+  border: 1px solid var(--enroll-section-border);
+  border-radius: 1rem;
+  padding: 2.5rem;
+}
+
+.support-ticket-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.support-ticket-field-full {
+  grid-column: 1 / -1;
+}
+
+.support-ticket-field label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--enroll-label-color);
+}
+
+.support-ticket-field input,
+.support-ticket-field select,
+.support-ticket-field textarea {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid var(--enroll-field-border);
+  border-radius: 0.5rem;
+  background: var(--card-bg);
+  color: var(--text-primary);
+}
+
+.support-ticket-field input:focus,
+.support-ticket-field select:focus,
+.support-ticket-field textarea:focus {
+  outline: none;
+  border-color: var(--enroll-field-focus);
+}
+
+.support-ticket-error {
+  grid-column: 1 / -1;
+  color: #ff6b7a;
+  font-size: 0.85rem;
+}
+
+/* => Inline per-field error, same red used across the enrollment forms */
+.support-ticket-inline-error {
+  color: #ff6b7a;
+  font-size: 0.8rem;
+  margin-top: -0.15rem;
+}
+
+.support-ticket-input--error {
+  border-color: #ff6b7a !important;
+}
+
+.support-ticket-submit {
+  grid-column: 1 / -1;
+  background: var(--enroll-btn-bg);
+  color: #fff;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.85rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.support-ticket-submit:hover {
+  background: var(--enroll-btn-hover);
+}
+
+.support-ticket-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* => Confirmation modal */
+.support-ticket-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.support-ticket-modal {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 1rem;
+  padding: 2.5rem;
+  max-width: 400px;
+  text-align: center;
+}
+
+.support-ticket-modal-icon {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 1rem;
+}
+
+.support-ticket-modal h3 {
+  color: var(--text-primary);
+  margin-bottom: 0.75rem;
+}
+
+.support-ticket-modal p {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.7;
+  margin-bottom: 0.75rem;
+}
+
+.support-ticket-modal-login-link {
+  display: inline-block;
+  color: var(--accent);
+  font-size: 0.85rem;
+  text-decoration: underline;
+  margin-bottom: 1.25rem;
+}
+
+.support-ticket-modal-login-link:hover {
+  color: var(--accent-hover);
+}
+
+.support-ticket-modal-close {
+  background: var(--enroll-btn-bg);
+  color: #fff;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.6rem 1.5rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.support-ticket-modal-close:hover {
+  background: var(--enroll-btn-hover);
+}
+
+@media (max-width: 600px) {
+  .support-ticket-form {
+    grid-template-columns: 1fr;
+    padding: 1.75rem;
+  }
+}
