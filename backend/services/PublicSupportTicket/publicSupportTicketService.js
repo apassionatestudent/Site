@@ -12,8 +12,32 @@ const ALLOWED_CONCERN_TYPES = [
   "Others",
 ];
 
-// => Basic shape check, not a full RFC validator, just enough to catch typos
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// => Regex-free email shape check. Even a simplified regex like
+// => /^[^\s@]+@[^\s@]+\.[^\s@]+$/ still trips js/polynomial-redos, since
+// => the [^\s@]+ before the dot overlaps with the literal "." after it,
+// => creating backtracking ambiguity on crafted input. Plain string methods
+// => below do the same structural check with zero regex, so there is no
+// => quantifier for an attacker to exploit at all.
+function isValidEmailShape(value) {
+  const trimmed = value.trim();
+
+  // => No whitespace anywhere in the address
+  if (/\s/.test(trimmed)) return false;
+
+  const atIndex = trimmed.indexOf('@');
+  const lastAtIndex = trimmed.lastIndexOf('@');
+
+  // => Must have exactly one "@", and it can't be the first character
+  if (atIndex <= 0 || atIndex !== lastAtIndex) return false;
+
+  const domain = trimmed.slice(atIndex + 1);
+  const dotIndex = domain.indexOf('.');
+
+  // => Domain must contain a dot that isn't the first or last character
+  if (dotIndex <= 0 || domain.endsWith('.')) return false;
+
+  return true;
+}
 
 // => Custom error type so the controller can tell validation failures (400)
 // => apart from unexpected server/DB errors (500)
@@ -48,13 +72,13 @@ function validateTicketPayload({ fullName, contactNumber, email, concernType, co
     throw new ValidationError("Email is required.");
   }
 
-  // => Length check runs BEFORE the regex test, bounding input size before
-  // => it ever reaches EMAIL_REGEX
+  // => Length check still runs first, no reason to drop this even
+  // => though isValidEmailShape() carries no regex risk
   if (email.trim().length > 255) {
     throw new ValidationError("Email address is too long.");
   }
 
-  if (!EMAIL_REGEX.test(email.trim())) {
+  if (!isValidEmailShape(email)) {
     throw new ValidationError("Please enter a valid email address.");
   }
 
