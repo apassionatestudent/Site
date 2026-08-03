@@ -63,6 +63,12 @@ import paymentsRoutes from './routes/Payments/paymentsRoutes.js';
 // => Own route since it doesn't belong to any single domain (reads from two tables)
 import dashboardBadgesRoutes from './routes/DashboardBadges/dashboardBadgesRoutes.js';
 
+// Public Pages (Privacy Policy + FAQs)
+// => Read-only, no auth - reads from the same cms_pages / faqs_sections /
+//    faqs tables the admin side writes to, via the shared Neon DB
+import cmsPageRoutes from './routes/Pages/cmsPageRoutes.js';
+import faqRoutes from './routes/Pages/faqRoutes.js';
+
 import path from "path";
 
 dotenv.config();
@@ -144,6 +150,10 @@ app.use('/api/payments', paymentsRoutes);
 // => Sidebar badge counts - single combined endpoint, own route since it
 //    spans announcements and support_tickets rather than belonging to one domain
 app.use('/api/dashboard-badges', dashboardBadgesRoutes);
+
+// => Public Pages - Privacy Policy (by slug) and FAQs, read-only, no auth
+app.use('/api/public/pages', cmsPageRoutes);
+app.use('/api/public/faqs', faqRoutes);
 
 async function initDB () {
   try {

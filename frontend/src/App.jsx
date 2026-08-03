@@ -31,6 +31,8 @@ import SHSCourseDetail from './components/public/SHSCourseDetail/shsCourseDetail
 import Enroll from './pages/public/Enroll/Enroll.jsx';
 import Contact from './pages/public/Contact/Contact.jsx';
 import Login from './pages/public/Login/Login.jsx';
+import PrivacyPolicy from './pages/public/LegalPolicy/legalPolicy.jsx';
+import FAQs from './pages/public/FAQs/faqs.jsx';
 
 // => import private (dashboard) pages
 import Dashboard from './pages/private/Dashboard/Dashboard.jsx';
@@ -88,6 +90,8 @@ function App() {
           <Route path="/enroll" element={<Enroll />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/faqs" element={<FAQs />} />
           {/* => private / dashboard routes */}
           {/* => checks localStorage before rendering any dashboard route */}
           {/* => if not logged in, redirects to /login without rendering the page at all */}
