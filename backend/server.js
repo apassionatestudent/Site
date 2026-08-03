@@ -27,6 +27,10 @@ import shsCoursesRoutes from './routes/Courses/shsCoursesRoutes.js';
 // => the enrollment form, not individual course browsing
 import tesdaBatchRoutes from "./routes/TESDAEnrollment/tesdaBatchRoutes.js";
 
+import publicSupportTicketRoutes from './routes/PublicSupportTicket/publicSupportTicketRoutes.js';
+// => Public, anonymous support ticket submissions - no auth required, and
+// => intentionally separate from the private, student-scoped support_tickets table
+
 import shsBatchesRouter from './routes/SHSEnrollment/shsBatchRoutes.js';
 // => Renamed from shsCourses -> shsClusters: SHS students enroll into a
 // => cluster, not an individual course - this route now returns a
@@ -93,6 +97,10 @@ app.use('/api/public/tesda-courses', tesdaCoursesRoutes);
 app.use('/api/public/shs-courses', shsCoursesRoutes);
 // => Register TESDA batches route - path stays /api/classes so the
 // => frontend's existing fetch calls don't need to change
+
+// => Public support ticket submission - anonymous, no student_id involved
+app.use('/api/public/support-tickets', publicSupportTicketRoutes);
+
 app.use("/api/classes", tesdaBatchRoutes);
 // => Register SHS batches route - renamed from shs-classes to match the
 // => shs_classes -> shs_batches table rename
@@ -1182,21 +1190,67 @@ async function initDB () {
     await sql`CREATE INDEX IF NOT EXISTS idx_refunds_enrollment ON refunds (enrollment_id)`;
     await sql`CREATE INDEX IF NOT EXISTS idx_refunds_status ON refunds (status)`;
 
-    // => Admin-authored announcements shown to all students, badge count = active rows
+    // => Announcements shown on the Student Dashboard - already live in
+    //    Neon, mirrored here for parity with the rest of this file's
+    //    schema. Hard-delete only, no soft-delete/restore columns.
     await sql`
-      CREATE TABLE IF NOT EXISTS announcements (
-        announcement_id  SERIAL        PRIMARY KEY,
-        public_id        UUID          NOT NULL DEFAULT gen_random_uuid() UNIQUE,
-
-        title            VARCHAR(200)  NOT NULL,
-        message          TEXT          NOT NULL,
-        is_active        BOOLEAN       NOT NULL DEFAULT TRUE,
-
-        created_by       INTEGER       NOT NULL REFERENCES admins(admin_id) ON DELETE RESTRICT,
-        created_at       TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
-        updated_at       TIMESTAMPTZ   NOT NULL DEFAULT NOW()
-      )
+        CREATE TABLE IF NOT EXISTS announcements (
+            announcement_id SERIAL        PRIMARY KEY,
+            public_id       UUID          NOT NULL DEFAULT gen_random_uuid(),
+            title           VARCHAR(200)  NOT NULL,
+            message         TEXT          NOT NULL,
+            is_active       BOOLEAN       NOT NULL DEFAULT true,
+            created_by      INTEGER       NOT NULL REFERENCES admins(admin_id),
+            created_at      TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+            updated_at      TIMESTAMPTZ   NOT NULL DEFAULT NOW()
+        )
     `;
+
+    // => Single-row-per-slug static page content (Privacy Policy today,
+    //    Terms of Service etc. later) - a slug's row only gets created
+    //    on its first-ever Save, via the upsert in cmsPageModel.js, not
+    //    pre-seeded here.
+    await sql`
+        CREATE TABLE IF NOT EXISTS cms_pages (
+            page_id     SERIAL        PRIMARY KEY,
+            slug        VARCHAR(50)   NOT NULL UNIQUE,
+            content     TEXT          NOT NULL DEFAULT '',
+            updated_by  INTEGER       NOT NULL REFERENCES admins(admin_id),
+            updated_at  TIMESTAMPTZ   NOT NULL DEFAULT NOW()
+        )
+    `;
+
+    // => FAQ sections (Accounts, Enrollment, Payments, etc.) - dynamic,
+    //    admin-created. Add-only from the UI; deletion is blocked by
+    //    the FK below while any FAQ still references a section.
+    await sql`
+        CREATE TABLE IF NOT EXISTS faqs_sections (
+            section_id  SERIAL        PRIMARY KEY,
+            public_id   UUID          NOT NULL DEFAULT gen_random_uuid(),
+            name        VARCHAR(100)  NOT NULL,
+            sort_order  INTEGER       NOT NULL DEFAULT 0,
+            created_by  INTEGER       NOT NULL REFERENCES admins(admin_id),
+            created_at  TIMESTAMPTZ   NOT NULL DEFAULT NOW()
+        )
+    `;
+
+    // => Individual FAQ entries, one section per FAQ. section_id here
+    //    is the FK described above - resolving a section's public_id
+    //    to this internal id happens in faqService.js, never in raw SQL.
+    await sql`
+        CREATE TABLE IF NOT EXISTS faqs (
+            faq_id      SERIAL        PRIMARY KEY,
+            public_id   UUID          NOT NULL DEFAULT gen_random_uuid(),
+            section_id  INTEGER       NOT NULL REFERENCES faqs_sections(section_id),
+            question    VARCHAR(300)  NOT NULL,
+            answer      TEXT          NOT NULL,
+            sort_order  INTEGER       NOT NULL DEFAULT 0,
+            created_by  INTEGER       NOT NULL REFERENCES admins(admin_id),
+            created_at  TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+            updated_at  TIMESTAMPTZ   NOT NULL DEFAULT NOW()
+        )
+        `;
+
 
     await sql`
       DO $$ BEGIN
@@ -1244,6 +1298,60 @@ async function initDB () {
     // => Badge count query filters by student_id + status together, so index both
     await sql`CREATE INDEX IF NOT EXISTS idx_support_tickets_student ON support_tickets (student_id)`;
     await sql`CREATE INDEX IF NOT EXISTS idx_support_tickets_status ON support_tickets (status)`;
+
+    // => Public (anonymous) support tickets - no student_id, separate from
+    // => the private support_tickets table for security separation
+    await sql`
+      CREATE TABLE IF NOT EXISTS public_support_tickets (
+        ticket_id        SERIAL        PRIMARY KEY,
+        public_id        UUID          NOT NULL DEFAULT gen_random_uuid() UNIQUE,
+
+        full_name        VARCHAR(150)  NOT NULL,
+        contact_number   VARCHAR(20)   NOT NULL,
+        email            VARCHAR(255)  NOT NULL,
+
+        concern_type     VARCHAR(50)   NOT NULL CHECK (concern_type IN (
+                            'Course Clarification',
+                            'Enrollment Status Tracking',
+                            'Technical Issue',
+                            'Feedback',
+                            'Others'
+                          )),
+        concern          TEXT          NOT NULL,
+
+        status           VARCHAR(15)   NOT NULL DEFAULT 'Open'
+                            CHECK (status IN ('Open', 'In Progress', 'Resolved', 'Closed')),
+
+        created_at       TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+        updated_at       TIMESTAMPTZ   NOT NULL DEFAULT NOW()
+      )
+    `;
+
+    await sql`
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'public_support_tickets_set_updated_at') THEN
+          CREATE TRIGGER public_support_tickets_set_updated_at
+          BEFORE UPDATE ON public_support_tickets
+          FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+        END IF;
+      END $$
+    `;
+
+    await sql`CREATE INDEX IF NOT EXISTS idx_public_support_tickets_status ON public_support_tickets (status)`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_public_support_tickets_created_at ON public_support_tickets (created_at DESC)`;
+
+    await sql`
+      CREATE TABLE IF NOT EXISTS announcements (
+        announcement_id SERIAL PRIMARY KEY,
+        public_id       UUID NOT NULL DEFAULT gen_random_uuid(),
+        title           VARCHAR(200) NOT NULL,
+        message         TEXT NOT NULL,
+        is_active       BOOLEAN NOT NULL DEFAULT true,
+        created_by      INTEGER NOT NULL REFERENCES admins(admin_id),
+        created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+        updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+      )
+    `;
 
     console.log("Database initialized successfully");
   } catch (error) {
