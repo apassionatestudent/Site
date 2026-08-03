@@ -1,0 +1,41 @@
+.privacy-policy-body {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 3rem 2rem 6rem;
+}
+
+.page-hero-updated {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-top: 0.75rem;
+}
+
+.privacy-policy-status {
+  text-align: center;
+  color: var(--text-secondary);
+  padding: 3rem 0;
+}
+
+.privacy-policy-content {
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  line-height: 1.8;
+  font-size: 1rem;
+}
+
+.privacy-policy-content p {
+  margin-bottom: 1.25rem;
+}
+
+.privacy-policy-content ul,
+.privacy-policy-content ol {
+  margin: 0 0 1.25rem 1.5rem;
+}
+
+.privacy-policy-content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+  margin: 1rem 0;
+  display: block;
+}
