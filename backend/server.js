@@ -1298,6 +1298,8 @@ async function initDB () {
         resolved_by      INTEGER       NULL REFERENCES admins(admin_id) ON DELETE SET NULL,
         resolved_at      TIMESTAMPTZ   NULL,
 
+        internal_remarks TEXT          NULL, // => admin-only notes, never shown to the public submitter
+
         created_at       TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
         updated_at       TIMESTAMPTZ   NOT NULL DEFAULT NOW()
       )
