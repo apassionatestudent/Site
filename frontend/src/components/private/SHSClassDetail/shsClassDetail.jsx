@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 import "./shsClassDetail.css";
 
 import BackButton from "../BackButton/BackButton.jsx";
+import LoadingState from "../LoadingState/loadingState.jsx";
 import CalendarIcon from "../../../assets/icons/calendar.png";
 import ClockIcon from "../../../assets/icons/clock.png";
 import LocationIcon from "../../../assets/icons/location.png";
@@ -55,7 +56,14 @@ const SHSClassDetail = () => {
     return session.facility_name || session.mobile_location || "TBD";
   };
 
-  if (loading) return <div className="class-detail-page">Loading...</div>;
+  if (loading) {
+    return (
+      <div className="class-detail-page">
+        {/* => shared spinner, keeps loading UI consistent across dashboard pages */}
+        <LoadingState message="Loading class details..." />
+      </div>
+    );
+  }
   if (!batch) return null;
 
   return (

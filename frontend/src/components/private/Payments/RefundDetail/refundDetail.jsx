@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 import "./refundDetail.css";
 
 import BackButton from "../../BackButton/BackButton.jsx";
+import LoadingState from "../../LoadingState/loadingState.jsx";
 import ReceiptIcon from "../../../../assets/icons/receipt.png";
 import CalendarIcon from "../../../../assets/icons/calendar.png";
 import EnrollmentIcon from "../../../../assets/icons/enroll.png";
@@ -66,7 +67,14 @@ const RefundDetail = () => {
     }
   };
 
-  if (loading) return <div className="refund-detail-page">Loading...</div>;
+  if (loading) {
+    return (
+      <div className="refund-detail-page">
+        {/* => shared spinner, keeps loading UI consistent across dashboard pages */}
+        <LoadingState message="Loading refund details..." />
+      </div>
+    );
+  }
   if (!refund) return null;
 
   return (

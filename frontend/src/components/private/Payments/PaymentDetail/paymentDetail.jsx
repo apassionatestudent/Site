@@ -7,6 +7,7 @@ import "./paymentDetail.css";
 // => four levels deep from src (components/private/Payments/PaymentDetail/),
 //    matching the same relative-depth pattern as tesdaClassDetail.jsx
 import BackButton from "../../BackButton/BackButton.jsx";
+import LoadingState from "../../LoadingState/loadingState.jsx";
 import ReceiptIcon from "../../../../assets/icons/receipt.png";
 import CalendarIcon from "../../../../assets/icons/calendar.png";
 import EnrollmentIcon from "../../../../assets/icons/enroll.png";
@@ -78,7 +79,14 @@ const PaymentDetail = () => {
     }
   };
 
-  if (loading) return <div className="payment-detail-page">Loading...</div>;
+  if (loading) {
+    return (
+      <div className="payment-detail-page">
+        {/* => shared spinner, keeps loading UI consistent across dashboard pages */}
+        <LoadingState message="Loading payment details..." />
+      </div>
+    );
+  }
   if (!payment) return null;
 
   return (

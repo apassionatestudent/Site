@@ -4,6 +4,8 @@ import axiosStudent from "../../../utils/axiosStudent";
 import toast from "react-hot-toast";
 import "./payments.css";
 
+import LoadingState from '../../../components/private/LoadingState/loadingState.jsx';
+
 import ReceiptIcon from "../../../assets/icons/receipt.png";
 import RefundIconImg from "../../../assets/icons/refund.png";
 import EmptyPaymentsIcon from "../../../assets/icons/empty-classes.png";
@@ -59,8 +61,8 @@ const Payments = () => {
   if (loading) {
     return (
       <div className="payments-page">
-        <h1>Payments</h1>
-        <p className="payments-subtitle">Loading your payment history...</p>
+        {/* => shared spinner, keeps loading UI consistent across dashboard pages */}
+        <LoadingState message="Loading your payment history..." />
       </div>
     );
   }
