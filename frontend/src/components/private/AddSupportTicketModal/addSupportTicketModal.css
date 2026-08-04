@@ -1,0 +1,112 @@
+.stk-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.stk-modal-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 1rem;
+  padding: 2rem;
+  width: 100%;
+  max-width: 480px;
+}
+
+.stk-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.stk-modal-header h3 {
+  color: var(--text-primary);
+  font-family: var(--font-body);
+}
+
+.stk-modal-close-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  display: flex;
+}
+
+.stk-close-icon {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+}
+
+.stk-modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.stk-modal-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.stk-modal-field label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--enroll-label-color);
+}
+
+/* => Same token the enrollment forms use for required-field asterisks */
+.stk-required {
+  color: var(--req-asterisk);
+}
+
+.stk-modal-field input,
+.stk-modal-field select,
+.stk-modal-field textarea {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid var(--enroll-field-border);
+  border-radius: 0.5rem;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.stk-modal-field input:focus,
+.stk-modal-field select:focus,
+.stk-modal-field textarea:focus {
+  outline: none;
+  border-color: var(--enroll-field-focus);
+}
+
+.stk-modal-error {
+  color: #ff6b7a;
+  font-size: 0.85rem;
+}
+
+.stk-modal-submit {
+  background: var(--enroll-btn-bg);
+  color: #fff;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.85rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.stk-modal-submit:hover {
+  background: var(--enroll-btn-hover);
+}
+
+.stk-modal-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

@@ -30,6 +30,7 @@ import tesdaBatchRoutes from "./routes/TESDAEnrollment/tesdaBatchRoutes.js";
 import publicSupportTicketRoutes from './routes/PublicSupportTicket/publicSupportTicketRoutes.js';
 // => Public, anonymous support ticket submissions - no auth required, and
 // => intentionally separate from the private, student-scoped support_tickets table
+import studentSupportTicketRoutes from "./routes/StudentSupportTicket/studentSupportTicketRoutes.js";
 
 import shsBatchesRouter from './routes/SHSEnrollment/shsBatchRoutes.js';
 // => Renamed from shsCourses -> shsClusters: SHS students enroll into a
@@ -111,6 +112,7 @@ app.use('/api/public/shs-courses', shsCoursesRoutes);
 
 // => Public support ticket submission - anonymous, no student_id involved
 app.use('/api/public/support-tickets', publicSupportTicketRoutes);
+app.use("/api/student/support-tickets", studentSupportTicketRoutes);
 
 app.use("/api/classes", tesdaBatchRoutes);
 // => Register SHS batches route - renamed from shs-classes to match the
@@ -1298,7 +1300,7 @@ async function initDB () {
         resolved_by      INTEGER       NULL REFERENCES admins(admin_id) ON DELETE SET NULL,
         resolved_at      TIMESTAMPTZ   NULL,
 
-        internal_remarks TEXT          NULL, // => admin-only notes, never shown to the public submitter
+        internal_remarks TEXT          NULL, 
 
         created_at       TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
         updated_at       TIMESTAMPTZ   NOT NULL DEFAULT NOW()
