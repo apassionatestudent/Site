@@ -1,119 +1,169 @@
-import React, { useEffect, useState } from 'react';
-import './SupportTickets.css';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 
-const initialTickets = [
-  {
-    id: 1,
-    subject: 'Unable to login',
-    description: 'I receive an error when trying to log in with my credentials.',
-    status: 'Open',
-    createdAt: '2026-05-13',
-  },
-  {
-    id: 2,
-    subject: 'Page layout issue',
-    description: 'Support tickets page is not rendering correctly in mobile view.',
-    status: 'Pending',
-    createdAt: '2026-05-12',
-  },
-];
+import './supportTickets.css';
+import axiosStudent from '../../../utils/axiosStudent.js';
+import RateLimitNotice from '../../../components/RateLimitNotice.jsx';
 
-const SupportTickets = () => {
+import LoadingState from '../../../components/private/LoadingState/loadingState.jsx';
+import AddSupportTicketModal from '../../../components/private/AddSupportTicketModal/addSupportTicketModal.jsx';
+
+// icons
+import errorIcon from '../../../assets/icons/warning.png';
+import emptyIcon from '../../../assets/icons/empty-classes.png';
+import calendarIcon from '../../../assets/icons/calendar.png';
+
+// => Maps each status to a CSS modifier class, same fixed palette style
+// => as Enrollment.jsx's statusClass so colors read consistently app-wide
+const statusClass = {
+  'Open':         'status--open',
+  'In Progress':  'status--progress',
+  'Resolved':     'status--resolved',
+  'Closed':       'status--closed',
+};
+
+// => Formats ISO date string to readable date, same shape as Enrollment.jsx
+const formatDate = (dateStr) => {
+  if (!dateStr) return '-';
+  return new Date(dateStr).toLocaleDateString('en-PH', {
+    year: 'numeric', month: 'long', day: 'numeric'
+  });
+};
+
+function SupportTickets() {
+  const navigate = useNavigate();
+
   const [tickets, setTickets] = useState([]);
-  const [subject, setSubject] = useState('');
-  const [description, setDescription] = useState('');
-  const [status, setStatus] = useState('Open');
+  const [listLoading, setListLoading] = useState(false);
+  const [listError, setListError] = useState(null);
+  const [rateLimitInfo, setRateLimitInfo] = useState(null); // => seconds remaining, null if not rate limited
+  const [showModal, setShowModal] = useState(false);
 
-  useEffect(() => {
-    setTickets(initialTickets);
+  // => Wrapped in useCallback so RateLimitNotice can call this exact same
+  // => function again once its countdown finishes, matching Enrollment.jsx
+  const fetchTickets = useCallback(async () => {
+    setListLoading(true);
+    setListError(null);
+    setRateLimitInfo(null);
+    try {
+      const response = await axiosStudent.get('/student/support-tickets');
+      setTickets(response.data);
+    } catch (err) {
+      if (err.response?.status === 429) {
+        const retryAfter = err.response.data?.retryAfter || 60;
+        setRateLimitInfo(retryAfter);
+      } else {
+        setListError('Failed to fetch support tickets.');
+      }
+    } finally {
+      setListLoading(false);
+    }
   }, []);
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
+  useEffect(() => {
+    fetchTickets();
+  }, [fetchTickets]);
 
-    if (!subject.trim() || !description.trim()) {
-      return;
-    }
+  // => Called by the modal after a successful submission, refetches
+  // => instead of guessing the shape of a locally-appended row
+  const handleTicketCreated = () => {
+    fetchTickets();
+  };
 
-    const newTicket = {
-      id: Date.now(),
-      subject: subject.trim(),
-      description: description.trim(),
-      status,
-      createdAt: new Date().toLocaleDateString(),
-    };
-
-    setTickets([newTicket, ...tickets]);
-    setSubject('');
-    setDescription('');
-    setStatus('Open');
+  const handleCardClick = (ticket) => {
+    navigate(`/dashboard/supporttickets/${ticket.public_id}`);
   };
 
   return (
-    <div className="support-tickets-page">
-      <header className="support-tickets-header">
-        <h1>Support Tickets</h1>
-        <p>View existing tickets or submit a new request for assistance.</p>
-      </header>
+    <div className="stk-page">
+      <div className="stk-header">
+        <h1 className="stk-title">
+          {tickets.length > 1 ? 'Support Tickets' : 'Support Ticket'}
+        </h1>
+        <p className="stk-subtitle">
+          Click on any ticket to view its full details.
+        </p>
+      </div>
 
-      <section className="ticket-form-section">
-        <h2>Create New Ticket</h2>
-        <form className="ticket-form" onSubmit={handleSubmit}>
-          <label>
-            Subject
-            <input
-              type="text"
-              value={subject}
-              onChange={(event) => setSubject(event.target.value)}
-              placeholder="Enter ticket subject"
-            />
-          </label>
+      {rateLimitInfo && (
+        <div className="stk-empty">
+          <img src={errorIcon} alt="" className="stk-empty-icon" />
+          <RateLimitNotice retryAfter={rateLimitInfo} onRetry={fetchTickets} />
+        </div>
+      )}
 
-          <label>
-            Description
-            <textarea
-              value={description}
-              onChange={(event) => setDescription(event.target.value)}
-              placeholder="Describe the issue in detail"
-            />
-          </label>
+      {!rateLimitInfo && listLoading && (
+        <LoadingState message="Loading your support tickets..." />
+      )}
 
-          <label>
-            Status
-            <select value={status} onChange={(event) => setStatus(event.target.value)}>
-              <option value="Open">Open</option>
-              <option value="Pending">Pending</option>
-              <option value="Resolved">Resolved</option>
-            </select>
-          </label>
+      {!rateLimitInfo && listError && (
+        <div className="stk-empty">
+          <img src={errorIcon} alt="" className="stk-empty-icon" />
+          <p>{listError}</p>
+        </div>
+      )}
 
-          <button type="submit">Submit Ticket</button>
-        </form>
-      </section>
+      {!rateLimitInfo && !listLoading && !listError && tickets.length === 0 && (
+        <div className="stk-empty">
+          <img src={emptyIcon} alt="" className="stk-empty-icon" />
+          <p>You have not submitted any support tickets yet.</p>
+        </div>
+      )}
 
-      <section className="ticket-list-section">
-        <h2>Current Tickets</h2>
-        {tickets.length === 0 ? (
-          <p>No tickets available.</p>
-        ) : (
-          <ul className="ticket-list">
-            {tickets.map((ticket) => (
-              <li key={ticket.id} className="ticket-card">
-                <div className="ticket-card-header">
-                  <h3>{ticket.subject}</h3>
-                  <span className={`ticket-status ticket-status-${ticket.status.toLowerCase()}`}>
+      {!rateLimitInfo && !listLoading && !listError && tickets.length > 0 && (
+        <ul className="stk-list">
+          {tickets.map((ticket, index) => (
+            <li
+              key={ticket.public_id}
+              className="stk-card"
+              style={{ animationDelay: `${index * 80}ms` }}
+              onClick={() => handleCardClick(ticket)}
+            >
+              {/* => Left accent bar colored by status */}
+              <div className={`stk-card-bar ${statusClass[ticket.status] || ''}`} />
+
+              <div className="stk-card-body">
+                <div className="stk-card-top">
+                  <div>
+                    <p className="stk-card-subject">{ticket.subject}</p>
+                    <p className="stk-card-type">{ticket.concern_type}</p>
+                  </div>
+                  <span className={`stk-card-badge ${statusClass[ticket.status] || ''}`}>
                     {ticket.status}
                   </span>
                 </div>
-                <p>{ticket.description}</p>
-                <small>Created: {ticket.createdAt}</small>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+
+                <div className="stk-card-meta">
+                  <span>
+                    <img src={calendarIcon} alt="" className="stk-card-meta-icon" />
+                    Submitted {formatDate(ticket.created_at)}
+                  </span>
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {/* => fixed bottom-right FAB, green, matches the admin dashboard's
+          => create-action convention */}
+      <button
+        type="button"
+        className="stk-fab"
+        onClick={() => setShowModal(true)}
+        aria-label="New Support Ticket"
+      >
+        +
+      </button>
+
+      {showModal && (
+        <AddSupportTicketModal
+          onClose={() => setShowModal(false)}
+          onCreated={handleTicketCreated}
+        />
+      )}
     </div>
   );
-};
+}
 
 export default SupportTickets;

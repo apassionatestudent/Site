@@ -39,7 +39,8 @@ import Dashboard from './pages/private/Dashboard/Dashboard.jsx';
 import Account from './pages/private/Account/account.jsx';
 import Documents from './pages/private/Documents/Documents.jsx';
 import Enrollment from './pages/private/Enrollment/Enrollment.jsx';
-import SupportTickets from './pages/private/SupportTickets/SupportTickets.jsx';
+import SupportTickets from './pages/private/SupportTickets/supportTickets.jsx';
+import SupportTicketDetail from './components/private/SupportTicketDetail/supportTicketDetail.jsx';
 import Announcements from './pages/private/Announcements/Announcements.jsx';
 import Classes from './pages/private/Classes/classes.jsx';
 import Payments from './pages/private/Payments/payments.jsx';
@@ -119,6 +120,7 @@ function App() {
                     <Route path="classes/shs/:publicId" element={<SHSClassDetail />} />
 
                     <Route path="supporttickets" element={<SupportTickets />} />
+                    <Route path="supporttickets/:publicId" element={<SupportTicketDetail />} />
 
                     <Route path="payments" element={<Payments />} />
                     <Route path="payments/refunds/:publicId" element={<RefundDetail />} />
