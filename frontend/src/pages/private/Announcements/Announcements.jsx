@@ -3,13 +3,12 @@ import axiosStudent from '../../../utils/axiosStudent.js';
 import AnnouncementDetail from '../../../components/private/AnnouncementDetail/announcementDetail.jsx';
 import toast from 'react-hot-toast';
 import './Announcements.css';
-
+import LoadingState from '../../../components/private/LoadingState/loadingState.jsx';
 
 // => Reusing the same icon set as Enrollment.jsx for visual consistency
 // => across dashboard pages, rather than sourcing new icons per page
-import loadingIcon from '../../../assets/icons/loading.png';
 import errorIcon from '../../../assets/icons/warning.png';
-import emptyIcon from '../../../assets/icons/clipboard.png';
+import emptyIcon from '../../../assets/icons/empty-classes.png';
 
 const Announcements = () => {
   const [announcements, setAnnouncements] = useState([]);
@@ -47,12 +46,8 @@ const Announcements = () => {
         <p className="announcements-subtitle">Latest updates and news from 3A Prime Hospitality Training and Assessment Center Inc.</p>
       </header>
 
-      {loading && (
-        <div className="announcement-empty">
-          <img src={loadingIcon} alt="loading..." className="announcement-empty-icon" />
-          <p>Loading announcements...</p>
-        </div>
-      )}
+      {/* => shared spinner, keeps loading UI consistent with any other page using LoadingState */}
+      {loading && <LoadingState message="Loading Announcements..." />}
 
       {!loading && announcements.length === 0 && (
         <div className="announcement-empty">

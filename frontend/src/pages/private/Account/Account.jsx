@@ -6,9 +6,11 @@ import axiosStudent from '../../../utils/axiosStudent.js';
 import { apiFetch, RateLimitError } from '../../../utils/api.js';
 import RateLimitNotice from '../../../components/RateLimitNotice.jsx';
 
+import LoadingState from '../../../components/private/LoadingState/loadingState.jsx';
+
 // icons
-// => loadingIcon / errorIcon reused from Enrollment.jsx's existing assets
-import loadingIcon from '../../../assets/icons/loading.png';
+// => errorIcon reused from Enrollment.jsx's existing assets, still needed
+// => for the rate-limit state's icon below
 import errorIcon    from '../../../assets/icons/warning.png';
 // => NEW IMPORT NEEDED: lock.png doesn't exist yet in assets/icons - add
 // => an actual lock icon asset here, never a text/emoji substitute
@@ -312,10 +314,8 @@ const Account = () => {
   if (loading) {
     return (
       <div className="acct-page">
-        <div className="acct-empty">
-          <img src={loadingIcon} alt="loading..." className="acct-empty-icon" />
-          <p>Loading your account...</p>
-        </div>
+        {/* => shared spinner, keeps loading UI consistent across dashboard pages */}
+        <LoadingState message="Loading your account..." />
       </div>
     );
   }

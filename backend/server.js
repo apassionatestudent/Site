@@ -1292,7 +1292,8 @@ async function initDB () {
 
         subject          VARCHAR(200)  NOT NULL,
         message          TEXT          NOT NULL,
-        status           VARCHAR(15)   NOT NULL DEFAULT 'Open' CHECK (status IN ('Open', 'In Progress', 'Resolved', 'Closed')),
+        status           VARCHAR(15)   NOT NULL DEFAULT 'Open'
+                            CHECK (status IN ('Open', 'In Progress', 'Resolved', 'Unresolved')), 
 
         resolved_by      INTEGER       NULL REFERENCES admins(admin_id) ON DELETE SET NULL,
         resolved_at      TIMESTAMPTZ   NULL,

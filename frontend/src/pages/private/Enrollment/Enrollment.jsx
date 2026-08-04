@@ -2,11 +2,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import './Enrollment.css';
-import { apiFetch, RateLimitError } from '../../../utils/api.js';
+import axiosStudent from '../../../utils/axiosStudent.js';
 import RateLimitNotice from '../../../components/RateLimitNotice.jsx';
 
+import LoadingState from '../../../components/private/LoadingState/loadingState.jsx';
+
 // icons
-import loadingIcon    from "../../../assets/icons/loading.png";
 import errorIcon      from "../../../assets/icons/warning.png";
 import clipboardIcon  from "../../../assets/icons/clipboard.png";
 import calendarIcon   from "../../../assets/icons/calendar.png";
@@ -53,13 +54,16 @@ function Enrollment() {
     setListError(null);
     setRateLimitInfo(null);
     try {
-      const data = await apiFetch('/api/enrollment/my-enrollments', {
-        credentials: 'include', // => sends the httpOnly JWT cookie
-      });
-      setEnrollments(data.enrollments);
+      // => axiosStudent attaches the httpOnly JWT cookie and CSRF token
+      // => automatically, and its 401 interceptor handles expired sessions
+      const response = await axiosStudent.get('/enrollment/my-enrollments');
+      setEnrollments(response.data.enrollments);
     } catch (err) {
-      if (err instanceof RateLimitError) {
-        setRateLimitInfo(err.retryAfter);
+      if (err.response?.status === 429) {
+        // => Backend sends { error, message, retryAfter } in the JSON body,
+        // => same shape apiFetch's RateLimitError used to read from
+        const retryAfter = err.response.data?.retryAfter || 60;
+        setRateLimitInfo(retryAfter);
       } else {
         setListError('Failed to fetch enrollments.');
       }
@@ -102,11 +106,9 @@ function Enrollment() {
         </div>
       )}
 
+      {/* => shared spinner, keeps loading UI consistent across dashboard pages */}
       {!rateLimitInfo && listLoading && (
-        <div className="enroll-empty">
-          <img src={loadingIcon} alt="loading..." className="enroll-empty-icon" />
-          <p>Loading your enrollments...</p>
-        </div>
+        <LoadingState message="Loading your enrollment/s..." />
       )}
 
       {!rateLimitInfo && listError && (

@@ -4,6 +4,8 @@ import axiosStudent from "../../../utils/axiosStudent";
 import toast from "react-hot-toast";
 import "./classes.css";
 
+import LoadingState from '../../../components/private/LoadingState/loadingState.jsx';
+
 import CalendarIcon from "../../../assets/icons/calendar.png";
 import EmptyClassesIcon from "../../../assets/icons/empty-classes.png";
 
@@ -50,8 +52,8 @@ const Classes = () => {
   if (loading) {
     return (
       <div className="classes-page">
-        <h1>Classes</h1>
-        <p className="classes-subtitle">Loading your classes...</p>
+        {/* => shared spinner, keeps loading UI consistent across dashboard pages */}
+        <LoadingState message="Loading your classes..." />
       </div>
     );
   }

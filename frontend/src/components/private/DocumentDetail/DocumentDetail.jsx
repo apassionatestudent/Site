@@ -1,10 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import BackButton from '../BackButton/BackButton.jsx';
+import RateLimitNotice from '../../../components/RateLimitNotice.jsx';
 
 import './DocumentDetail.css';
+import axiosStudent from '../../../utils/axiosStudent.js';
+import LoadingState from '../LoadingState/loadingState.jsx';
 
 // icons
+// => loadingIcon/errorIcon still used inside the preview section below
 import loadingIcon from "../../../assets/icons/loading.png";
 import errorIcon   from "../../../assets/icons/warning.png";
 
@@ -33,36 +37,41 @@ function DocumentDetail() {
   const [detail,        setDetail]        = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError,   setDetailError]   = useState(null);
+  const [rateLimitInfo, setRateLimitInfo] = useState(null); // => seconds remaining, null if not rate limited
 
   // => Separate state for the preview - file loading is independent from metadata loading
   const [previewUrl,     setPreviewUrl]     = useState(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewError,   setPreviewError]   = useState(null);
 
-  // => Fetch document metadata on mount using publicId from the URL
-  useEffect(() => {
+  // => Wrapped in useCallback so RateLimitNotice can call this exact same
+  // => function again once its countdown finishes, same pattern as Enrollment.jsx
+  const fetchDetail = useCallback(async () => {
     if (!publicId) return;
-
-    const fetchDetail = async () => {
-      setDetailLoading(true);
-      setDetailError(null);
-      try {
-        const res = await fetch(`/api/documents/detail/${publicId}`, {
-          credentials: 'include', // => sends the httpOnly JWT cookie
-        });
-        if (res.status === 404) throw new Error('Document not found.');
-        if (!res.ok) throw new Error('Failed to fetch document details.');
-        const data = await res.json();
-        setDetail(data.document);
-      } catch (err) {
-        setDetailError(err.message);
-      } finally {
-        setDetailLoading(false);
+    setDetailLoading(true);
+    setDetailError(null);
+    setRateLimitInfo(null);
+    try {
+      // => axiosStudent attaches the httpOnly JWT cookie and CSRF token
+      // => automatically, and its 401 interceptor handles expired sessions
+      const response = await axiosStudent.get(`/documents/detail/${publicId}`);
+      setDetail(response.data.document);
+    } catch (err) {
+      if (err.response?.status === 429) {
+        // => Backend sends { error, message, retryAfter } in the JSON body
+        const retryAfter = err.response.data?.retryAfter || 60;
+        setRateLimitInfo(retryAfter);
+      } else if (err.response?.status === 404) {
+        setDetailError('Document not found.');
+      } else {
+        setDetailError('Failed to fetch document details.');
       }
-    };
-
-    fetchDetail();
+    } finally {
+      setDetailLoading(false);
+    }
   }, [publicId]);
+
+  useEffect(() => { fetchDetail(); }, [fetchDetail]);
 
   // => Once metadata is loaded, fetch the actual file through the proxy
   // => The document_key is encoded so slashes don't break the URL param
@@ -74,18 +83,18 @@ function DocumentDetail() {
       setPreviewError(null);
       try {
         const encodedKey = encodeURIComponent(detail.document_key);
-        const res = await fetch(`/api/documents/${encodedKey}`, {
-          credentials: 'include', // => sends the httpOnly JWT cookie
+        // => responseType: 'blob' tells axios to keep the response binary
+        // => instead of trying to parse it as JSON, same result as res.blob() before
+        const response = await axiosStudent.get(`/documents/${encodedKey}`, {
+          responseType: 'blob',
         });
-        if (!res.ok) throw new Error('Failed to load file preview.');
 
         // => Convert the streamed response to a blob URL for inline preview
         // => This keeps the actual R2 key out of the browser's address bar
-        const blob = await res.blob();
-        const url  = URL.createObjectURL(blob);
+        const url = URL.createObjectURL(response.data);
         setPreviewUrl(url);
       } catch (err) {
-        setPreviewError(err.message);
+        setPreviewError('Failed to load file preview.');
       } finally {
         setPreviewLoading(false);
       }
@@ -113,21 +122,24 @@ function DocumentDetail() {
       <BackButton destination="Documents" onClick={() => navigate('/dashboard/documents')} />
 
 
-      {detailLoading && (
+      {rateLimitInfo && (
         <div className="doc-detail-empty">
-          <img src={loadingIcon} alt="" className="doc-detail-empty-icon" />
-          <p>Loading document details...</p>
+          <img src={errorIcon} alt="" className="doc-detail-empty-icon" />
+          <RateLimitNotice retryAfter={rateLimitInfo} onRetry={fetchDetail} />
         </div>
       )}
 
-      {detailError && (
+      {/* => shared spinner, keeps loading UI consistent across dashboard pages */}
+      {!rateLimitInfo && detailLoading && <LoadingState message="Loading document details..." />}
+
+      {!rateLimitInfo && detailError && (
         <div className="doc-detail-empty">
           <img src={errorIcon} alt="" className="doc-detail-empty-icon" />
           <p>{detailError}</p>
         </div>
       )}
 
-      {!detailLoading && !detailError && detail && (
+      {!rateLimitInfo && !detailLoading && !detailError && detail && (
         <div className="doc-detail">
 
           {/* => Metadata header */}

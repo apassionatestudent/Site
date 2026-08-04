@@ -1,10 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import BackButton from '../BackButton/BackButton.jsx';
+import RateLimitNotice from '../../../components/RateLimitNotice.jsx';
 
 import './shsEnrollmentDetail.css';
+import axiosStudent from '../../../utils/axiosStudent.js';
+import LoadingState from '../LoadingState/loadingState.jsx';
 
 // icons
+// => loadingIcon still used below for the Pending/Reserved notice banners
 import loadingIcon   from "../../../assets/icons/loading.png";
 import errorIcon     from "../../../assets/icons/warning.png";
 import informationIcon from "../../../assets/icons/information.png";
@@ -44,31 +48,36 @@ function SHSEnrollmentDetail() {
   const [detail,        setDetail]        = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError,   setDetailError]   = useState(null);
+  const [rateLimitInfo, setRateLimitInfo] = useState(null); // => seconds remaining, null if not rate limited
 
-  // => Fetch the single SHS enrollment detail on mount using publicId from the URL
-  useEffect(() => {
+  // => Wrapped in useCallback so RateLimitNotice can call this exact same
+  // => function again once its countdown finishes, same pattern as Enrollment.jsx
+  const fetchDetail = useCallback(async () => {
     if (!publicId) return;
-
-    const fetchDetail = async () => {
-      setDetailLoading(true);
-      setDetailError(null);
-      try {
-        const res = await fetch(`/api/enrollment/${publicId}`, {
-          credentials: 'include', // => sends the httpOnly JWT cookie
-        });
-        if (res.status === 404) throw new Error('Enrollment not found.');
-        if (!res.ok) throw new Error('Failed to fetch enrollment details.');
-        const data = await res.json();
-        setDetail(data.enrollment);
-      } catch (err) {
-        setDetailError(err.message);
-      } finally {
-        setDetailLoading(false);
+    setDetailLoading(true);
+    setDetailError(null);
+    setRateLimitInfo(null);
+    try {
+      // => axiosStudent attaches the httpOnly JWT cookie and CSRF token
+      // => automatically, and its 401 interceptor handles expired sessions
+      const response = await axiosStudent.get(`/enrollment/${publicId}`);
+      setDetail(response.data.enrollment);
+    } catch (err) {
+      if (err.response?.status === 429) {
+        // => Backend sends { error, message, retryAfter } in the JSON body
+        const retryAfter = err.response.data?.retryAfter || 60;
+        setRateLimitInfo(retryAfter);
+      } else if (err.response?.status === 404) {
+        setDetailError('Enrollment not found.');
+      } else {
+        setDetailError('Failed to fetch enrollment details.');
       }
-    };
-
-    fetchDetail();
+    } finally {
+      setDetailLoading(false);
+    }
   }, [publicId]);
+
+  useEffect(() => { fetchDetail(); }, [fetchDetail]);
 
   return (
     <div className="enroll-detail-page">
@@ -76,21 +85,24 @@ function SHSEnrollmentDetail() {
       {/*  Back button  */}
       <BackButton destination="Enrollment" onClick={() => navigate('/dashboard/enrollment')} />
 
-      {detailLoading && (
+      {rateLimitInfo && (
         <div className="enroll-detail-empty">
-          <img src={loadingIcon} alt="" className="enroll-detail-empty-icon" />
-          <p>Loading enrollment details...</p>
+          <img src={errorIcon} alt="" className="enroll-detail-empty-icon" />
+          <RateLimitNotice retryAfter={rateLimitInfo} onRetry={fetchDetail} />
         </div>
       )}
 
-      {detailError && (
+      {/* => shared spinner, keeps loading UI consistent across dashboard pages */}
+      {!rateLimitInfo && detailLoading && <LoadingState message="Loading enrollment details..." />}
+
+      {!rateLimitInfo && detailError && (
         <div className="enroll-detail-empty">
           <img src={errorIcon} alt="" className="enroll-detail-empty-icon" />
           <p>{detailError}</p>
         </div>
       )}
 
-      {!detailLoading && !detailError && detail && (
+      {!rateLimitInfo && !detailLoading && !detailError && detail && (
         <div className="enroll-detail">
           <div className="enroll-detail-header">
             <div>
