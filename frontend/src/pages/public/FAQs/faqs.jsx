@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import ChevronDown from "./../../../assets/icons/chevron-down.png";
 import "./faqs.css";
+// => Shared loading/error UI, lives in components/public/LoadingState
+// => Path goes up 3 folders (FAQs > public > pages) to reach src, then back down
+import LoadingState from "../../../components/public/LoadingState/loadingState";
 
 // => Public, read-only FAQs page - grouped by admin-managed sections,
 //    one FAQ open at a time
@@ -11,22 +14,26 @@ export default function FAQs() {
   const [error, setError] = useState(null);
   const [openFaqId, setOpenFaqId] = useState(null);
 
-  useEffect(() => {
-    let isMounted = true;
+  // => Pulled out of useEffect and given a reload flag, so the Retry button
+  // => inside LoadingState can call this directly instead of reloading the page
+  const loadFaqs = async (isMounted = { current: true }) => {
+    setLoading(true);
+    setError(null);
 
-    async function fetchFaqs() {
-      try {
-        const res = await axios.get("/api/public/faqs");
-        if (isMounted) setSections(res.data);
-      } catch (err) {
-        if (isMounted) setError("Unable to load FAQs right now.");
-      } finally {
-        if (isMounted) setLoading(false);
-      }
+    try {
+      const res = await axios.get("/api/public/faqs");
+      if (isMounted.current) setSections(res.data);
+    } catch (err) {
+      if (isMounted.current) setError("Unable to load FAQs right now.");
+    } finally {
+      if (isMounted.current) setLoading(false);
     }
+  };
 
-    fetchFaqs();
-    return () => { isMounted = false; };
+  useEffect(() => {
+    const isMounted = { current: true };
+    loadFaqs(isMounted);
+    return () => { isMounted.current = false; };
   }, []);
 
   const toggleFaq = (faqId) => {
@@ -47,8 +54,19 @@ export default function FAQs() {
       </section>
 
       <section className="faqs-body">
-        {loading && <p className="faqs-status">Loading...</p>}
-        {!loading && error && <p className="faqs-status">{error}</p>}
+        {/* => Shared spinner while the fetch is in flight */}
+        {loading && <LoadingState message="Loading..." />}
+
+        {/* => Shared error block, Retry re-runs loadFaqs instead of reloading the page */}
+        {!loading && error && (
+          <LoadingState
+            variant="error"
+            message={error}
+            onRetry={() => loadFaqs()}
+          />
+        )}
+
+        {/* => Genuine empty state, not an error, left as plain text on purpose */}
         {!loading && !error && sections.length === 0 && (
           <p className="faqs-status">No FAQs have been published yet.</p>
         )}

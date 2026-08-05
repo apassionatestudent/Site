@@ -10,12 +10,6 @@
   margin-top: 0.75rem;
 }
 
-.privacy-policy-status {
-  text-align: center;
-  color: var(--text-secondary);
-  padding: 3rem 0;
-}
-
 .privacy-policy-content {
   color: var(--text-primary);
   font-family: var(--font-body);

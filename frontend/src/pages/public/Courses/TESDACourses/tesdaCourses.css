@@ -3,15 +3,7 @@
   min-height: 100vh;
 }
 
-.tesda-courses-status {
-  text-align: center;
-  padding: 3rem 2rem;
-  color: var(--text-secondary);
-}
 
-.tesda-courses-error {
-  color: #f87171;
-}
 
 .tesda-courses-grid {
   display: grid;
