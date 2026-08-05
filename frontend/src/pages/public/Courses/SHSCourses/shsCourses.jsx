@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import './shsCourses.css';
+// => Shared loading/error UI, lives in components/public/LoadingState
+// => Path goes up 4 folders (SHSCourses > Courses > public > pages) to reach src, then back down
+import LoadingState from '../../../../components/public/LoadingState/loadingState';
 
 // => Swap this for your existing axios instance if the public site already has one
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -10,7 +13,12 @@ export default function SHSCourses() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
+  // => Pulled out of useEffect so the Retry button inside LoadingState can
+  // => re-run this exact fetch, instead of forcing a full page reload
+  const loadCourses = () => {
+    setLoading(true);
+    setError(null);
+
     // => Fetch the public, active SHS course catalog
     fetch(`${API_BASE}/api/public/shs-courses`)
       .then((res) => {
@@ -24,6 +32,10 @@ export default function SHSCourses() {
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    loadCourses();
   }, []);
 
   // => Cuts a description down to a max word count, appending "..." if it was cut
@@ -48,8 +60,17 @@ export default function SHSCourses() {
         <div className="page-hero-rule" />
       </section>
 
-      {loading && <p className="shs-courses-status">Loading courses...</p>}
-      {error && <p className="shs-courses-status shs-courses-error">{error}</p>}
+      {/* => Shared spinner while the fetch is in flight */}
+      {loading && <LoadingState message="Loading courses..." />}
+
+      {/* => Shared error block, Retry re-runs loadCourses instead of reloading the page */}
+      {error && (
+        <LoadingState
+          variant="error"
+          message={error}
+          onRetry={loadCourses}
+        />
+      )}
 
       {!loading && !error && (
         <section className="shs-courses-grid">

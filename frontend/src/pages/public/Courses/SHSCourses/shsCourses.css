@@ -3,16 +3,6 @@
   min-height: 100vh;
 }
 
-.shs-courses-status {
-  text-align: center;
-  padding: 3rem 2rem;
-  color: var(--text-secondary);
-}
-
-.shs-courses-error {
-  color: #f87171;
-}
-
 .shs-courses-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
