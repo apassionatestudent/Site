@@ -67,7 +67,9 @@ export const insertShsEnrollment = async (client, { studentId, body, academicDat
       status,
     ]
   );
-  return result.rows[0].enrollment_id;
+  // => Returns status alongside enrollmentId - the service needs it to
+  // => tell the student their current status in the password-setup email
+  return { enrollmentId: result.rows[0].enrollment_id, status };
 };
 
 // SHS FAMILY MEMBERS

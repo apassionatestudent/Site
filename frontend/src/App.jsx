@@ -31,6 +31,8 @@ import SHSCourseDetail from './components/public/SHSCourseDetail/shsCourseDetail
 import Enroll from './pages/public/Enroll/Enroll.jsx';
 import Contact from './pages/public/Contact/Contact.jsx';
 import Login from './pages/public/Login/Login.jsx';
+import ForgotPassword from './pages/public/ForgotPassword/forgotPassword.jsx';
+import SetPassword from './pages/public/SetPassword/setPassword.jsx';
 import PrivacyPolicy from './pages/public/LegalPolicy/legalPolicy.jsx';
 import FAQs from './pages/public/FAQs/faqs.jsx';
 
@@ -91,6 +93,8 @@ function App() {
           <Route path="/enroll" element={<Enroll />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/set-password" element={<SetPassword />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/faqs" element={<FAQs />} />
           {/* => private / dashboard routes */}

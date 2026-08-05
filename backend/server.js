@@ -1375,6 +1375,24 @@ async function initDB () {
       )
     `;
 
+    // => Single-use, expiring tokens for both new-account password setup
+    //    (purpose 'setup', created right after enrollment) and forgot-
+    //    password resets (purpose 'reset'). token_hash stores a SHA-256
+    //    hash of the raw token, never the raw value itself.
+    await sql`
+      CREATE TABLE IF NOT EXISTS password_setup_tokens (
+        token_id     SERIAL        PRIMARY KEY,
+        student_id   BIGINT        NOT NULL REFERENCES student_accounts(student_id),
+        token_hash   TEXT          NOT NULL,
+        purpose      VARCHAR(20)   NOT NULL DEFAULT 'setup',
+        expires_at   TIMESTAMPTZ   NOT NULL,
+        used_at      TIMESTAMPTZ,
+        created_at   TIMESTAMPTZ   NOT NULL DEFAULT NOW()
+      )
+    `;
+
+    await sql`CREATE INDEX IF NOT EXISTS idx_password_setup_tokens_hash ON password_setup_tokens (token_hash)`;
+
     console.log("Database initialized successfully");
   } catch (error) {
     console.error("Error initializing database:", error);

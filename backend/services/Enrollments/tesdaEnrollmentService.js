@@ -22,6 +22,8 @@ import {
   insertEnrollmentDocuments,
 } from '../../models/Enrollments/tesdaEnrollmentModel.js';
 
+import { issuePasswordToken } from '../passwordTokenService.js';
+
 export const processTesdaEnrollmentSubmission = async (body, files) => {
   // => Parse the JSON blobs sent via FormData
   // => Each step's data is stringified on the frontend before appending to FormData
@@ -91,7 +93,9 @@ export const processTesdaEnrollmentSubmission = async (body, files) => {
     await insertStudentGuardian(client, { studentId, body });
 
     // => 5. Core enrollment record (Step 4 + Step 5)
-    const enrollmentId = await insertTesdaEnrollment(client, {
+    // => status returned alongside enrollmentId - needed below so the
+    // => password-setup email reflects the real assigned status
+    const { enrollmentId, status } = await insertTesdaEnrollment(client, {
       studentId,
       courseData,
       ncaeData,
@@ -111,6 +115,16 @@ export const processTesdaEnrollmentSubmission = async (body, files) => {
     await insertEnrollmentDocuments(client, { enrollmentId, docs });
 
     await client.query('COMMIT');
+
+    // => Password setup email fires AFTER commit, wrapped in its own
+    // => try/catch so a Resend or token-table failure never turns a
+    // => successful enrollment into a 500 response for the student
+    try {
+      await issuePasswordToken({ studentId, email: body.email, purpose: 'setup', enrollmentStatus: status });
+    } catch (emailErr) {
+      console.error('Password setup email failed to send:', emailErr);
+    }
+
     return { enrollmentId };
 
   } catch (err) {

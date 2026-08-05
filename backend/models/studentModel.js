@@ -45,6 +45,17 @@ export const Student = {
         `;
     },
 
+    // => Sets password_hash for a student who previously had none (post-
+    // => enrollment setup) or is overwriting an existing one (forgot-password
+    // => reset). Called by passwordTokenService.js after a token is validated.
+    setPassword: async (student_id, password_hash) => {
+        await sql`
+            UPDATE student_accounts
+            SET password_hash = ${password_hash}
+            WHERE student_id = ${student_id}
+        `;
+    },
+
     // => Deactivate a student account (admin action)
     deactivate: async (student_id) => {
         const result = await sql`
