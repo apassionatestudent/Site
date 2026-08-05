@@ -39,7 +39,13 @@ export const csrfProtection = (req, res, next) => {
     // => Register/login/logout are exempt - no token can exist yet for
     // => register/login (this is where one gets issued), and logout is
     // => protected instead by invalidating the token server-side
-    const exemptRoutes = ['/api/student-auth/register', '/api/student-auth/login', '/api/student-auth/logout'];
+    const exemptRoutes = [
+        '/api/student-auth/register',
+        '/api/student-auth/login',
+        '/api/student-auth/logout',
+        '/api/student-auth/forgot-password',
+        '/api/student-auth/set-password',
+    ];
     if (exemptRoutes.includes(req.path)) {
         return next();
     }

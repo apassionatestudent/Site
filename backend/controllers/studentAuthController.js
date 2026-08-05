@@ -6,9 +6,8 @@ import { Student } from '../models/studentModel.js';
 // => responsibility - mirrors adminAuthController.js's pattern exactly
 import { generateCsrfToken, invalidateCsrfToken } from '../middleware/studentCsrf.js';
 
-// => for sending login notification emails and such
-import { sendEmail } from '../utils/sendEmail.js';
-import { loginNotificationTemplate } from '../utils/emailTemplates.js';
+// => for issuing/consuming password setup & reset tokens
+import { issuePasswordToken, consumePasswordToken } from '../services/passwordTokenService.js';
 
 // => Cookie options for security
 const cookieOptions = {
@@ -102,16 +101,6 @@ export const loginStudent = async (req, res) => {
         // => Update last_login_at on successful login
         await Student.updateLastLogin(student.student_id);
 
-        // => Send login notification email to the student
-        // => Runs after login succeeds - failure won't affect the login response
-        const { subject, html } = loginNotificationTemplate({
-            username: student.username,
-            loginTime: new Date().toLocaleString('en-PH', { timeZone: 'Asia/Manila' }),
-        });
-        sendEmail({ to: student.username, subject, html });
-        // => Note: not awaited intentionally - email sending runs in the background
-        // => so a slow email server never delays the login response to the student
-
         // => cookie duration depends on whether the student chose "Remember Me"
         const loginCookieOptions = rememberMe
             ? cookieOptions  // => 30 days if "Remember Me" was checked
@@ -160,4 +149,60 @@ export const logoutStudent = (req, res) => {
 export const getMe = (req, res) => {
     // => req.student is attached by the protectStudent middleware
     return res.status(200).json({ student: req.student });
+};
+
+// => POST /api/student-auth/forgot-password
+// => Always returns a generic success message regardless of whether the
+// => email exists - revealing which emails are registered is a user
+// => enumeration risk. If found and active, a 'reset' token is emailed.
+export const requestPasswordReset = async (req, res) => {
+    const { email } = req.body;
+
+    if (!email || !email.trim()) {
+        return res.status(400).json({ message: 'Please provide your email address.' });
+    }
+
+    try {
+        const student = await Student.findByUsername(email);
+
+        if (student && student.is_active) {
+            try {
+                await issuePasswordToken({ studentId: student.student_id, email: student.username, purpose: 'reset' });
+            } catch (err) {
+                // => Logged, not surfaced - the response stays generic either way
+                console.error('Password reset email failed to send:', err);
+            }
+        }
+
+        return res.status(200).json({
+            message: 'If an account exists for that email, a password reset link has been sent.',
+        });
+
+    } catch (error) {
+        console.error('Request password reset error:', error);
+        return res.status(500).json({ message: 'Server error' });
+    }
+};
+
+// => POST /api/student-auth/set-password
+// => Shared by BOTH the post-enrollment setup link and the forgot-password
+// => reset link - consumePasswordToken doesn't care which purpose issued
+// => the token, it just validates and burns it
+export const setPassword = async (req, res) => {
+    const { token, password } = req.body;
+
+    if (!password || password.length < 8) {
+        return res.status(400).json({ message: 'Password must be at least 8 characters long.' });
+    }
+
+    try {
+        await consumePasswordToken({ rawToken: token, newPassword: password });
+        return res.status(200).json({ message: 'Password set successfully. You may now log in.' });
+
+    } catch (err) {
+        const statusCode = err.statusCode || 500;
+        return res.status(statusCode).json({
+            message: statusCode === 400 ? err.message : 'Server error while setting your password.',
+        });
+    }
 };

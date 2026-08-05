@@ -17,6 +17,8 @@ import {
   findClusterNameById,
 } from '../../models/Enrollments/shsEnrollmentModel.js';
 
+import { issuePasswordToken } from '../passwordTokenService.js';
+
 export const processShsEnrollmentSubmission = async (body, files) => {
   // => Parse the JSON blobs sent via FormData - same pattern as processTesdaEnrollmentSubmission
   const academicData  = JSON.parse(body.academicData); // => Step 2: school info, track/cluster
@@ -104,7 +106,9 @@ export const processShsEnrollmentSubmission = async (body, files) => {
     await insertStudentAddress(client, { studentId, body });
 
     // => 4. Core SHS enrollment record (academic + track/cluster + emergency + health)
-    const enrollmentId = await insertShsEnrollment(client, { studentId, body, academicData, familyData, clusterName });
+    // => status returned alongside enrollmentId - needed below so the
+    // => password-setup email reflects the real assigned status
+    const { enrollmentId, status } = await insertShsEnrollment(client, { studentId, body, academicData, familyData, clusterName });
 
     // => 5. Family members - one row each for whichever of Father/Mother/
     // => Guardian were provided. The DEFERRED constraint trigger on
@@ -116,6 +120,16 @@ export const processShsEnrollmentSubmission = async (body, files) => {
     await insertShsDocuments(client, { enrollmentId, docs });
 
     await client.query('COMMIT');
+
+    // => Password setup email fires AFTER commit, wrapped in its own
+    // => try/catch so a Resend or token-table failure never turns a
+    // => successful enrollment into a 500 response for the student
+    try {
+      await issuePasswordToken({ studentId, email: body.email, purpose: 'setup', enrollmentStatus: status });
+    } catch (emailErr) {
+      console.error('Password setup email failed to send:', emailErr);
+    }
+
     return { enrollmentId };
 
   } catch (err) {
