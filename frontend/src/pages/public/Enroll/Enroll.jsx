@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './Enroll.css';
 
 import TESDAStep1 from '../../../components/public/TESDA/TESDAStep1';
@@ -10,10 +11,17 @@ import SHSStep1 from '../../../components/public/SHS/SHSStep1';
 import SHSStep2 from '../../../components/public/SHS/SHSStep2';
 import SHSStep3 from '../../../components/public/SHS/SHSStep3';
 
+import InformationModal from '../../../components/InformationModal/informationModal';
+
 
 const Enroll = () => {
+const navigate = useNavigate();
+
 // => Controls which enrollment type the user selected: null | 'shs' | 'tesda'
 const [enrollType, setEnrollType] = useState(null);
+
+// => Shows the post-submission "next steps" modal, replaces the old alert()
+const [showInfoModal, setShowInfoModal] = useState(false);
 
 // => TESDA multi-step state: tracks which of the 7 pages is active
 const [tesdaStep, setTesdaStep] = useState(1);
@@ -184,6 +192,115 @@ const [shsPrivacy, setShsPrivacy] = useState({
   agreed: false,
 });
 
+// => Clears every field back to its initial blank state - called once the
+// => user dismisses the post-submission modal, so a second visit to /enroll
+// => never shows leftover data from a submission that already went through
+const resetAllForms = () => {
+  setEnrollType(null);
+
+  setTesdaStep(1);
+  setTesdaProfile({
+    lastName: '',
+    nameExtension: 'N/A',
+    firstName: '',
+    middleName: '',
+    street: '',
+    barangay: '',
+    district: '',
+    city: '',
+    province: '',
+    region: '',
+    email: '',
+    facebookLink: '',
+    contactNo: '',
+    nationality: 'Filipino',
+  });
+  setTesdaPersonal({
+    sex: '',
+    civilStatus: '',
+    employmentStatus: '',
+    birthMonth: '',
+    birthDay: '',
+    birthYear: '',
+    birthplaceCity: '',
+    birthplaceProvince: '',
+    birthplaceRegion: '',
+    educAttainment: '',
+    guardianName: '',
+    guardianAddress: '',
+    guardianContactNo: '',
+  });
+  setTesdaClassifications([]);
+  setTesdaOthersText('');
+  setTesdaNcae({ takenBefore: '', where: '', when: '' });
+  setTesdaCourse({ sector: '', course: '', courseFee: '', courseClass: '' });
+  setTesdaFiles({ birthCert: null, schoolDoc: null, validId: null });
+  setTesdaScholarship({ isScholar: '', scholarshipType: '', otherScholarship: '' });
+  setTesdaPrivacy({ agreed: false });
+
+  setShsStep(1);
+  setShsProfile({
+    lrn: '',
+    lastName: '',
+    firstName: '',
+    middleName: '',
+    suffix: 'N/A',
+    sex: '',
+    birthMonth: '',
+    birthDay: '',
+    birthYear: '',
+    birthplaceRegion: '',
+    birthplaceProvince: '',
+    birthplaceCity: '',
+    citizenship: 'Filipino',
+    religion: '',
+    religionOthers: '',
+    region: '',
+    province: '',
+    city: '',
+    barangay: '',
+    district: '',
+    street: '',
+    contactNo: '',
+    facebookLink: '',
+    email: '',
+  });
+  setShsAcademic({
+    lastSchoolAttended: '',
+    schoolAddress: '',
+    gradeLevelCompleted: '',
+    schoolYearCompleted: '',
+    track: 'technical professional',
+    cluster: '',
+    electives: '',
+    class: '',
+  });
+  setShsDocuments({
+    psaBirthCertificate: null,
+    grade10ReportCard: null,
+    goodMoralCertificate: null,
+    escCertificate: null,
+  });
+  setShsFamily({
+    fatherName: '', fatherOccupation: '', fatherContactNo: '',
+    motherName: '', motherOccupation: '', motherContactNo: '',
+    guardianName: '', guardianOccupation: '', guardianRelationship: '', guardianContactNo: '',
+    emergencyName: '', emergencyRelationship: '', emergencyContactNo: '', emergencyAddress: '',
+    hasMedicalCondition: '',
+    medicalConditionDetail: '',
+    allergies: '',
+    maintenanceMedication: '',
+  });
+  setShsPrivacy({ agreed: false });
+};
+
+// => Fires when the info modal's countdown finishes and the user closes it
+const handleInfoModalClose = () => {
+  setShowInfoModal(false);
+  resetAllForms();
+  navigate('/login');
+};
+
 // => SHS navigation helpers - same shape as tesdaGoNext/tesdaGoBack
 const shsGoNext = () => {
   setShsStep(prev => Math.min(prev + 1, 3));
@@ -228,7 +345,7 @@ const handleShsSubmit = async () => {
     const result = await res.json();
     console.log('SHS enrollment submitted:', result);
 
-    alert('Enrollment submitted successfully!');
+    setShowInfoModal(true);
   } catch (err) {
     console.error('SHS submission failed:', err);
     alert('Submission failed. Please try again.');
@@ -300,8 +417,7 @@ const handleTesdaSubmit = async () => {
     const result = await res.json();
     console.log('Enrollment submitted:', result);
 
-    // => alert popup for now as of 01JUN26
-    alert('Enrollment submitted successfully!');
+    setShowInfoModal(true);
   } catch (err) {
     console.error('Submission failed:', err);
     alert('Submission failed. Please try again.');
@@ -505,6 +621,13 @@ const handleTesdaSubmit = async () => {
 
         </div>
       )}
+
+      {/* => Shared for both TESDA and SHS - the mockup steps inside
+           InformationModal are generic enough to cover either flow for now */}
+      <InformationModal
+        isOpen={showInfoModal}
+        onClose={handleInfoModalClose}
+      />
     </>
   );
 };
