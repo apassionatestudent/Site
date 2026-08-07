@@ -146,7 +146,7 @@ function Enrollment() {
                       <>
                         <p className="enroll-card-course">
                           {enrollment.track}
-                          {enrollment.cluster ? ` – ${enrollment.cluster}` : ''}
+                          {enrollment.cluster ? ` - ${enrollment.cluster}` : ''}
                         </p>
                         <p className="enroll-card-sector">
                           {enrollment.last_school_attended ?? '-'}

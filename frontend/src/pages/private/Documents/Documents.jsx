@@ -139,7 +139,7 @@ function Documents() {
                           {doc.enrollment_type === 'SHS' ? (
                             doc.track && (
                               <p className="docs-card-course">
-                                {doc.track}{doc.cluster ? ` – ${doc.cluster}` : ''}
+                                {doc.track}{doc.cluster ? ` - ${doc.cluster}` : ''}
                               </p>
                             )
                           ) : (
