@@ -224,26 +224,6 @@
   letter-spacing: 0.06em;
 }
 
-.footer-legal-links {
-  display: flex;
-  gap: 20px;
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.footer-legal-links li a {
-  font-size: 14px;
-  color: var(--footer-legal-color);
-  text-decoration: none;
-  letter-spacing: 0.06em;
-  transition: color 0.2s ease;
-}
-
-.footer-legal-links li a:hover {
-  color: var(--footer-legal-hover);
-}
-
 /* => RWD  */
 @media (max-width: 768px) {
   .footer-inner {

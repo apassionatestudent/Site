@@ -150,7 +150,7 @@ function DocumentDetail() {
                 detail.track && (
                   <p className="doc-detail-sub">
                     {detail.track}
-                    {detail.cluster ? ` – ${detail.cluster}` : ''}
+                    {detail.cluster ? ` - ${detail.cluster}` : ''}
                   </p>
                 )
               ) : (

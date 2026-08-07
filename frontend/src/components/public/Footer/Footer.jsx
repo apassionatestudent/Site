@@ -50,11 +50,8 @@ const YouTubeIcon = () => (
 
 // => Socials config 
 const SOCIALS = [
-  { label: 'Facebook',  href: 'https://facebook.com',  Icon: FacebookIcon  },
-  { label: 'Instagram', href: 'https://instagram.com', Icon: InstagramIcon },
-  { label: 'LinkedIn',  href: 'https://linkedin.com',  Icon: LinkedInIcon  },
-  { label: 'Twitter/X', href: 'https://x.com',         Icon: TwitterIcon   },
-  { label: 'YouTube',   href: 'https://youtube.com',   Icon: YouTubeIcon   },
+  { label: 'Facebook',  href: 'https://web.facebook.com/3APrimeHospitalityandTrainingInc',  Icon: FacebookIcon  },
+  { label: 'Instagram', href: 'https://www.instagram.com/3a_primehospitality/', Icon: InstagramIcon },
 ];
 
 // => iframe src for Google Map embed to allow map pinpointing and direction
@@ -97,6 +94,7 @@ export default function Footer() {
           <div className="footer-section">
             <p className="footer-section-title">Quick Links</p>
             <ul className="footer-links">
+              <li><a href="/termsandconditions">Terms and Conditions</a></li>
               <li><a href="/privacy-policy">Privacy Policy</a></li>
               <li><a href="/faqs">FAQs</a></li>
             </ul>
@@ -116,8 +114,8 @@ export default function Footer() {
           <div className="footer-section">
             <p className="footer-section-title">Business Hours</p>
             <p className="footer-detail-text">
-              <strong>Mon – Sat</strong>&ensp;8:00 AM – 5:00 PM<br />
-              <strong>Sunday</strong>&ensp;Closed
+              <strong>Monday - Friday</strong>&ensp;8:00 AM - 5:00 PM<br />
+              <strong>Saturday - Sunday</strong>&ensp;Closed
             </p>
           </div>
 
@@ -125,21 +123,13 @@ export default function Footer() {
           <div className="footer-section">
             <p className="footer-section-title">Contact Us</p>
             <div className="footer-contacts">
-              <a href="tel:+6332XXXXXXX" className="footer-contact-item">
+              <a href="tel:+639918367021" className="footer-contact-item">
                 <PhoneIcon />
-                +63 32 XXX XXXX
+                +63 991 836 7021
               </a>
-              <a href="tel:+639XXXXXXXXX" className="footer-contact-item">
-                <PhoneIcon />
-                +63 9XX XXX XXXX
-              </a>
-              <a href="mailto:info@3aprime.com.ph" className="footer-contact-item">
+              <a href="mailto:info@ricson-capston.online" className="footer-contact-item">
                 <MailIcon />
-                info@3aprime.com.ph
-              </a>
-              <a href="mailto:admissions@3aprime.com.ph" className="footer-contact-item">
-                <MailIcon />
-                admissions@3aprime.com.ph
+                info@ricson-capston.online
               </a>
             </div>
           </div>
@@ -171,10 +161,6 @@ export default function Footer() {
         <span className="footer-copyright">
           © {new Date().getFullYear()} 3A Prime Hospitality Training and Assessment Center Inc. All rights reserved.
         </span>
-        <ul className="footer-legal-links">
-          <li><a href="/privacy-policy">Privacy Policy</a></li>
-          <li><a href="/sitemap">Sitemap</a></li>
-        </ul>
       </div>
     </footer>
   );

@@ -109,7 +109,7 @@ function SHSEnrollmentDetail() {
               <span className="enroll-detail-type-tag type--shs">SHS</span>
               <h2 className="enroll-detail-title">
                 {detail.track}
-                {detail.cluster ? ` – ${detail.cluster}` : ''}
+                {detail.cluster ? ` - ${detail.cluster}` : ''}
               </h2>
               <p className="enroll-detail-sub">
                 {detail.last_school_attended ?? '-'}
@@ -243,7 +243,7 @@ function SHSEnrollmentDetail() {
               => student will take under their chosen cluster, resolved
               => server-side via shs_clusters -> shs_courses */}
           <p className="enroll-detail-section-title">
-            Cluster Curriculum{detail.cluster_name ? ` – ${detail.cluster_name}` : ''}
+            Cluster Curriculum{detail.cluster_name ? ` - ${detail.cluster_name}` : ''}
           </p>
 
           {Array.isArray(detail.cluster_courses) && detail.cluster_courses.length > 0 ? (
