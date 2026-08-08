@@ -1329,7 +1329,6 @@ async function initDB () {
         public_id        UUID          NOT NULL DEFAULT gen_random_uuid() UNIQUE,
 
         full_name        VARCHAR(150)  NOT NULL,
-        contact_number   VARCHAR(20)   NOT NULL,
         email            VARCHAR(255)  NOT NULL,
 
         concern_type     VARCHAR(50)   NOT NULL CHECK (concern_type IN (
