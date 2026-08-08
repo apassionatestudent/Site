@@ -49,7 +49,8 @@ export class ValidationError extends Error {
 }
 
 // => Validation now lives here in the service instead of a middleware file
-function validateTicketPayload({ fullName, contactNumber, email, concernType, concern }) {
+// => contactNumber removed - public tickets are anonymous, email alone is enough to respond
+function validateTicketPayload({ fullName, email, concernType, concern }) {
   if (!fullName || !fullName.trim()) {
     throw new ValidationError("Full name is required.");
   }
@@ -60,13 +61,7 @@ function validateTicketPayload({ fullName, contactNumber, email, concernType, co
     throw new ValidationError("Full name is too long, please shorten it to 150 characters or fewer.");
   }
 
-  if (!contactNumber || !contactNumber.trim()) {
-    throw new ValidationError("Contact number is required.");
-  }
-
-  if (!/^09\d{9}$/.test(contactNumber.trim())) {
-    throw new ValidationError("Contact number must start with 09 and be exactly 11 digits.");
-  }
+  
 
   if (!email || !email.trim()) {
     throw new ValidationError("Email is required.");
@@ -102,7 +97,6 @@ export async function submitPublicSupportTicket(payload) {
 
   const cleaned = {
     fullName: payload.fullName.trim(),
-    contactNumber: payload.contactNumber.trim(),
     email: payload.email.trim().toLowerCase(),
     concernType: payload.concernType.trim(),
     concern: payload.concern.trim(),

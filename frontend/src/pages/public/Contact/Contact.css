@@ -1,5 +1,5 @@
 .contact {
-  color: #fff;
+  color: var(--text-primary);
   min-height: 100vh;
 }
 
@@ -46,17 +46,18 @@
 }
 
 .contact-card {
-  background: #111;
-  border: 1px solid #222;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
   border-radius: 1rem;
   padding: 2rem;
   text-align: center;
-  transition: border-color 0.3s, transform 0.3s;
+  transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
 }
 
 .contact-card:hover {
-  border-color: #660911;
+  border-color: var(--card-border-hover);
   transform: translateY(-4px);
+  box-shadow: var(--card-glow);
 }
 
 .contact-icon {
@@ -68,11 +69,33 @@
   font-size: 1.1rem;
   font-weight: 700;
   margin-bottom: 0.75rem;
-  color: #ff6b7a;
+  color: var(--accent-span);
 }
 
 .contact-card p {
-  color: #888;
+  color: var(--card-p);
   font-size: 0.9rem;
   line-height: 1.8;
+}
+
+
+.contact-icon-img {
+  width: 2.5rem;
+  height: 2.5rem;
+  margin-bottom: 1rem;
+  object-fit: contain;
+}
+
+/* => Style the FAQ link with the site's accent color instead of the browser's default purple/violet */
+.contact-card a {
+  color: var(--accent-span);
+  text-decoration: underline;
+}
+
+.contact-card a:visited {
+  color: var(--accent-span);
+}
+
+.contact-card a:hover {
+  color: var(--accent-hover);
 }

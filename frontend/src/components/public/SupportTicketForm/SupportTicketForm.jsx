@@ -23,14 +23,6 @@ const toTitleCase = (value) => {
     .replace(/(^\w|(?<=[\s\-])\w)/g, (c) => c.toUpperCase()); // => Capitalize after space or hyphen
 };
 
-// => Validates Philippine mobile number, same rule as TESDAStep1.jsx
-// => Must start with '09' and be exactly 11 digits
-const validateMobile = (value) => {
-  if (!value) return 'Contact number is required.';
-  if (!/^09\d{9}$/.test(value)) return 'Must start with 09 and be exactly 11 digits.';
-  return null;
-};
-
 // => Broad email format check, identical regex to TESDAStep1.jsx / SHSStep1.jsx
 // => so all support ticket + enrollment forms enforce identically
 const EMAIL_REGEX = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
@@ -42,7 +34,6 @@ const validateEmail = (value) => {
 
 const INITIAL_FORM = {
   fullName: '',
-  contactNumber: '',
   email: '',
   concernType: '',
   concern: '',
@@ -55,7 +46,6 @@ export default function SupportTicketForm() {
   const [errorMessage, setErrorMessage] = useState('');
 
   // => Inline field-level errors, same pattern as TESDAStep1.jsx
-  const [contactError, setContactError] = useState('');
   const [emailError, setEmailError] = useState('');
 
   // => Generic handler for fields with no restriction (concernType, concern)
@@ -69,13 +59,6 @@ export default function SupportTicketForm() {
     setForm((prev) => ({ ...prev, fullName: toTitleCase(e.target.value) }));
   };
 
-  // => Contact number: strip non-digits, cap at 11 digits, validate 09 prefix as typed
-  const handleContactNumberChange = (e) => {
-    const raw = e.target.value.replace(/\D/g, '').slice(0, 11);
-    setForm((prev) => ({ ...prev, contactNumber: raw }));
-    setContactError(validateMobile(raw) || '');
-  };
-
   // => Email: no character restriction (would block valid addresses), just live validation
   const handleEmailChange = (e) => {
     const value = e.target.value;
@@ -87,13 +70,11 @@ export default function SupportTicketForm() {
     e.preventDefault();
     setErrorMessage('');
 
-    // => Re-check both restricted fields on submit in case the user never blurred them
-    const contactCheck = validateMobile(form.contactNumber);
+    // => Re-check the restricted field on submit in case the user never blurred it
     const emailCheck = validateEmail(form.email);
-    setContactError(contactCheck || '');
     setEmailError(emailCheck || '');
 
-    if (contactCheck || emailCheck) {
+    if (emailCheck) {
       setErrorMessage('Please correct the errors above before submitting.');
       return;
     }
@@ -147,7 +128,7 @@ export default function SupportTicketForm() {
           />
         </div>
 
-        <div className="support-ticket-field">
+        <div className="support-ticket-field support-ticket-field-full">
           <label htmlFor="email">Email Address</label>
           <input
             id="email"
@@ -160,22 +141,6 @@ export default function SupportTicketForm() {
             required
           />
           {emailError && <span className="support-ticket-inline-error">{emailError}</span>}
-        </div>
-
-        <div className="support-ticket-field">
-          <label htmlFor="contactNumber">Contact Number</label>
-          <input
-            id="contactNumber"
-            name="contactNumber"
-            type="tel"
-            placeholder="e.g. 09XXXXXXXXX"
-            className={contactError ? 'support-ticket-input--error' : ''}
-            value={form.contactNumber}
-            maxLength={11}
-            onChange={handleContactNumberChange}
-            required
-          />
-          {contactError && <span className="support-ticket-inline-error">{contactError}</span>}
         </div>
 
         <div className="support-ticket-field support-ticket-field-full">
