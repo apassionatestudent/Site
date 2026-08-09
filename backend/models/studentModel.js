@@ -26,6 +26,18 @@ export const Student = {
         return result.rows[0] || null;
     },
 
+    // => Fetches just the display name fields from student_profile for a given student_id
+    // => Used by getMe so the Sidebar (and anywhere else) can show the student's actual name
+    // => without pulling the full Account Settings payload (address, employment, etc.)
+    findNameById: async (student_id) => {
+        const result = await sql`
+            SELECT first_name, middle_name, last_name, name_extension
+            FROM student_profile
+            WHERE student_id = ${student_id}
+        `;
+        return result.rows[0] || null;
+    },
+
     // => Create a new student account
     create: async (username, password_hash) => {
         const result = await sql`

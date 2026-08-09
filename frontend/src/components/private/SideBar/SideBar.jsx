@@ -16,6 +16,7 @@ import DefaultAvatar from "../../../assets/icons/default-avatar.png";
 import Payments from "../../../assets/icons/payments.png";
 import Site from "../../../assets/icons/site.png";
 
+
 /*
   Sidebar converted to use NavLink (React Router v6+).
   - Each nav item uses NavLink so routing and active state come from react-router.
