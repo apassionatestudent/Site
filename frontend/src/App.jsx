@@ -1,7 +1,10 @@
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import './App.css'
 
 import { Toaster } from "react-hot-toast";
+// => reuses the same axios instance Sidebar already uses for logout
+import axiosStudent from './utils/axiosStudent';
 
 // => import public components
 import NavBar from './components/public/Navbar/NavBar.jsx';
@@ -72,13 +75,36 @@ function App() {
 const isLoggedIn =
   localStorage.getItem('isLoggedIn') === 'true' ||
   sessionStorage.getItem('isLoggedIn') === 'true';
-  
+
+  // => Holds the logged-in student's display name for the Sidebar
+  const [studentName, setStudentName] = useState('Student Name');
+
+  // => Fetches the student's own profile once per login session
+  // => Runs only when logged in, since /me is a protected route
+  useEffect(() => {
+    if (!isLoggedIn) return;
+
+    const fetchStudentName = async () => {
+      try {
+        const res = await axiosStudent.get('/student-auth/me');
+        // => Falls back to the default if full_name comes back null
+        if (res.data?.student?.full_name) {
+          setStudentName(res.data.student.full_name);
+        }
+      } catch (error) {
+        console.error('Failed to fetch student profile for Sidebar:', error);
+      }
+    };
+
+    fetchStudentName();
+  }, [isLoggedIn]);
+
   return (
     <div className="app-shell">
       {/* => show public NavBar only on public pages */}
       {!isDashboard && <NavBar isLoggedIn={isLoggedIn} />}
       {/* => show Sidebar only on dashboard pages */}
-      {isDashboard && <Sidebar />}
+      {isDashboard && <Sidebar profileName={studentName} />}
       <main className={isDashboard ? 'app-main app-main-dashboard' : 'app-main'}>
         <Routes>
           {/* => public routes */}

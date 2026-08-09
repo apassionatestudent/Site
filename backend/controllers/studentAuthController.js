@@ -145,10 +145,30 @@ export const logoutStudent = (req, res) => {
 };
 
 // => GET /api/student-auth/me
-// => Returns the currently logged-in student's info from the JWT token
-export const getMe = (req, res) => {
-    // => req.student is attached by the protectStudent middleware
-    return res.status(200).json({ student: req.student });
+// => Returns the currently logged-in student's info from the JWT token,
+// => plus their display name, so the frontend has everything it needs
+// => to render things like the Sidebar without a second request
+export const getMe = async (req, res) => {
+    try {
+        // => req.student is attached by the protectStudent middleware
+        const nameRow = await Student.findNameById(req.student.student_id);
+
+        // => Builds "First Last" for display - falls back gracefully if
+        // => the profile row is somehow missing (should not happen post-enrollment)
+        const fullName = nameRow
+            ? [nameRow.first_name, nameRow.last_name].filter(Boolean).join(' ')
+            : null;
+
+        return res.status(200).json({
+            student: {
+                ...req.student,
+                full_name: fullName,
+            },
+        });
+    } catch (error) {
+        console.error('getMe error:', error);
+        return res.status(500).json({ message: 'Server error' });
+    }
 };
 
 // => POST /api/student-auth/forgot-password
