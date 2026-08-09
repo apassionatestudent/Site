@@ -29,7 +29,7 @@ import Site from "../../../assets/icons/site.png";
 // => announcements and back-to-site need end:true since their paths are prefixes of every other route
 // => classes/enrollment/documents/payments must stay unmarked (prefix match) so nested detail routes keep the parent highlighted
 const NAV_ITEMS = [
-  { id: "announcements", label: "Announcements", icon: AnnouncementsIcon, to: "dashboard/", end: true },
+  { id: "announcements", label: "Announcements", icon: AnnouncementsIcon, to: "/dashboard", end: true },
   { id: "account",       label: "Account",       icon: AccountIcon,       to: "dashboard/account" },
   { id: "enrollment",    label: "Enrollment",    icon: EnrollmentIcon,    to: "dashboard/enrollment" },
   { id: "documents",     label: "Documents",     icon: DocumentsIcon,     to: "dashboard/documents" },
