@@ -68,7 +68,10 @@ function App() {
     location.pathname.startsWith(route)
   );
 
-  const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+  // => checks both storage types so this matches the dashboard route's login check
+const isLoggedIn =
+  localStorage.getItem('isLoggedIn') === 'true' ||
+  sessionStorage.getItem('isLoggedIn') === 'true';
   
   return (
     <div className="app-shell">
@@ -90,7 +93,15 @@ function App() {
           <Route path="/courses/shs" element={<SHSCourses />} />
           <Route path="/courses/shs/:title" element={<SHSCourseDetail />} />
 
-          <Route path="/enroll" element={<Enroll />} />
+          {/* => Enroll page is for new applicants only, already-enrolled students get redirected to their dashboard */}
+          <Route
+            path="/enroll"
+            element={
+              isLoggedIn
+                ? <Navigate to="/dashboard/enrollment" replace />
+                : <Enroll />
+            }
+          />
           <Route path="/contact" element={<Contact />} />
           <Route path="/login" element={<Login />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />

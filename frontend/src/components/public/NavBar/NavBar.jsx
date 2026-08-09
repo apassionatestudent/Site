@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, NavLink } from 'react-router-dom';
+import { Link, NavLink, useLocation } from 'react-router-dom';
 import ThemeToggle from "../../ThemeToggle"; // => day/night mode toggle button
 import './NavBar.css';
 import homeIcon from '../../../assets/icons/home.png';
@@ -8,11 +8,13 @@ import coursesIcon from '../../../assets/icons/courses.png';
 import enrollIcon from '../../../assets/icons/enroll.png';
 import contactIcon from '../../../assets/icons/contact.png';
 import loginIcon from '../../../assets/icons/login.png';
+import dashboardIcon from '../../../assets/icons/dashboard.png';
 
 // => receives isLoggedIn from App.jsx to conditionally render login or dashboard link || {isLoggedIn }
 const NavBar = (  ) => {
   const [isOpen, setIsOpen] = useState(false);
   const toggleMenu = () => setIsOpen(!isOpen);
+  const location = useLocation(); // => needed to also treat root path "/" as the Home link
 
   const isLoggedIn = 
   localStorage.getItem('isLoggedIn') === 'true' || 
@@ -28,10 +30,21 @@ const NavBar = (  ) => {
       </div>
       <div className={`nav-right ${isOpen ? 'active' : ''}`}>
         <ul className="nav-links">
-          <li><NavLink to="/home"><img src={homeIcon} alt="Home" className="nav-icon" /> Home</NavLink></li>
+          {/* => className overrides NavLink's default matching so root path "/" also counts as Home being active */}
+          <li>
+            <NavLink
+              to="/home"
+              className={({ isActive }) => (isActive || location.pathname === '/') ? 'active' : ''}
+            >
+              <img src={homeIcon} alt="Home" className="nav-icon" /> Home
+            </NavLink>
+          </li>
           <li><NavLink to="/about"><img src={aboutIcon} alt="About" className="nav-icon" /> About</NavLink></li>
           <li><NavLink to="/courses"><img src={coursesIcon} alt="Courses" className="nav-icon" /> Courses</NavLink></li>
-          <li><NavLink to="/enroll"><img src={enrollIcon} alt="Enroll" className="nav-icon" /> Enroll</NavLink></li>
+          {/* => only show Enroll link to visitors who are not logged in yet */}
+          {!isLoggedIn && (
+            <li><NavLink to="/enroll"><img src={enrollIcon} alt="Enroll" className="nav-icon" /> Enroll</NavLink></li>
+          )}
           <li><NavLink to="/contact"><img src={contactIcon} alt="Contact" className="nav-icon" /> Contact</NavLink></li>
           <li>
             {/* => swap login link to dashboard when student is already logged in */}
@@ -40,8 +53,8 @@ const NavBar = (  ) => {
               {isLoggedIn ? 'Dashboard' : 'Login'}
             </NavLink> */}
             {isLoggedIn 
-              ? <NavLink to="/dashboard">Dashboard</NavLink>
-              : <NavLink to="/login">Login</NavLink>
+              ? <NavLink to="/dashboard"><img src={dashboardIcon} alt="Dashboard" className="nav-icon" /> Dashboard</NavLink>
+              : <NavLink to="/login"><img src={loginIcon} alt="Login" className="nav-icon" /> Login</NavLink>
             }
           </li>
           <li className="theme-item">
