@@ -348,7 +348,7 @@ const Account = () => {
           <h2 className="acct-card-title">Personal Information</h2>
         </div>
         <p className="acct-locked-note">
-          These details are tied to your submitted PSA birth certificate and cannot be edited
+          These details are tied to your submitted documents and cannot be edited
           here. To request a correction, please submit a support ticket for our office to assist you.
         </p>
 
@@ -593,18 +593,20 @@ const Account = () => {
         <h2 className="acct-card-title">Change Password</h2>
 
         <form onSubmit={handlePasswordSubmit}>
-          <div className="acct-field-group">
-            <label className="acct-label">Current Password <span className="acct-req">*</span></label>
-            <input
-              type="password"
-              className="acct-input"
-              value={passwordForm.currentPassword}
-              onChange={(e) => setPasswordForm(prev => ({ ...prev, currentPassword: e.target.value }))}
-              required
-            />
-          </div>
+          {/* => All three password fields now share one row, matching the
+              => Admin Dashboard's one-line layout for this section */}
+          <div className="acct-grid acct-g3">
+            <div className="acct-field-group">
+              <label className="acct-label">Current Password <span className="acct-req">*</span></label>
+              <input
+                type="password"
+                className="acct-input"
+                value={passwordForm.currentPassword}
+                onChange={(e) => setPasswordForm(prev => ({ ...prev, currentPassword: e.target.value }))}
+                required
+              />
+            </div>
 
-          <div className="acct-grid acct-g2">
             <div className="acct-field-group">
               <label className="acct-label">New Password <span className="acct-req">*</span></label>
               <input
@@ -616,6 +618,7 @@ const Account = () => {
                 required
               />
             </div>
+
             <div className="acct-field-group">
               <label className="acct-label">Confirm New Password <span className="acct-req">*</span></label>
               <input
