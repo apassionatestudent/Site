@@ -51,7 +51,10 @@ const NavBar = (  ) => {
           {!isLoggedIn && (
             <li><NavLink to="/enroll"><img src={enrollIcon} alt="Enroll" className="nav-icon" /> Enroll</NavLink></li>
           )}
-          <li><NavLink to="/contact"><img src={contactIcon} alt="Contact" className="nav-icon" /> Contact</NavLink></li>
+          {/* => only show Contact link to visitors who are not logged in yet, logged-in students use Support Tickets instead */}
+          {!isLoggedIn && (
+            <li><NavLink to="/contact"><img src={contactIcon} alt="Contact" className="nav-icon" /> Contact</NavLink></li>
+          )}
           <li>
             {/* => swap login link to dashboard when student is already logged in */}
             {/* <NavLink to={isLoggedIn ? '/dashboard' : '/login'}>
