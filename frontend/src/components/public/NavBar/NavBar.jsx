@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import ThemeToggle from "../../ThemeToggle"; // => day/night mode toggle button
 import './NavBar.css';
@@ -15,6 +15,12 @@ const NavBar = (  ) => {
   const [isOpen, setIsOpen] = useState(false);
   const toggleMenu = () => setIsOpen(!isOpen);
   const location = useLocation(); // => needed to also treat root path "/" as the Home link
+
+  // => scrolls window to top whenever the route changes
+  // => only fires for public pages since NavBar is not rendered on dashboard routes
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
 
   const isLoggedIn = 
   localStorage.getItem('isLoggedIn') === 'true' || 
