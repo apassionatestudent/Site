@@ -128,7 +128,15 @@ const isLoggedIn =
                 : <Enroll />
             }
           />
-          <Route path="/contact" element={<Contact />} />
+          {/* => Contact page is for guests only, logged-in students get redirected to their Support Tickets tab instead */}
+          <Route
+            path="/contact"
+            element={
+              isLoggedIn
+                ? <Navigate to="/dashboard/supporttickets" replace />
+                : <Contact />
+            }
+          />
           <Route path="/login" element={<Login />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/set-password" element={<SetPassword />} />
