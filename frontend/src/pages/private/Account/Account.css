@@ -238,14 +238,15 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 11px 28px;
+  /* => Matched to Admin Dashboard's adm-account-btn sizing (10px 24px, 14px, 600) */
+  padding: 10px 24px;
   background: var(--enroll-btn-bg);
   color: #fff;
   border: none;
   border-radius: 6px;
   font-family: var(--font-body);
-  font-size: 15px;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
   transition: background 0.15s, transform 0.1s, opacity 0.15s;
   letter-spacing: 0.02em;
