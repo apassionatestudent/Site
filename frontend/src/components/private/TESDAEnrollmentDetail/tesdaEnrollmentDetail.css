@@ -86,7 +86,7 @@
 }
 
 .enroll-detail-title {
-  font-family: var(--font-display);
+  font-family: var(--font-body); 
   font-size: 1.7rem;
   font-weight: 400;
   color: var(--text-primary);
@@ -242,6 +242,7 @@
   text-transform: uppercase;
   letter-spacing: 0.07em;
   margin: 0; /* => spacing now comes from the parent's flex gap, not this margin */
+  line-height: 1.2; /* => Merriweather's default "normal" line-height renders much taller than the visible text, this tightens it back down */
 }
 
 .enroll-detail-value {
@@ -320,24 +321,9 @@
   margin: 0 0 1rem;
 }
 
-/*  JOB OPPORTUNITY TAGS  */
-
-.enroll-detail-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-bottom: 1.75rem;
-}
-
-.enroll-detail-tag {
-  display: inline-block;
-  padding: 0.3rem 0.75rem;
-  border-radius: 999px;
-  font-size: 0.78rem;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid var(--border);
-  color: var(--text-muted);
-}
+/* => JOB OPPORTUNITY TAGS section removed along with its markup in
+   => tesdaEnrollmentDetail.jsx - Potential Job Opportunities no longer
+   => shown on this page */
 
 /*  RWD  */
 

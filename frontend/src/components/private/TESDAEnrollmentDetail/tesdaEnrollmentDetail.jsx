@@ -113,7 +113,11 @@ function TESDAEnrollmentDetail() {
           <div className="enroll-detail-header">
             <div>
               <span className="enroll-detail-type-tag type--tesda">TESDA</span>
-              <h2 className="enroll-detail-title">{detail.course_name}</h2>
+              <h2 className="enroll-detail-title">
+                {detail.course_name}
+                {/* => appends the NC level in parenthesis only if the course has one */}
+                {detail.nc_level ? ` (${detail.nc_level})` : ''}
+              </h2>
               <p className="enroll-detail-sub">
                 {detail.sector}
               </p>
@@ -277,19 +281,13 @@ function TESDAEnrollmentDetail() {
             </div>
           </div>
 
-          {/* => Job opportunities - rendered as tags rather than a grid card
-              => since the count varies per course (2 to 10+) */}
-          {Array.isArray(detail.job_opportunities) && detail.job_opportunities.length > 0 && (
-            <div className="enroll-detail-tags">
-              {detail.job_opportunities.map((job, i) => (
-                <span key={i} className="enroll-detail-tag">{job}</span>
-              ))}
-            </div>
-          )}
+          {/* => Potential Job Opportunities removed - not directly relevant
+              => to the student's own enrollment, and this info already
+              => lives on the public course pages */}
 
           {/* => CLASS / BATCH - only 2 cards, so use the halves variant to
               => split the row evenly instead of the default 3-col grid */}
-          <p className="enroll-detail-section-title">Class / Batch</p>
+          <p className="enroll-detail-section-title">Batch</p>
           <div className="enroll-detail-grid enroll-detail-grid--halves">
 
             {/* => 3 possible states: no start_date yet (Pending, fully muted),
@@ -297,19 +295,24 @@ function TESDAEnrollmentDetail() {
                 => may still shift/extend), or both dates set (fixed range) */}
             {!detail.start_date ? (
               <div className="enroll-detail-card enroll-detail-card--muted">
-                <p className="enroll-detail-label">Class Period</p>
-                <p className="enroll-detail-value enroll-detail-value--muted">Not yet assigned</p>
+                <p className="enroll-detail-label">Batch Period</p>
+                {/* => Falls back to "Class Period" if batch_name hasn't been set yet, so the label never renders blank */}
+                <p className="enroll-detail-value enroll-detail-value--muted">
+                  {detail.batch_name || 'Class Period'} (Not yet assigned)
+                </p>
               </div>
             ) : !detail.end_date ? (
               <div className="enroll-detail-card">
-                <p className="enroll-detail-label">Class Period</p>
-                <p className="enroll-detail-value">{formatDate(detail.start_date)} - Ongoing</p>
+                <p className="enroll-detail-label">Batch Period</p>
+                <p className="enroll-detail-value">
+                  {detail.batch_name ? `${detail.batch_name} ` : ''}({formatDate(detail.start_date)} - Ongoing)
+                </p>
               </div>
             ) : (
               <div className="enroll-detail-card">
-                <p className="enroll-detail-label">Class Period</p>
+                <p className="enroll-detail-label">Batch Period</p>
                 <p className="enroll-detail-value">
-                  {formatDate(detail.start_date)} - {formatDate(detail.end_date)}
+                  {detail.batch_name ? `${detail.batch_name} ` : ''}({formatDate(detail.start_date)} - {formatDate(detail.end_date)})
                 </p>
               </div>
             )}
@@ -317,7 +320,7 @@ function TESDAEnrollmentDetail() {
             {/* => Groupchat link - only shown once the admin has added it to the class */}
             {detail.groupchat_link ? (
               <div className="enroll-detail-card enroll-detail-card--groupchat">
-                <p className="enroll-detail-label">Class Groupchat</p>
+                <p className="enroll-detail-label">Batch Groupchat</p>
                 
                 <a
                   href={detail.groupchat_link}
@@ -331,7 +334,7 @@ function TESDAEnrollmentDetail() {
               </div>
             ) : (
               <div className="enroll-detail-card enroll-detail-card--muted">
-                <p className="enroll-detail-label">Class Groupchat</p>
+                <p className="enroll-detail-label">Batch Groupchat</p>
                 <p className="enroll-detail-value enroll-detail-value--muted">Not yet available</p>
               </div>
             )}

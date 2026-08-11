@@ -152,6 +152,7 @@ export const getEnrollmentsByStudentId = async (pool, studentId) => {
           e.fee_at_enrollment,
           cl.class_type,
           c.title                 AS course_name,
+          nct.certification_type  AS nc_level, -- => e.g. "NC II", used to build the parenthetical in the title
           s.sector                AS sector,
           NULL::VARCHAR(20)       AS track,
           NULL::VARCHAR(60)       AS cluster,
@@ -159,9 +160,10 @@ export const getEnrollmentsByStudentId = async (pool, studentId) => {
           NULL::VARCHAR(30)       AS grade_level_completed,
           NULL::TEXT              AS last_school_attended
         FROM tesda_enrollments e
-        LEFT JOIN tesda_courses c        ON e.course_id  = c.course_id
-        LEFT JOIN sectors       s        ON c.sector_id  = s.sector_id
-        LEFT JOIN tesda_batches cl       ON e.batch_id   = cl.batch_id
+        LEFT JOIN tesda_courses c                       ON e.course_id  = c.course_id
+        LEFT JOIN sectors       s                       ON c.sector_id  = s.sector_id
+        LEFT JOIN tesda_batches cl                      ON e.batch_id   = cl.batch_id
+        LEFT JOIN national_certification_types nct      ON c.certification_id = nct.certification_id
         WHERE e.student_id = $1
 
         UNION ALL
@@ -174,6 +176,7 @@ export const getEnrollmentsByStudentId = async (pool, studentId) => {
           NULL::NUMERIC(10,2)      AS fee_at_enrollment,
           NULL::VARCHAR(20)        AS class_type,
           NULL::VARCHAR(255)       AS course_name,
+          NULL::VARCHAR(100)       AS nc_level, -- => SHS has no NC level, kept NULL to match the TESDA branch's column type
           NULL::VARCHAR(150)       AS sector,
           -- => track removed, shs_enrollments no longer has this column
           NULL::VARCHAR(20)        AS track,
@@ -209,6 +212,7 @@ export const getEnrollmentByPublicId = async (pool, publicId, studentId) => {
           e.uli,
           cl.class_type,
           c.title                  AS course_name,
+          nct.certification_type   AS nc_level, -- => used to build the parenthetical in the title
           s.sector                 AS sector,
           e.ncae_taken,
           e.ncae_where,
@@ -216,6 +220,7 @@ export const getEnrollmentByPublicId = async (pool, publicId, studentId) => {
           e.is_tesda_scholar,
           e.scholarship_type,
           e.other_scholarship,
+          cl.batch_name, -- => used to build "Batch Name (start - end)" on the Class/Batch card
           cl.start_date,
           cl.end_date,
           cl.groupchat_link,
@@ -241,9 +246,10 @@ export const getEnrollmentByPublicId = async (pool, publicId, studentId) => {
           NULL::VARCHAR(150)        AS cluster_name,
           NULL::JSON                AS cluster_courses
         FROM tesda_enrollments e
-        LEFT JOIN tesda_courses c        ON e.course_id  = c.course_id
-        LEFT JOIN sectors       s        ON c.sector_id  = s.sector_id
-        LEFT JOIN tesda_batches cl       ON e.batch_id   = cl.batch_id
+        LEFT JOIN tesda_courses c                    ON e.course_id  = c.course_id
+        LEFT JOIN sectors       s                    ON c.sector_id  = s.sector_id
+        LEFT JOIN tesda_batches cl                   ON e.batch_id   = cl.batch_id
+        LEFT JOIN national_certification_types nct   ON c.certification_id = nct.certification_id
         -- => LATERAL subquery collapses all job title rows for this course
         -- => into one JSON array so the row count stays 1:1 with the enrollment
         LEFT JOIN LATERAL (
@@ -264,6 +270,7 @@ export const getEnrollmentByPublicId = async (pool, publicId, studentId) => {
           NULL::VARCHAR(20)         AS uli,
           NULL::VARCHAR(20)         AS class_type,
           NULL::VARCHAR(255)        AS course_name,
+          NULL::VARCHAR(100)        AS nc_level, -- => matches TESDA branch's column type for UNION ALL
           NULL::VARCHAR(150)        AS sector,
           NULL::BOOLEAN             AS ncae_taken,
           NULL::TEXT                AS ncae_where,
@@ -271,6 +278,7 @@ export const getEnrollmentByPublicId = async (pool, publicId, studentId) => {
           NULL::BOOLEAN             AS is_tesda_scholar,
           NULL::VARCHAR(50)         AS scholarship_type,
           NULL::TEXT                AS other_scholarship,
+          cl.batch_name, -- => shs_batches also has batch_name, keeps this column real on both branches
           cl.start_date,
           cl.end_date,
           cl.groupchat_link,

@@ -86,7 +86,7 @@
 }
 
 .enroll-detail-title {
-  font-family: var(--font-display);
+  font-family: var(--font-body); /* => switched from font-display to font-body, mirrors the TESDA detail page */
   font-size: 1.7rem;
   font-weight: 400;
   color: var(--text-primary);
