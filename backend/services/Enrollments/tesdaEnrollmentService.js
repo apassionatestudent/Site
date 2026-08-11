@@ -92,10 +92,11 @@ export const processTesdaEnrollmentSubmission = async (body, files) => {
     // => 4. Guardian (Step 2 - only inserted if student is a minor)
     await insertStudentGuardian(client, { studentId, body });
 
-    // => 5. Core enrollment record (Step 4 + Step 5)
-    // => status returned alongside enrollmentId - needed below so the
-    // => password-setup email reflects the real assigned status
-    const { enrollmentId, status } = await insertTesdaEnrollment(client, {
+    // => Returns status alongside enrollmentId - the service needs it to
+    // => tell the student their current status in the password-setup email.
+    // => reservedReason distinguishes an explicit Reserve pick from a
+    // => submit-time capacity downgrade, for the InformationModal variant
+    const { enrollmentId, status, reservedReason } = await insertTesdaEnrollment(client, {
       studentId,
       courseData,
       ncaeData,
@@ -125,7 +126,11 @@ export const processTesdaEnrollmentSubmission = async (body, files) => {
       console.error('Password setup email failed to send:', emailErr);
     }
 
-    return { enrollmentId };
+    // => status/reservedReason are already returned by insertTesdaEnrollment -
+    // => passed through here so the controller can tell the frontend
+    // => whether this landed as Pending, an explicit Reserve pick, or a
+    // => submit-time capacity downgrade to Reserved
+    return { enrollmentId, status, reservedReason };
 
   } catch (err) {
     // => Any failure rolls back ALL inserts - no partial records ever persist
