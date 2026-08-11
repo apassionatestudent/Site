@@ -107,9 +107,11 @@ function SHSEnrollmentDetail() {
           <div className="enroll-detail-header">
             <div>
               <span className="enroll-detail-type-tag type--shs">SHS</span>
+              {/* => track column no longer exists on shs_enrollments, so
+                  => cluster_name (resolved via shs_clusters) is now the
+                  => primary title instead */}
               <h2 className="enroll-detail-title">
-                {detail.track}
-                {detail.cluster ? ` - ${detail.cluster}` : ''}
+                {detail.cluster_name || detail.cluster || '-'}
               </h2>
               <p className="enroll-detail-sub">
                 {detail.last_school_attended ?? '-'}
@@ -284,7 +286,7 @@ function SHSEnrollmentDetail() {
           {/* => CLASS / BATCH - shs_enrollments.class_id -> shs_classes is now
               => wired up in the backend union query, so this renders real data
               => once an admin assigns a class, and the muted placeholder until then */}
-          <p className="enroll-detail-section-title">Class / Batch</p>
+          <p className="enroll-detail-section-title">Batch</p>
           <div className="enroll-detail-grid enroll-detail-grid--halves">
 
             {/* => 3 possible states: no start_date yet (Planned, fully muted),
@@ -292,26 +294,31 @@ function SHSEnrollmentDetail() {
                 => may still shift/extend), or both dates set (fixed range) */}
             {!detail.start_date ? (
               <div className="enroll-detail-card enroll-detail-card--muted">
-                <p className="enroll-detail-label">Class Period</p>
-                <p className="enroll-detail-value enroll-detail-value--muted">Not yet assigned</p>
+                <p className="enroll-detail-label">Batch Period</p>
+                {/* => Falls back to "Batch Period" if batch_name hasn't been set yet, so the label never renders blank */}
+                <p className="enroll-detail-value enroll-detail-value--muted">
+                  {detail.batch_name || 'Batch Period'} (Not yet assigned)
+                </p>
               </div>
             ) : !detail.end_date ? (
               <div className="enroll-detail-card">
-                <p className="enroll-detail-label">Class Period</p>
-                <p className="enroll-detail-value">{formatDate(detail.start_date)} - Ongoing</p>
+                <p className="enroll-detail-label">Batch Period</p>
+                <p className="enroll-detail-value">
+                  {detail.batch_name ? `${detail.batch_name} ` : ''}({formatDate(detail.start_date)} - Ongoing)
+                </p>
               </div>
             ) : (
               <div className="enroll-detail-card">
-                <p className="enroll-detail-label">Class Period</p>
+                <p className="enroll-detail-label">Batch Period</p>
                 <p className="enroll-detail-value">
-                  {formatDate(detail.start_date)} - {formatDate(detail.end_date)}
+                  {detail.batch_name ? `${detail.batch_name} ` : ''}({formatDate(detail.start_date)} - {formatDate(detail.end_date)})
                 </p>
               </div>
             )}
 
             {detail.groupchat_link ? (
               <div className="enroll-detail-card enroll-detail-card--groupchat">
-                <p className="enroll-detail-label">Class Groupchat</p>
+                <p className="enroll-detail-label">Batch Groupchat</p>
                 <a
                   href={detail.groupchat_link}
                   target="_blank"
@@ -324,7 +331,7 @@ function SHSEnrollmentDetail() {
               </div>
             ) : (
               <div className="enroll-detail-card enroll-detail-card--muted">
-                <p className="enroll-detail-label">Class Groupchat</p>
+                <p className="enroll-detail-label">Batch Groupchat</p>
                 <p className="enroll-detail-value enroll-detail-value--muted">Not yet available</p>
               </div>
             )}

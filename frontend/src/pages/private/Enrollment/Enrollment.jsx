@@ -144,9 +144,11 @@ function Enrollment() {
                         => don't share a "course" concept - SHS uses track/cluster instead */}
                     {enrollment.enrollment_type === 'SHS' ? (
                       <>
+                        {/* => track column no longer exists on shs_enrollments,
+                            => cluster_name (resolved via shs_clusters) is now
+                            => the primary title instead, same fix as the detail page */}
                         <p className="enroll-card-course">
-                          {enrollment.track}
-                          {enrollment.cluster ? ` - ${enrollment.cluster}` : ''}
+                          {enrollment.cluster_name || enrollment.cluster || '-'}
                         </p>
                         <p className="enroll-card-sector">
                           {enrollment.last_school_attended ?? '-'}
@@ -155,7 +157,11 @@ function Enrollment() {
                       </>
                     ) : (
                       <>
-                        <p className="enroll-card-course">{enrollment.course_name}</p>
+                        <p className="enroll-card-course">
+                          {enrollment.course_name}
+                          {/* => appends the NC level in parenthesis only if one exists for this course */}
+                          {enrollment.nc_level ? ` (${enrollment.nc_level})` : ''}
+                        </p>
                         <p className="enroll-card-sector">
                           {enrollment.sector}
                         </p>
