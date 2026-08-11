@@ -10,7 +10,55 @@ export const insertTesdaEnrollment = async (client, { studentId, courseData, nca
   // => Mirrors insertShsEnrollment's Reserve handling: 'reserve' isn't a real
   // => class_id, it's the frontend's placeholder for "no open section yet."
   const hasRealClass = courseData.courseClass && courseData.courseClass !== 'reserve';
-  const status = hasRealClass ? 'Pending' : 'Reserved';
+
+  // => Defaults to what the student picked - downgraded to Reserved below
+  // => if the batch filled up between page load and this submit.
+  // => reservedReason distinguishes WHY a Reserved status happened -
+  // => 'explicit' means the student had nothing to choose from and picked
+  // => Reserve themselves, 'downgraded' means their real batch pick filled
+  // => up before this submit landed. Lets the frontend show accurate
+  // => wording instead of one blended message for both cases.
+  let batchId = hasRealClass ? parseInt(courseData.courseClass, 10) : null;
+  let status = hasRealClass ? 'Pending' : 'Reserved';
+  let reservedReason = hasRealClass ? null : 'explicit';
+
+  if (hasRealClass) {
+    // => Serializes concurrent submissions into the same batch - same
+    // => pg_advisory_xact_lock pattern the admin side uses for approvals,
+    // => so two near-simultaneous submissions can't both slip past a
+    // => plain read-then-insert capacity check
+    await client.query('SELECT pg_advisory_xact_lock($1)', [batchId]);
+
+    // => Same two-tier check as tesdaBatchModel.js's list query - if no
+    // => row comes back at all, the batch was deleted/dissolved between
+    // => page load and submit, which is also treated as full
+    const capacityCheck = await client.query(
+      `SELECT
+         cb.max_students,
+         cb.max_applicants,
+         COUNT(*) FILTER (WHERE te.status = 'Approved') AS approved_count,
+         COUNT(*) FILTER (WHERE te.status NOT IN ('Rejected', 'Dropped')) AS applicant_count
+       FROM tesda_batches cb
+       LEFT JOIN tesda_enrollments te ON te.batch_id = cb.batch_id
+       WHERE cb.batch_id = $1
+       GROUP BY cb.batch_id, cb.max_students, cb.max_applicants`,
+      [batchId]
+    );
+
+    const row = capacityCheck.rows[0];
+    const isFull = !row
+      || Number(row.approved_count) >= row.max_students
+      || Number(row.applicant_count) >= row.max_applicants;
+
+    // => Graceful fallback instead of rejecting the submission outright -
+    // => documents are already uploaded to R2 by this point, so failing
+    // => here would orphan them and force the student to redo the form
+    if (isFull) {
+      batchId = null;
+      status = 'Reserved';
+      reservedReason = 'downgraded';
+    }
+  }
 
   const result = await client.query(
     `INSERT INTO tesda_enrollments
@@ -23,7 +71,7 @@ export const insertTesdaEnrollment = async (client, { studentId, courseData, nca
     [
       studentId,
       courseData.course       || null,
-      hasRealClass ? courseData.courseClass : null,
+      batchId,
       courseData.courseFee    || null,
       ncaeData.takenBefore === 'yes',
       ncaeData.takenBefore === 'yes' ? (ncaeData.where || null) : null,
@@ -35,8 +83,10 @@ export const insertTesdaEnrollment = async (client, { studentId, courseData, nca
     ]
   );
   // => Returns status alongside enrollmentId - the service needs it to
-  // => tell the student their current status in the password-setup email
-  return { enrollmentId: result.rows[0].enrollment_id, status };
+  // => tell the student their current status in the password-setup email.
+  // => reservedReason lets the frontend distinguish an explicit Reserve
+  // => pick from a submit-time capacity downgrade.
+  return { enrollmentId: result.rows[0].enrollment_id, status, reservedReason };
 };
 
 // TESDA CLIENT CLASSIFICATIONS

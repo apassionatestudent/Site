@@ -108,7 +108,9 @@ export const processShsEnrollmentSubmission = async (body, files) => {
     // => 4. Core SHS enrollment record (academic + track/cluster + emergency + health)
     // => status returned alongside enrollmentId - needed below so the
     // => password-setup email reflects the real assigned status
-    const { enrollmentId, status } = await insertShsEnrollment(client, { studentId, body, academicData, familyData, clusterName });
+    // => reservedReason distinguishes an explicit Reserve pick from a
+    // => submit-time capacity downgrade, for the InformationModal variant
+    const { enrollmentId, status, reservedReason } = await insertShsEnrollment(client, { studentId, body, academicData, familyData, clusterName });
 
     // => 5. Family members - one row each for whichever of Father/Mother/
     // => Guardian were provided. The DEFERRED constraint trigger on
@@ -130,7 +132,11 @@ export const processShsEnrollmentSubmission = async (body, files) => {
       console.error('Password setup email failed to send:', emailErr);
     }
 
-    return { enrollmentId };
+    // => status/reservedReason are already returned by insertShsEnrollment -
+    // => passed through here so the controller can tell the frontend
+    // => whether this landed as Pending, an explicit Reserve pick, or a
+    // => submit-time capacity downgrade to Reserved
+    return { enrollmentId, status, reservedReason };
 
   } catch (err) {
     // => Any failure rolls back ALL inserts - no partial records ever persist

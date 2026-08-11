@@ -11,6 +11,15 @@ export const submitShsEnrollment = async (req, res) => {
       success: true,
       message: 'SHS enrollment submitted successfully.',
       enrollment_id: result.enrollmentId,
+      // => Real lifecycle status ('Pending' or 'Reserved') - lets the
+      // => frontend show the correct InformationModal variant, since a
+      // => batch can fill up between page load and submit and silently
+      // => downgrade the student to Reserved server-side
+      status: result.status,
+      // => 'explicit' (student picked Reserve themselves) or 'downgraded'
+      // => (their real batch pick filled up before this submit landed) -
+      // => null when status is Pending
+      reserved_reason: result.reservedReason,
     });
   } catch (err) {
     console.error('SHS enrollment submission error:', err);

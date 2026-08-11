@@ -23,6 +23,17 @@ const [enrollType, setEnrollType] = useState(null);
 // => Shows the post-submission "next steps" modal, replaces the old alert()
 const [showInfoModal, setShowInfoModal] = useState(false);
 
+// => Real enrollment status ('Pending' or 'Reserved') returned by the
+// => submission response - drives which InformationModal variant is
+// => shown, since a batch can fill up between page load and submit and
+// => silently downgrade the student to Reserved server-side
+const [submissionStatus, setSubmissionStatus] = useState(null);
+
+// => 'explicit' (student picked Reserve themselves) or 'downgraded'
+// => (their real batch pick filled up before this submit landed) - only
+// => meaningful when submissionStatus is 'Reserved'
+const [submissionReservedReason, setSubmissionReservedReason] = useState(null);
+
 // => TESDA multi-step state: tracks which of the 7 pages is active
 const [tesdaStep, setTesdaStep] = useState(1);
 
@@ -297,6 +308,8 @@ const resetAllForms = () => {
 // => Fires when the info modal's countdown finishes and the user closes it
 const handleInfoModalClose = () => {
   setShowInfoModal(false);
+  setSubmissionStatus(null);
+  setSubmissionReservedReason(null);
   resetAllForms();
   navigate('/login');
 };
@@ -345,6 +358,8 @@ const handleShsSubmit = async () => {
     const result = await res.json();
     console.log('SHS enrollment submitted:', result);
 
+    setSubmissionStatus(result.status || null);
+    setSubmissionReservedReason(result.reserved_reason || null);
     setShowInfoModal(true);
   } catch (err) {
     console.error('SHS submission failed:', err);
@@ -417,6 +432,8 @@ const handleTesdaSubmit = async () => {
     const result = await res.json();
     console.log('Enrollment submitted:', result);
 
+    setSubmissionStatus(result.status || null);
+    setSubmissionReservedReason(result.reserved_reason || null);
     setShowInfoModal(true);
   } catch (err) {
     console.error('Submission failed:', err);
@@ -627,6 +644,11 @@ const handleTesdaSubmit = async () => {
       <InformationModal
         isOpen={showInfoModal}
         onClose={handleInfoModalClose}
+        variant={
+          submissionStatus === 'Reserved'
+            ? (submissionReservedReason === 'downgraded' ? 'reserved-downgraded' : 'reserved-explicit')
+            : 'pending'
+        }
       />
     </>
   );

@@ -14,7 +14,13 @@
 import { sql } from '../../config/db.js';
 
 // => Open TESDA batches (Pending or Ongoing) for one course, joined with
-// => the assigned trainer and a real enrolled-count against max_students
+// => the assigned trainer. A batch is excluded entirely once it hits
+// => EITHER capacity ceiling: Approved count against max_students (the
+// => real, capacity-consuming status), or total non-terminal applicant
+// => count against max_applicants (the pool cap, everything except
+// => Rejected/Dropped). This mirrors the admin-side two-tier rule -
+// => Approved-full always blocks regardless of pool room, max_applicants
+// => is only leeway during the pending/review phase.
 export const getOpenBatchesByCourseId = async (courseId) => {
   const result = await sql`
     SELECT
@@ -23,6 +29,7 @@ export const getOpenBatchesByCourseId = async (courseId) => {
       cb.end_date,
       cb.status,
       cb.max_students,
+      cb.max_applicants,
       cb.required_number_of_students,
       cb.remarks,
 
@@ -37,26 +44,32 @@ export const getOpenBatchesByCourseId = async (courseId) => {
       -- => can have NULL start_date/end_date)
       cb.batch_name,
 
-      -- => Pending and Approved enrollments both hold a claim on a seat -
-      -- => Rejected/Reserved do not (Reserved rows have batch_id NULL
-      -- => anyway, so they'd never match this batch regardless).
-      -- => GREATEST(...,0) guards against a negative number if max_students
-      -- => is ever lowered below the current enrolled count after the fact.
-      GREATEST(cb.max_students - COALESCE(enrolled.enrolled_count, 0), 0) AS remaining_slots,
+      -- => Remaining slots now reflects pool room (max_applicants), not
+      -- => seat room (max_students) - this is what a NEW applicant is
+      -- => actually competing for. GREATEST(...,0) guards against a
+      -- => negative number if max_applicants is ever lowered below the
+      -- => current applicant count after the fact.
+      GREATEST(cb.max_applicants - COALESCE(counts.applicant_count, 0), 0) AS remaining_slots,
 
       tr.trainer_full_name
     FROM tesda_batches cb
     LEFT JOIN trainers tr ON cb.trainer_id = tr.trainer_id
     -- => LATERAL subquery keeps this a clean 1-row-per-batch result,
-    -- => same pattern used for job_opportunities in sharedEnrollmentModel.js
+    -- => same pattern used for job_opportunities in sharedEnrollmentModel.js.
+    -- => Two FILTER counts in one pass instead of two separate subqueries.
     LEFT JOIN LATERAL (
-      SELECT COUNT(*) AS enrolled_count
+      SELECT
+        COUNT(*) FILTER (WHERE te.status = 'Approved') AS approved_count,
+        COUNT(*) FILTER (WHERE te.status NOT IN ('Rejected', 'Dropped')) AS applicant_count
       FROM tesda_enrollments te
       WHERE te.batch_id = cb.batch_id
-        AND te.status IN ('Pending', 'Approved')
-    ) enrolled ON true
+    ) counts ON true
     WHERE cb.course_id = ${courseId}
       AND cb.status IN ('Pending', 'Ongoing')
+      -- => Approved-full blocks regardless of pool room
+      AND COALESCE(counts.approved_count, 0) < cb.max_students
+      -- => Pool-full blocks even if no one's Approved yet
+      AND COALESCE(counts.applicant_count, 0) < cb.max_applicants
       -- TODO: confirm whether enrollment into Ongoing batches should be allowed
     ORDER BY cb.start_date ASC
   `;
