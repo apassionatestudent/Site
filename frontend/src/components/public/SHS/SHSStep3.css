@@ -231,6 +231,16 @@
   font-weight: 600;
 }
 
+.shs3-policy-text a {
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.shs3-policy-text a:hover {
+  color: var(--accent-hover);
+}
+
 .shs3-consent-label {
   display: flex;
   align-items: flex-start;

@@ -314,7 +314,7 @@ const SHSStep2 = ({ data, onChange, documents, onDocumentsChange, onBack, onNext
            fetched live from /api/shs-clusters (id + name) instead of a
            hardcoded array, since shs_clusters.value was dropped from the DB. */}
       <div className="shs2-field-group">
-        <label className="shs2-label">Select Cluster <span className="shs2-req">*</span> <span className="shs2-hint-inline">(Choose 1 cluster)</span> <Info content="Sample content" /></label>
+        <label className="shs2-label">Select Cluster <span className="shs2-req">*</span> <span className="shs2-hint-inline">(Choose 1 cluster)</span> <Info content="A cluster is your chosen specialization track under Strengthened Senior High School. It determines which subjects and skills you'll focus on - you can only select one." /></label>
         <div className={`shs2-cluster-list ${fieldErrors.cluster ? 'shs2-radio--error' : ''}`}>
           {clustersLoading ? (
             <span className="shs2-cluster-specs">Loading clusters…</span>
@@ -381,17 +381,30 @@ const SHSStep2 = ({ data, onChange, documents, onDocumentsChange, onBack, onNext
             <option value="">
               {batchesLoading ? 'Loading classes...' : 'Select class'}
             </option>
-            {shsBatches.map(({ batch_id, batch_name }) => (
-              <option key={batch_id} value={batch_id}>
-                {batch_name}
-              </option>
-            ))}
+            {shsBatches.map(({ batch_id, batch_name, start_date, end_date, remaining_slots }) => {
+              // => Pending batches can have NULL start_date/end_date until
+              // => the admin firms up a schedule - show "Dates TBA" instead
+              // => of an Invalid Date string in that case, same pattern
+              // => used in TESDAStep3.jsx's batch dropdown
+              const dateRange = (start_date && end_date)
+                ? `${new Date(start_date).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })} → ${new Date(end_date).toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}`
+                : 'Dates TBA';
+
+              return (
+                <option key={batch_id} value={batch_id}>
+                  {batch_name} · {dateRange} · {remaining_slots} approved slot{remaining_slots !== 1 ? 's' : ''} left
+                </option>
+              );
+            })}
           </select>
         )}
       </div>
 
       <div className="shs2-field-group">
-        <label className="shs2-label">Select Electives <span className="shs2-hint-inline">(if applicable)</span></label>
+        <label className="shs2-label">
+          Select Electives <span className="shs2-hint-inline">(if applicable)</span>
+          <Info content="Electives are optional subjects outside your chosen cluster's core curriculum. If you'd like to take any, list them here - otherwise, leave this blank." />
+        </label>
         <input
           type="text"
           className="shs2-input"

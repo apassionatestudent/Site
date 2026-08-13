@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './SHSStep1.css';
+import Info from '../../Info.jsx';
 
 // => Name extension options - same list as TESDAStep1 for consistency
 const NAME_EXTENSIONS = ['N/A', 'Jr.', 'Sr.', 'II', 'III', 'IV', 'V'];
@@ -414,7 +415,10 @@ const SHSStep1 = ({ data, onChange, onNext }) => {
            => Widened to full row width instead of the short 260px box -
            => reads better than a cramped short field for a 12-digit number. */}
       <div className="shs1-field-group">
-        <label className="shs1-label">Learner Reference Number (LRN)</label>
+        <label className="shs1-label">
+          Learner Reference Number (LRN)
+          <Info content="Your Learner Reference Number is a permanent 12-digit ID assigned by DepEd. Check your Form 137 (Report Card) or ask your previous school's registrar if you don't have it on hand. If you don't have it, leave it as blank." />
+        </label>
         <input
           type="text"
           className={`shs1-input ${lrnError ? 'shs1-input--error' : ''}`}
@@ -428,7 +432,7 @@ const SHSStep1 = ({ data, onChange, onNext }) => {
           }}
         />
         {lrnError && <span className="shs1-field-error">{lrnError}</span>}
-        <span className="shs1-field-hint">Leave blank if not applicable.</span>
+        <span className="shs1-field-hint">Not sure? Leave this blank - our staff can pull it up from your records and add it during review.</span>
       </div>
 
       {/* => Name row: Last Name, First Name, Middle Name, Suffix */}
@@ -688,43 +692,36 @@ const SHSStep1 = ({ data, onChange, onNext }) => {
 
       <div className="shs1-grid shs1-g3">
         <div className="shs1-field-group">
-          <label className="shs1-label">Region <span className="shs1-req">*</span></label>
+          <label className="shs1-label">
+            Region <span className="shs1-req">*</span>
+            <Info content="Fixed to Region VII (Central Visayas), since 3A Prime Hospitality Training and Assessment Center Inc. is physically located in Cebu City." />
+          </label>
           <select
-            className={`shs1-select ${fieldErrors.region ? 'shs1-input--error' : ''}`}
+            className="shs1-select"
             value={data.region}
-            onChange={(e) => {
-              onChange('region', e.target.value);
-              onChange('province', '');
-              onChange('city', '');
-              onChange('barangay', '');
-              setProvinces([]); setCities([]); setBarangays([]);
-              clearError('region');
-            }}
+            // => Locked to Region VII - training is conducted on-site in
+            // => Cebu City, so no other region applies
+            disabled
           >
-            <option value="">Select Region</option>
             {regions.map(r => <option key={r.code} value={r.code}>{r.name}</option>)}
           </select>
         </div>
 
-        {/* => Province hidden for NCR */}
+        {/* => Province hidden for NCR - kept for structural safety, though
+             region is now locked so this branch is effectively always true */}
         {!isNCR && (
           <div className="shs1-field-group">
-            <label className="shs1-label">Province <span className="shs1-req">*</span></label>
+            <label className="shs1-label">
+              Province <span className="shs1-req">*</span>
+              <Info content="Fixed to Cebu, since 3A Prime Hospitality Training and Assessment Center Inc. is physically located in Cebu City." />
+            </label>
             <select
-              className={`shs1-select ${fieldErrors.province ? 'shs1-input--error' : ''}`}
+              className="shs1-select"
               value={data.province}
-              onChange={(e) => {
-                onChange('province', e.target.value);
-                onChange('city', '');
-                onChange('barangay', '');
-                setCities([]); setBarangays([]);
-                clearError('province');
-              }}
-              disabled={!data.region || loadingProvinces}
+              // => Locked to Cebu - training is conducted on-site in Cebu
+              // => City, so no other province applies
+              disabled
             >
-              <option value="">
-                {loadingProvinces ? 'Loading...' : !data.region ? '- Select Region first -' : 'Select Province'}
-              </option>
               {provinces.map(p => <option key={p.code} value={p.code}>{p.name}</option>)}
             </select>
           </div>

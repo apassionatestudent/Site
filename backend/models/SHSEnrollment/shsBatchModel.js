@@ -17,7 +17,12 @@ export const findOpenBatchesByClusterId = async (clusterId) => {
       sb.status,
       sb.max_students,
       sb.max_applicants,
-      GREATEST(sb.max_applicants - COALESCE(counts.applicant_count, 0), 0) AS remaining_slots
+      -- => Same correction as tesdaBatchModel.js - remaining_slots
+      -- => reflects seat room (max_students), not pool room
+      -- => (max_applicants). GREATEST(...,0) guards against a negative
+      -- => number if max_students is ever lowered below the current
+      -- => approved count after the fact.
+      GREATEST(sb.max_students - COALESCE(counts.approved_count, 0), 0) AS remaining_slots
     FROM shs_batches sb
     LEFT JOIN LATERAL (
       SELECT

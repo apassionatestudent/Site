@@ -44,12 +44,14 @@ export const getOpenBatchesByCourseId = async (courseId) => {
       -- => can have NULL start_date/end_date)
       cb.batch_name,
 
-      -- => Remaining slots now reflects pool room (max_applicants), not
-      -- => seat room (max_students) - this is what a NEW applicant is
-      -- => actually competing for. GREATEST(...,0) guards against a
-      -- => negative number if max_applicants is ever lowered below the
-      -- => current applicant count after the fact.
-      GREATEST(cb.max_applicants - COALESCE(counts.applicant_count, 0), 0) AS remaining_slots,
+      -- => Remaining slots reflects seat room (max_students), not pool
+      -- => room (max_applicants) - max_applicants only gates whether new
+      -- => submissions still get accepted (falling back to Reserved once
+      -- => full), it isn't the number an applicant should see as "slots
+      -- => left". GREATEST(...,0) guards against a negative number if
+      -- => max_students is ever lowered below the current approved count
+      -- => after the fact.
+      GREATEST(cb.max_students - COALESCE(counts.approved_count, 0), 0) AS remaining_slots,
 
       tr.trainer_full_name
     FROM tesda_batches cb

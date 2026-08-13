@@ -284,6 +284,7 @@ const TESDAStep3 = ({
         <div className="ts5-field-group">
           <label className="ts5-label">
             Batch <span className="ts5-req">*</span>
+            <Info content="Regular batches require payment of the course fee, with a reservation fee due once your application is reviewed. TESDA-Sponsored batches are fully covered by TESDA at no cost to you. Each batch below is labeled with its type." />
           </label>
           <select
             className={`ts5-select ${fieldErrors.courseClass ? 'ts5-select--error' : ''}`}
@@ -328,7 +329,7 @@ const TESDAStep3 = ({
 
               return (
                 <option key={cl.batch_id} value={cl.batch_id}>
-                  {cl.batch_name} · {dateRange} · {cl.remaining_slots} slot{cl.remaining_slots !== 1 ? 's' : ''} left
+                  {cl.batch_name} · {cl.class_type === 'Regular' ? 'Regular' : 'TESDA-Sponsored'} · {dateRange} · {cl.remaining_slots} approved slot{cl.remaining_slots !== 1 ? 's' : ''} left
                 </option>
               );
             })}
@@ -481,6 +482,7 @@ const TESDAStep3 = ({
           <div className="ts5-field-group ts5-field-group--inline">
             <label className="ts5-label">
               Scholarship Type <span className="ts5-req">*</span>
+              <Info content="TWSP: Training for Work Scholarship Program. PESFA: Private Education Student Financial Assistance. STEP: Special Training for Employment Program. Not sure which one applies to you? Select 'Others' and briefly describe what you believe you're availing." />
             </label>
             <div className={`ts5-radio-group ts5-radio-group--wrap ${scholarErrors.scholarshipType ? 'ts5-radio--error' : ''}`}>
               {['TWSP', 'PESFA', 'STEP', 'Others'].map(type => (
@@ -537,27 +539,13 @@ const TESDAStep3 = ({
       <div className="ts5-policy-box">
         <p className="ts5-policy-text">
           By submitting this enrollment form, you acknowledge and agree that{' '}
-          <strong>3A Prime Academy</strong> will collect, store, and process
-          the personal information you have provided in this form in accordance
-          with the <strong>Data Privacy Act of 2012 (Republic Act No. 10173)</strong>
-          and its implementing rules and regulations.
-        </p>
-        <p className="ts5-policy-text">
-          Your personal information will be used solely for the purposes of
-          enrollment processing, student record management, communication
-          regarding your enrollment status, and compliance with regulatory
-          requirements of TESDA and other relevant government agencies.
-        </p>
-        <p className="ts5-policy-text">
-          Your information will not be shared with third parties without
-          your consent, except as required by law or by TESDA for the
-          purpose of program registration and monitoring.
-        </p>
-        <p className="ts5-policy-text">
-          You have the right to access, correct, and withdraw consent for
-          the processing of your personal data. For concerns regarding
-          your data privacy rights, please contact the school's Data
-          Privacy Officer.
+          <strong>3A Prime Hospitality Training and Assessment Center Inc.</strong> will collect, store, and process
+          the personal information you have provided in accordance with the{' '}
+          <strong>Data Privacy Act of 2012 (Republic Act No. 10173)</strong>.
+          Read our full{' '}
+          <a href="/termsandconditions" target="_blank" rel="noopener noreferrer">Terms and Conditions</a>{' '}
+          and{' '}
+          <a href="/privacy-policy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>.
         </p>
       </div>
 
@@ -574,7 +562,7 @@ const TESDAStep3 = ({
         <span>
           I have read and understood the privacy disclaimer above and
           I consent to the collection and processing of my personal
-          information by 3A Prime Academy.{' '}
+          information by 3A Prime Hospitality Training and Assessment Center Inc.{' '}
           <span className="ts5-req">*</span>
         </span>
       </label>
