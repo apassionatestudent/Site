@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import './TESDAStep2.css';
+import Info from '../../Info.jsx';
 
 // => Client classifications from MIS 03-01 (ver. 2021)
 // => Grouped for better readability on screen
@@ -92,9 +93,10 @@ const TESDAStep2 = ({
 
       <div className="ts3-section-title">
         Learner / Trainee / Student (Clients) Classification
+        <Info content="This is standard TESDA registration data (MIS 03-01) used for reporting purposes. This field is required - if none of these apply to you, select 'Others' and briefly describe what you believe best fits your situation." />
       </div>
       <p className="ts3-hint">
-        Select one classification that applies to you.
+        Select one classification that applies to you. Not sure which one fits? Choose "Others" and describe it in your own words.
       </p>
 
       {/* => Radio grid */}
@@ -147,7 +149,10 @@ const TESDAStep2 = ({
           SECTION B: NCAE / YP4SC (old Step 4)
           ============================================================ */}
 
-      <div className="ts4-section-title" style={{ marginTop: '1.8rem' }}>NCAE / YP4SC</div>
+      <div className="ts4-section-title" style={{ marginTop: '1.8rem' }}>
+        NCAE / YP4SC
+        <Info content="NCAE (National Career Assessment Examination) and YP4SC (Youth Profiling for Starring Careers) are DepEd/TESDA career-guidance assessments usually taken in high school. If you're not sure whether you've taken either one, select 'No.'" />
+      </div>
 
       {/* => Yes / No radio */}
       <div className="ts4-field-group">

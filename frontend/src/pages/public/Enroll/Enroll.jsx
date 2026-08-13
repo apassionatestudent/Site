@@ -47,8 +47,10 @@ const [tesdaProfile, setTesdaProfile] = useState({
   barangay: '',
   district: '',
   city: '',
-  province: '',
-  region: '',
+  // => Preset to Cebu since 3A Prime is physically located in Cebu City -
+  // => defaults the cascade so most applicants don't need to touch it
+  province: '0702200000',
+  region: '0700000000',
   email: '',
   facebookLink: '', 
   contactNo: '',
@@ -140,8 +142,10 @@ const [shsProfile, setShsProfile] = useState({
   religion: '',
   // => new: "Others" specify text, read/written by SHSStep1 as data.religionOthers
   religionOthers: '',
-  region: '',
-  province: '',
+  // => Preset to Cebu since 3A Prime is physically located in Cebu City -
+  // => defaults the cascade so most applicants don't need to touch it
+  region: '0700000000',
+  province: '0702200000',
   city: '',
   barangay: '',
   district: '',

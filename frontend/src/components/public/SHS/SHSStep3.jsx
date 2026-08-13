@@ -463,15 +463,14 @@ const SHSStep3 = ({
 
       <div className="shs3-policy-box">
         <p className="shs3-policy-text">
-          We hereby certify that the information provided in this form is true
-          and correct to the best of our knowledge, and we agree to abide by
-          the policies, rules, and regulations of <strong>3A Prime Academy</strong>.
-        </p>
-        <p className="shs3-policy-text">
-          Further, we authorize the school to collect and process the
-          learner's personal information in accordance with the provisions
-          of the <strong>Data Privacy Act of 2012 (Republic Act No. 10173)</strong>
-          and applicable policies of the Department of Education.
+          By submitting this form, you certify that the information provided
+          is true and correct, and you consent to <strong>3A Prime Hospitality Training and Assessment Center Inc.</strong>{' '}
+          collecting and processing the learner's personal data under the{' '}
+          <strong>Data Privacy Act of 2012 (Republic Act No. 10173)</strong>.
+          Read our full{' '}
+          <a href="/termsandconditions" target="_blank" rel="noopener noreferrer">Terms and Conditions</a>{' '}
+          and{' '}
+          <a href="/privacy-policy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>.
         </p>
       </div>
 
@@ -488,7 +487,7 @@ const SHSStep3 = ({
         <span>
           I have read and understood the certification above and I consent to
           the collection and processing of the learner's personal information
-          by 3A Prime Academy. <span className="shs3-req">*</span>
+          by 3A Prime Hospitality Training and Assessment Center Inc.. <span className="shs3-req">*</span>
         </span>
       </label>
 

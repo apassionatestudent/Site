@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './TESDAStep1.css';
+import Info from '../../Info.jsx';
 
 // => Name extension options from MIS 03-01
 const NAME_EXTENSIONS = ['N/A', 'Jr.', 'Sr.', 'II', 'III', 'IV', 'V'];
@@ -537,49 +538,38 @@ const TESDAStep1 = ({ profileData, onProfileChange, personalData, onPersonalChan
       {/* => Row 1: Region + Province + City */}
       <div className="ts1-grid ts1-g3">
         <div className="ts1-field-group">
-          <label className="ts1-label">Region <span className="ts1-req">*</span></label>
+          <label className="ts1-label">
+            Region <span className="ts1-req">*</span>
+            <Info content="Fixed to Region VII (Central Visayas), since 3A Prime Hospitality Training and Assessment Center Inc. is physically located in Cebu City." />
+          </label>
           <select
-            className={`ts1-select ${fieldErrors.region ? 'ts1-input--error' : ''}`}
+            className="ts1-select"
             value={profileData.region}
-            onChange={(e) => {
-              // => Reset dependent fields when region changes
-              onProfileChange('region', e.target.value);
-              onProfileChange('province', '');
-              onProfileChange('city', '');
-              onProfileChange('barangay', '');
-              onProfileChange('district', '');
-              setDistrict('');
-              setAddrProvinces([]);
-              setAddrCities([]);
-              setAddrBarangays([]);
-            }}
+            // => Locked to Region VII - training is conducted on-site in
+            // => Cebu City, so no other region applies
+            disabled
           >
-            <option value="">Select Region</option>
             {addrRegions.map(r => (
               <option key={r.code} value={r.code}>{r.name}</option>
             ))}
           </select>
         </div>
 
-        {/* => Province hidden for NCR */}
+        {/* => Province hidden for NCR - kept for structural safety, though
+             region is now locked so this branch is effectively always true */}
         {!isNCR && (
           <div className="ts1-field-group">
-            <label className="ts1-label">Province <span className="ts1-req">*</span></label>
+            <label className="ts1-label">
+              Province <span className="ts1-req">*</span>
+              <Info content="Fixed to Cebu, since 3A Prime Hospitality Training and Assessment Center Inc. is physically located in Cebu City." />
+            </label>
             <select
-              className={`ts1-select ${fieldErrors.province ? 'ts1-input--error' : ''}`}
+              className="ts1-select"
               value={profileData.province}
-              onChange={(e) => {
-                onProfileChange('province', e.target.value);
-                onProfileChange('city', '');
-                onProfileChange('barangay', '');
-                setAddrCities([]);
-                setAddrBarangays([]);
-              }}
-              disabled={!profileData.region || addrLoadingProvinces}
+              // => Locked to Cebu - training is conducted on-site in Cebu
+              // => City, so no other province applies
+              disabled
             >
-              <option value="">
-                {addrLoadingProvinces ? 'Loading...' : !profileData.region ? '- Select Region first -' : 'Select Province'}
-              </option>
               {addrProvinces.map(p => (
                 <option key={p.code} value={p.code}>{p.name}</option>
               ))}
@@ -694,7 +684,10 @@ const TESDAStep1 = ({ profileData, onProfileChange, personalData, onPersonalChan
         </div>
 
         <div className="ts1-field-group">
-          <label className="ts1-label">Facebook Profile Link <span className="ts1-req">*</span></label>
+          <label className="ts1-label">
+            Facebook Profile Link <span className="ts1-req">*</span>
+            <Info content="Used to add you to your batch's Facebook group chat, where your trainer and staff post class schedules, requirements, and updates." />
+          </label>
           <input
             type="text"
             className={`ts1-input ${facebookError || fieldErrors.facebookLink ? 'ts1-input--error' : ''}`}

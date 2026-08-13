@@ -482,6 +482,16 @@
   font-weight: 600;
 }
 
+.ts5-policy-text a {
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.ts5-policy-text a:hover {
+  color: var(--accent-hover);
+}
+
 .ts5-consent-label {
   display: flex;
   align-items: flex-start;

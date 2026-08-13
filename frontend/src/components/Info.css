@@ -48,6 +48,12 @@
   line-height: 1.4;
   pointer-events: auto;
   white-space: pre-line;
+  /* => Resets inherited text styling (uppercase, letter-spacing) that
+       otherwise leaks in from whatever section title or label the
+       trigger happens to be placed inside */
+  text-transform: none;
+  letter-spacing: normal;
+  font-weight: 400;
 }
 
 /* Arrow base */
