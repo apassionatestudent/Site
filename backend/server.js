@@ -75,6 +75,10 @@ import faqRoutes from './routes/Pages/faqRoutes.js';
 //    returns the unread count for the sidebar bubble
 import announcementRoutes from './routes/Announcements/announcementRoutes.js';
 
+// => Student's own activity log history, read-only, strictly scoped to
+// => actor_type = 'Student' AND actor_id = this student in the model layer
+import studentLogsRoutes from './routes/Logs/logsRoutes.js';
+
 import path from "path";
 
 dotenv.config();
@@ -163,6 +167,8 @@ app.use('/api/public/pages', cmsPageRoutes);
 app.use('/api/public/faqs', faqRoutes);
 
 app.use('/api/announcements', announcementRoutes);
+
+app.use('/api/student/logs', studentLogsRoutes);
 
 async function initDB () {
   try {
@@ -1057,6 +1063,14 @@ async function initDB () {
     await sql`
       CREATE INDEX IF NOT EXISTS idx_activity_logs_created_at
       ON activity_logs (created_at DESC)
+    `;
+
+    // => Speeds up the student Logs page, which always filters by
+    // => actor_type = 'Student' AND actor_id = studentId first, before
+    // => any other filter is applied
+    await sql`
+      CREATE INDEX IF NOT EXISTS idx_activity_logs_actor
+      ON activity_logs (actor_type, actor_id)
     `;
 
     await sql`
