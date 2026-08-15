@@ -12,7 +12,7 @@ import express from 'express';
 import { protectStudent } from '../../middleware/studentAuth.js';
 import { readLimiter, submissionLimiter, floodLimiter } from '../../middleware/rateLimiters.js';
 import { csrfProtection } from '../../middleware/studentCsrf.js';
-import { getMyAccount, updateMyProfile, changeMyPassword } from '../../controllers/Account/accountController.js';
+import { getMyAccount, updateMyProfile, changeMyPassword, updateMyNightMode } from '../../controllers/Account/accountController.js';
 
 const router = express.Router();
 
@@ -25,5 +25,9 @@ router.patch('/profile', floodLimiter, protectStudent, csrfProtection, submissio
 
 // => PATCH /api/account/password - Form 2: password reset, separate endpoint per your direction
 router.patch('/password', floodLimiter, protectStudent, csrfProtection, submissionLimiter, changeMyPassword);
+
+// => PATCH /api/account/theme - day/night toggle, uses readLimiter instead of
+// => submissionLimiter since this isn't a validated form, just a lightweight flip
+router.patch('/theme', floodLimiter, protectStudent, csrfProtection, readLimiter, updateMyNightMode);
 
 export default router;

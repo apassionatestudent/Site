@@ -30,6 +30,7 @@ export const getAccountByStudentId = async (pool, studentId) => {
         sp.contact_no,
         sp.facebook_link,
         sp.email,
+        acct.is_night_mode,
         sa.street,
         sa.barangay_code,
         sa.city_code,
@@ -38,6 +39,9 @@ export const getAccountByStudentId = async (pool, studentId) => {
         sa.region_code
       FROM student_profile sp
       LEFT JOIN student_address sa ON sa.student_id = sp.student_id
+      -- => Needed to pull is_night_mode - LEFT JOIN, not INNER, in case a
+      -- => profile row somehow exists without a matching account row yet
+      LEFT JOIN student_accounts acct ON acct.student_id = sp.student_id
       WHERE sp.student_id = $1`,
     [studentId]
   );
@@ -105,5 +109,14 @@ export const updatePassword = async (pool, studentId, newPasswordHash) => {
   await pool.query(
     `UPDATE student_accounts SET password_hash = $1 WHERE student_id = $2`,
     [newPasswordHash, studentId]
+  );
+};
+
+// UPDATE NIGHT MODE PREFERENCE
+// => Single-table write, no transaction needed, same reasoning as updatePassword
+export const updateNightMode = async (pool, studentId, isNightMode) => {
+  await pool.query(
+    `UPDATE student_accounts SET is_night_mode = $1 WHERE student_id = $2`,
+    [isNightMode, studentId]
   );
 };

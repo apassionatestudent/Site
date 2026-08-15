@@ -6,6 +6,7 @@ import {
   getStudentAccount,
   updateStudentProfile,
   changeStudentPassword,
+  updateStudentNightMode,
 } from '../../services/Account/accountServices.js';
 
 // GET /api/account
@@ -56,6 +57,22 @@ export const changeMyPassword = async (req, res) => {
     return res.status(statusCode).json({
       success: false,
       message: statusCode === 400 ? err.message : 'Failed to change password. Please try again.',
+    });
+  }
+};
+
+// PATCH /api/account/theme
+// => Persists the day/night toggle to the student's account
+export const updateMyNightMode = async (req, res) => {
+  try {
+    await updateStudentNightMode(req.student.student_id, req.body.isNightMode);
+    return res.status(200).json({ success: true });
+  } catch (err) {
+    console.error('updateMyNightMode error:', err);
+    const statusCode = err.statusCode || 500;
+    return res.status(statusCode).json({
+      success: false,
+      message: statusCode === 400 ? err.message : 'Failed to save theme preference.',
     });
   }
 };

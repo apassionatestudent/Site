@@ -266,6 +266,21 @@ async function initDB () {
       END $$
     `;
 
+    // => is_night_mode stores the student's day/night theme preference on
+    // => their account, mirroring admins.is_night_mode, so the Account
+    // => Settings toggle and the public NavBar toggle sync across devices
+    // => instead of only living in localStorage. Safe to run repeatedly.
+    await sql`
+      DO $$ BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_name = 'student_accounts' AND column_name = 'is_night_mode'
+        ) THEN
+          ALTER TABLE student_accounts ADD COLUMN is_night_mode BOOLEAN NOT NULL DEFAULT FALSE;
+        END IF;
+      END $$
+    `;
+
     // => student_address.student_id was declared UNIQUE in this file's
     // => CREATE TABLE text from the start, but that text only applies to
     // => a freshly created table - the live table predates it and never
