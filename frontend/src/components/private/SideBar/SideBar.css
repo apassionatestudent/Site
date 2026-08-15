@@ -54,7 +54,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  /* => tightened from 10px to 6px to match the admin sidebar spacing */
+  gap: 6px;
   padding: 0 20px 24px;
 }
 
@@ -88,6 +89,17 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* => Subtitle text sitting under the profile name, e.g. "Student" */
+/* => Styled to match the admin dashboard sidebar's role badge exactly */
+.sidebar-profile-role {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  text-align: center;
 }
 
 /*  Divider */
@@ -261,6 +273,7 @@
   }
 
   .sidebar-profile-name,
+  .sidebar-profile-role,
   .sidebar-nav-label {
     display: none;
   }
