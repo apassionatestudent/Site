@@ -11,6 +11,7 @@ import {
   upsertAddress,
   getPasswordHashByStudentId,
   updatePassword,
+  updateNightMode,
 } from '../../models/Account/accountModel.js';
 
 import { Student } from '../../models/studentModel.js';
@@ -181,4 +182,14 @@ export const changeStudentPassword = async (studentId, { currentPassword, newPas
       action: ACTIVITY_ACTIONS.PASSWORD_CHANGE,
       actionDetail: 'Password changed via Account Settings',
   });
+};
+
+// UPDATE NIGHT MODE PREFERENCE
+// => Not logged to activity_logs - this is a UI preference, not a
+// => business-record-worthy account action like profile/password changes
+export const updateStudentNightMode = async (studentId, isNightMode) => {
+  if (typeof isNightMode !== 'boolean') {
+    throw Object.assign(new Error('isNightMode must be true or false.'), { statusCode: 400 });
+  }
+  await updateNightMode(pool, studentId, isNightMode);
 };

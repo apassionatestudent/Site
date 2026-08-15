@@ -7,6 +7,9 @@ import { apiFetch, RateLimitError } from '../../../utils/api.js';
 import RateLimitNotice from '../../../components/RateLimitNotice.jsx';
 
 import LoadingState from '../../../components/private/LoadingState/loadingState.jsx';
+// => Reusing the same toggle NavBar already uses, since theme persistence
+// => now lives centrally in ThemeContext regardless of which component calls it
+import ThemeToggle from '../../../components/ThemeToggle.jsx';
 
 // icons
 // => errorIcon reused from Enrollment.jsx's existing assets, still needed
@@ -337,6 +340,24 @@ const Account = () => {
         <h1 className="acct-title">Account Settings</h1>
         <p className="acct-subtitle">Update your contact details, address, and password.</p>
       </div>
+
+      {/* ============================================================
+          EDITABLE: Display Preferences
+          => Day/Night toggle - syncs with student_accounts.is_night_mode,
+          => same toggle instance behavior as the public NavBar's toggle
+          ============================================================ */}
+      <section className="acct-card">
+        <h2 className="acct-card-title">Display Preferences</h2>
+        <div className="acct-card-title-row" style={{ justifyContent: 'space-between' }}>
+          <div>
+            <p className="acct-label" style={{ marginBottom: '4px' }}>Day / Night Mode</p>
+            <p className="acct-subtitle" style={{ margin: 0 }}>
+              This applies across the site and is saved to your account.
+            </p>
+          </div>
+          <ThemeToggle />
+        </div>
+      </section>
 
       {/* ============================================================
           LOCKED: Personal Information
