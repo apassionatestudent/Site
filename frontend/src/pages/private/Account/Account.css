@@ -21,16 +21,16 @@
 
 .acct-title {
   font-family: var(--font-body);
-  font-size: 2rem;
-  font-weight: 400;
+  font-size: 1.75rem; /* => matches admin's adm-enroll-title size, was 2rem */
+  font-weight: 700; /* => was 400, brings this in line with the admin dashboard's bold titles */
   color: var(--text-primary);
   margin: 0 0 0.35rem;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.02em; /* => already matched admin, unchanged */
 }
 
 .acct-subtitle {
   color: var(--text-muted);
-  font-size: 0.9rem;
+  font-size: 0.875rem; /* => matches admin's adm-enroll-subtitle size, was 0.9rem */
   margin: 0;
 }
 
