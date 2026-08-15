@@ -9,6 +9,9 @@ import { generateCsrfToken, invalidateCsrfToken } from '../middleware/studentCsr
 // => for issuing/consuming password setup & reset tokens
 import { issuePasswordToken, consumePasswordToken } from '../services/passwordTokenService.js';
 
+import { ACTIVITY_ACTIONS } from '../constants/activityActions.js';
+import { logActivity } from '../services/Logs/logsService.js';
+
 // => Cookie options for security
 const cookieOptions = {
     httpOnly: true, // => cookie is only accessible by the web server, not by JavaScript on the client side
@@ -100,6 +103,26 @@ export const loginStudent = async (req, res) => {
 
         // => Update last_login_at on successful login
         await Student.updateLastLogin(student.student_id);
+
+        // => Fetch display name for the log's actor_name snapshot. Login is
+        // => low-frequency enough that a fresh lookup here is fine, unlike a
+        // => per-request hot path where this would add up
+        const nameRow = await Student.findNameById(student.student_id);
+        const actorName = nameRow
+            ? [nameRow.first_name, nameRow.last_name].filter(Boolean).join(' ')
+            : student.username;
+
+        // => entity_type/entity_id stay null - LOGIN is an account-level
+        // => action per the logging convention, not tied to any entity
+        // => logActivity never throws internally, so this can never fail
+        // => or delay the login response below
+        await logActivity({
+            actorType: 'Student',
+            actorId: student.student_id,
+            actorName,
+            action: ACTIVITY_ACTIONS.LOGIN,
+            actionDetail: `Logged in as ${student.username}`,
+        });
 
         // => cookie duration depends on whether the student chose "Remember Me"
         const loginCookieOptions = rememberMe

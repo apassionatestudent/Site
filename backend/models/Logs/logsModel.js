@@ -80,3 +80,32 @@ export const getDistinctEntityTypesByStudentId = async (pool, studentId) => {
   );
   return result.rows.map((row) => row.entity_type);
 };
+
+// => Write-side insert - the only write operation in this otherwise
+// => read-only model file. Kept here since it belongs to the same
+// => activity_logs domain as everything else above, rather than a
+// => separate file. Follows the same (pool, ...) parameter pattern as
+// => the read functions above, pool is never imported directly here.
+// => Does not default or derive actor_type/actor_id itself - that
+// => decision belongs to whichever controller triggers logActivity()
+// => in the service layer below.
+export const insertActivityLog = async (pool, logData) => {
+  const {
+    entityType = null,
+    entityId = null,
+    actorType,
+    actorId,
+    actorName,
+    action,
+    actionDetail = null,
+  } = logData;
+
+  const result = await pool.query(
+    `INSERT INTO activity_logs
+        (entity_type, entity_id, actor_type, actor_id, actor_name, action, action_detail)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
+     RETURNING log_id`,
+    [entityType, entityId, actorType, actorId, actorName, action, actionDetail]
+  );
+  return result.rows[0];
+};

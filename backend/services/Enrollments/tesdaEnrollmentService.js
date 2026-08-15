@@ -23,6 +23,8 @@ import {
 } from '../../models/Enrollments/tesdaEnrollmentModel.js';
 
 import { issuePasswordToken } from '../passwordTokenService.js';
+import { logActivity } from '../Logs/logsService.js';
+import { ACTIVITY_ACTIONS } from '../../constants/activityActions.js';
 
 export const processTesdaEnrollmentSubmission = async (body, files) => {
   // => Parse the JSON blobs sent via FormData
@@ -125,6 +127,23 @@ export const processTesdaEnrollmentSubmission = async (body, files) => {
     } catch (emailErr) {
       console.error('Password setup email failed to send:', emailErr);
     }
+
+    // => Activity log fires after COMMIT, same reasoning as the password
+    // => email above. logActivity() never throws (it catches internally in
+    // => logsService.js), so this can never turn a successful enrollment
+    // => into a failed response for the student.
+    // => actorName is pulled straight from body instead of a fresh
+    // => Student.findNameById() lookup, since the profile was just written
+    // => in this same transaction, no need to re-query what we just inserted.
+    await logActivity({
+      entityType: 'tesda_enrollment',
+      entityId: enrollmentId,
+      actorType: 'Student',
+      actorId: studentId,
+      actorName: `${body.firstName} ${body.lastName}`,
+      action: ACTIVITY_ACTIONS.CREATE,
+      actionDetail: `Submitted TESDA enrollment application, status: ${status}`,
+    });
 
     // => status/reservedReason are already returned by insertTesdaEnrollment -
     // => passed through here so the controller can tell the frontend

@@ -141,18 +141,56 @@ export const loadLocationCache = async () => {
   }
 };
 
+// => Sync lookup, no fetch needed - regions are already cached on startup.
+//    Exported so activity-log diffing can resolve a region_code to a
+//    readable name without going through HTTP. Same prefix-matching
+//    fallback as admin's copy, since psgc.cloud short codes and the
+//    10-digit codes stored in student_address don't always match exactly.
+export const getRegionName = (regionCode) => {
+  const match = cache.regions.find(r =>
+    regionCode === r.code ||
+    regionCode.startsWith(r.code) ||
+    r.code.startsWith(regionCode)
+  );
+  return fixMojibake(match?.name || match?.regionName || match?.label || regionCode);
+};
+
 // GET /regions
 // => psgc.cloud returns regionName, not name - handle both just in case
 router.get('/regions', (req, res) => {
   res.json(cache.regions.map(r => ({ 
     code: r.code, 
-    // name: r.name || r.regionName || r.label || ''
     name: fixMojibake(r.name || r.regionName || r.label || '')
   })));
 });
 
 // GET /provinces/:regionCode
 // => Uses hierarchy endpoint: /api/regions/{code}/provinces
+// => Extracted so other backend modules (activity-log diffing) can reuse
+//    this without an HTTP round trip to this router's own route.
+export const getProvinces = async (regionCode) => {
+  if (!isValidPsgcCode(regionCode)) return [];
+
+  if (cache.provincesByRegion[regionCode]) {
+    return cache.provincesByRegion[regionCode];
+  }
+
+  try {
+    const data = await fetch(buildPsgcUrl(BASE, `/regions/${regionCode}/provinces`))
+      .then(r => r.json());
+
+    const mapped = (Array.isArray(data) ? data : [])
+      .map(p => ({ code: p.code, name: fixMojibake(p.name) }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    cache.provincesByRegion[regionCode] = mapped;
+    return mapped;
+  } catch (err) {
+    console.error('Failed to fetch provinces:', err);
+    return [];
+  }
+};
+
 router.get('/provinces/:regionCode', async (req, res) => {
   const regionCode = req.params.regionCode;
 
@@ -161,59 +199,23 @@ router.get('/provinces/:regionCode', async (req, res) => {
     return res.status(400).json({ error: 'Invalid region code format' });
   }
 
-  // => Return from cache if already fetched
-  if (cache.provincesByRegion[regionCode]) {
-    return res.json(cache.provincesByRegion[regionCode]);
-  }
-
-  try {
-    const data = await fetch(buildPsgcUrl(BASE, `/regions/${regionCode}/provinces`))
-      .then(r => r.json());
-
-    // const mapped = (Array.isArray(data) ? data : [])
-    //   .map(p => ({ code: p.code, name: p.name }))
-    //   .sort((a, b) => a.name.localeCompare(b.name));
-
-    const mapped = (Array.isArray(data) ? data : [])
-      .map(p => ({ code: p.code, name: fixMojibake(p.name) }))
-      .sort((a, b) => a.name.localeCompare(b.name));
-
-    // => Cache for next time
-    cache.provincesByRegion[regionCode] = mapped;
-    res.json(mapped);
-  } catch (err) {
-    console.error('Failed to fetch provinces:', err);
-    res.json([]);
-  }
+  res.json(await getProvinces(regionCode));
 });
 
 // GET /cities/:provinceCode
 // => Uses hierarchy endpoint: /api/provinces/{code}/cities-municipalities
-router.get('/cities/:provinceCode', async (req, res) => {
-  const provinceCode = req.params.provinceCode;
-
-  // => SECURITY: reject malformed codes before cache lookup or network call
-  // => (closes CodeQL SSRF alert #9)
-  if (!isValidPsgcCode(provinceCode)) {
-    return res.status(400).json({ error: 'Invalid province code format' });
-  }
+// => Extracted so other backend modules (activity-log diffing) can reuse
+//    this without an HTTP round trip to this router's own route.
+export const getCitiesByProvince = async (provinceCode) => {
+  if (!isValidPsgcCode(provinceCode)) return [];
 
   if (cache.citiesByProvince[provinceCode]) {
-    return res.json(cache.citiesByProvince[provinceCode]);
+    return cache.citiesByProvince[provinceCode];
   }
 
   try {
     const data = await fetch(buildPsgcUrl(BASE, `/provinces/${provinceCode}/cities-municipalities`))
       .then(r => r.json());
-
-    // const mapped = (Array.isArray(data) ? data : [])
-    //   .map(c => ({
-    //     code: c.code,
-    //     name: c.name,
-    //     zip: c.zip_code || '',
-    //     district: c.district || '',
-    //   }))
-    //   .sort((a, b) => a.name.localeCompare(b.name));
 
     const mapped = (Array.isArray(data) ? data : [])
       .map(c => ({
@@ -225,39 +227,39 @@ router.get('/cities/:provinceCode', async (req, res) => {
       .sort((a, b) => a.name.localeCompare(b.name));
 
     cache.citiesByProvince[provinceCode] = mapped;
-    res.json(mapped);
+    return mapped;
   } catch (err) {
     console.error('Failed to fetch cities:', err);
-    res.json([]);
+    return [];
   }
+};
+
+router.get('/cities/:provinceCode', async (req, res) => {
+  const provinceCode = req.params.provinceCode;
+
+  // => SECURITY: reject malformed codes before cache lookup or network call
+  // => (closes CodeQL SSRF alert #9)
+  if (!isValidPsgcCode(provinceCode)) {
+    return res.status(400).json({ error: 'Invalid province code format' });
+  }
+
+  res.json(await getCitiesByProvince(provinceCode));
 });
 
 // GET /cities-by-region/:regionCode
 // => Uses hierarchy endpoint: /api/regions/{code}/cities-municipalities (for NCR)
-router.get('/cities-by-region/:regionCode', async (req, res) => {
-  const regionCode = req.params.regionCode;
-
-  // => SECURITY: reject malformed codes before cache lookup or network call
-  if (!isValidPsgcCode(regionCode)) {
-    return res.status(400).json({ error: 'Invalid region code format' });
-  }
+// => Extracted so other backend modules (activity-log diffing) can reuse
+//    this without an HTTP round trip to this router's own route.
+export const getCitiesByRegion = async (regionCode) => {
+  if (!isValidPsgcCode(regionCode)) return [];
 
   if (cache.citiesByRegion[regionCode]) {
-    return res.json(cache.citiesByRegion[regionCode]);
+    return cache.citiesByRegion[regionCode];
   }
 
   try {
     const data = await fetch(buildPsgcUrl(BASE, `/regions/${regionCode}/cities-municipalities`))
       .then(r => r.json());
-
-    // const mapped = (Array.isArray(data) ? data : [])
-    //   .map(c => ({
-    //     code: c.code,
-    //     name: c.name,
-    //     zip: c.zip_code || '',
-    //     district: c.district || '',
-    //   }))
-    //   .sort((a, b) => a.name.localeCompare(b.name));
 
     const mapped = (Array.isArray(data) ? data : [])
       .map(c => ({
@@ -269,11 +271,22 @@ router.get('/cities-by-region/:regionCode', async (req, res) => {
       .sort((a, b) => a.name.localeCompare(b.name));
 
     cache.citiesByRegion[regionCode] = mapped;
-    res.json(mapped);
+    return mapped;
   } catch (err) {
     console.error('Failed to fetch region cities:', err);
-    res.json([]);
+    return [];
   }
+};
+
+router.get('/cities-by-region/:regionCode', async (req, res) => {
+  const regionCode = req.params.regionCode;
+
+  // => SECURITY: reject malformed codes before cache lookup or network call
+  if (!isValidPsgcCode(regionCode)) {
+    return res.status(400).json({ error: 'Invalid region code format' });
+  }
+
+  res.json(await getCitiesByRegion(regionCode));
 });
 
 // GET /barangays/:cityCode
@@ -316,6 +329,41 @@ router.get('/cities-by-region/:regionCode', async (req, res) => {
 // GET /barangays/:cityCode
 // => Uses psgc.cloud hierarchy: /api/cities/{code}/barangays or /api/municipalities/{code}/barangays
 // => psgc.cloud codes are 10 digits - no conversion needed, use them directly
+// => Extracted so other backend modules (activity-log diffing) can reuse
+//    this without an HTTP round trip to this router's own route.
+export const getBarangays = async (code) => {
+  if (!isValidPsgcCode(code)) return [];
+
+  if (cache.barangaysByParent[code]) {
+    return cache.barangaysByParent[code];
+  }
+
+  try {
+    let response = await fetch(buildPsgcUrl(BASE, `/cities/${code}/barangays`));
+
+    if (!response.ok) {
+      response = await fetch(buildPsgcUrl(BASE, `/municipalities/${code}/barangays`));
+    }
+
+    if (!response.ok) {
+      console.warn('Barangays not found on psgc.cloud for code:', code);
+      return [];
+    }
+
+    const data = await response.json();
+    const mapped = (Array.isArray(data) ? data : [])
+      .map(b => ({ code: b.code, name: fixMojibake(b.name) }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    cache.barangaysByParent[code] = mapped;
+    return mapped;
+
+  } catch (err) {
+    console.error('Failed to fetch barangays for code:', code, err);
+    return [];
+  }
+};
+
 router.get('/barangays/:cityCode', async (req, res) => {
   const code = req.params.cityCode;
 
@@ -325,46 +373,7 @@ router.get('/barangays/:cityCode', async (req, res) => {
     return res.status(400).json({ error: 'Invalid city/municipality code format' });
   }
 
-  // => Return from cache if already fetched
-  if (cache.barangaysByParent[code]) {
-    return res.json(cache.barangaysByParent[code]);
-  }
-
-  try {
-    // => Try city endpoint first
-    let response = await fetch(buildPsgcUrl(BASE, `/cities/${code}/barangays`));
-
-    // => Fallback to municipality endpoint if city returns 404 or empty
-    if (!response.ok) {
-      response = await fetch(buildPsgcUrl(BASE, `/municipalities/${code}/barangays`));
-    }
-
-    if (!response.ok) {
-      // => SECURITY: code is now a separate arg, not embedded in the
-      // => format-string position (closes CodeQL alert #13 - format string)
-      console.warn('Barangays not found on psgc.cloud for code:', code);
-      return res.json([]);
-    }
-
-    const data = await response.json();
-    // const mapped = (Array.isArray(data) ? data : [])
-    //   .map(b => ({ code: b.code, name: b.name }))
-    //   .sort((a, b) => a.name.localeCompare(b.name));
-
-    const mapped = (Array.isArray(data) ? data : [])
-      .map(b => ({ code: b.code, name: fixMojibake(b.name) }))
-      .sort((a, b) => a.name.localeCompare(b.name));
-
-    // => Cache to avoid re-fetching same city
-    cache.barangaysByParent[code] = mapped;
-    res.json(mapped);
-
-  } catch (err) {
-    // => SECURITY: code passed as a separate arg, never inside the
-    // => format-string position (closes CodeQL alert #13)
-    console.error('Failed to fetch barangays for code:', code, err);
-    res.json([]);
-  }
+  res.json(await getBarangays(code));
 });
 
 // GET /barangays/:cityCode

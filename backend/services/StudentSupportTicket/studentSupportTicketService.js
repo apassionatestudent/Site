@@ -6,6 +6,10 @@ import {
   insertSupportTicket,
 } from "../../models/StudentSupportTicket/studentSupportTicketModel.js";
 
+import { Student } from "../../models/studentModel.js";
+import { ACTIVITY_ACTIONS } from "../../constants/activityActions.js";
+import { logActivity } from "../Logs/logsService.js";
+
 // => Kept identical in spirit to publicSupportTicketService.js's list, but
 // => duplicated here rather than imported, per no-shared-code policy
 const ALLOWED_CONCERN_TYPES = [
@@ -50,12 +54,36 @@ function validateTicketPayload({ subject, concernType, concern }) {
 export async function submitStudentSupportTicket(studentId, payload) {
   validateTicketPayload(payload);
 
-  return await insertSupportTicket({
+  const subject = payload.subject.trim();
+  const concernType = payload.concernType.trim();
+
+  const ticket = await insertSupportTicket({
     studentId,
-    subject: payload.subject.trim(),
-    concernType: payload.concernType.trim(),
+    subject,
+    concernType,
     message: payload.concern.trim(),
   });
+
+  // => Fetch display name for the log's actor_name snapshot - ticket
+  // => submission is low-frequency enough that a fresh lookup here is fine
+  const nameRow = await Student.findNameById(studentId);
+  const actorName = nameRow
+      ? [nameRow.first_name, nameRow.last_name].filter(Boolean).join(' ')
+      : 'Student';
+
+  // => entity_type/entity_id point at the new ticket, unlike account-level
+  // => actions - this is the first entity-scoped log on the student side
+  await logActivity({
+      actorType: 'Student',
+      actorId: studentId,
+      actorName,
+      entityType: 'SupportTicket',
+      entityId: ticket.ticket_id,
+      action: ACTIVITY_ACTIONS.CREATE,
+      actionDetail: `Submitted support ticket: "${subject}" (${concernType})`,
+  });
+
+  return ticket;
 }
 
 export async function listStudentSupportTickets(studentId) {

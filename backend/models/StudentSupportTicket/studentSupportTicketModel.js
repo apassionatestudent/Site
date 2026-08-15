@@ -29,7 +29,7 @@ export async function insertSupportTicket({ studentId, subject, concernType, mes
   const result = await sql`
     INSERT INTO support_tickets (student_id, subject, concern_type, message)
     VALUES (${studentId}, ${subject}, ${concernType}, ${message})
-    RETURNING public_id, created_at
+    RETURNING ticket_id, public_id, created_at
   `;
   return result.rows[0];
 }
