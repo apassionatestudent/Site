@@ -12,6 +12,7 @@ import {
   getStudentLogs,
   getLogsTodayCountByStudentId,
   getDistinctEntityTypesByStudentId,
+  insertActivityLog,
 } from '../../models/Logs/logsModel.js';
 
 export class ValidationError extends Error {
@@ -83,4 +84,18 @@ export const getStudentActivityLogs = async (studentId, rawFilters) => {
   ]);
 
   return { logs, total, logsToday, entityTypes };
+};
+
+// => Write-side entry point. Every controller across the codebase that
+// => needs to record a student action (login, registration, password
+// => reset, document actions, enrollment submission, etc.) calls this
+// => instead of touching the model directly.
+// => Never throws: a logging failure must never break the actual student
+// => action it is attached to, so any error here is only logged server-side.
+export const logActivity = async (logData) => {
+  try {
+    await insertActivityLog(pool, logData);
+  } catch (error) {
+    console.error('Activity log write failed:', error);
+  }
 };

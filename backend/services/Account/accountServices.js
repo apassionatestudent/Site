@@ -13,6 +13,13 @@ import {
   updatePassword,
 } from '../../models/Account/accountModel.js';
 
+import { Student } from '../../models/studentModel.js';
+import { ACTIVITY_ACTIONS } from '../../constants/activityActions.js';
+import { logActivity } from '../Logs/logsService.js';
+
+import { buildFieldDiff, formatDiffDetail } from '../../utils/buildFieldDiff.js';
+import { buildAddressDiff } from '../../utils/resolveAddressNames.js';
+
 // GET ACCOUNT
 export const getStudentAccount = async (studentId) => {
   return await getAccountByStudentId(pool, studentId);
@@ -40,6 +47,10 @@ export const updateStudentProfile = async (studentId, body) => {
   if (!body.barangay || !body.city || !body.region) {
     throw Object.assign(new Error('Complete address (region, city, barangay) is required.'), { statusCode: 400 });
   }
+
+  // => Snapshot the current record before any writes - this is the "old"
+  // => side of the diff used for the log's action_detail once the save commits
+  const oldRecord = await getAccountByStudentId(pool, studentId);
 
   const client = await pool.connect();
 
@@ -69,6 +80,56 @@ export const updateStudentProfile = async (studentId, body) => {
   } finally {
     client.release();
   }
+
+  // => Logged only after the transaction has fully committed, and outside
+  // => the try/finally above so a logging issue can never trigger a
+  // => ROLLBACK against an already-committed transaction
+
+  // => Contact fields + district use raw-value diffing - district is
+  // => already a human-readable number ("2nd"/"3rd"), no code to resolve
+  const contactAndDistrictFields = {
+    email: body.email,
+    contact_no: body.contactNo,
+    facebook_link: body.facebookLink,
+    district_code: body.district || null,
+  };
+
+  const contactAndDistrictLabels = {
+    email: 'Email',
+    contact_no: 'Contact No.',
+    facebook_link: 'Facebook Link',
+    district_code: 'District',
+  };
+
+  const contactChanges = buildFieldDiff(oldRecord, contactAndDistrictFields, contactAndDistrictLabels);
+
+  // => Region/province/city/barangay/street go through buildAddressDiff
+  // => instead, so the log shows resolved place names rather than raw
+  // => PSGC codes
+  const addressChanges = await buildAddressDiff(oldRecord, {
+    street: body.street,
+    barangay_code: body.barangay,
+    city_code: body.city,
+    province_code: body.province || null,
+    region_code: body.region,
+  });
+
+  const changes = [...contactChanges, ...addressChanges];
+
+  const nameRow = await Student.findNameById(studentId);
+  const actorName = nameRow
+      ? [nameRow.first_name, nameRow.last_name].filter(Boolean).join(' ')
+      : 'Student';
+
+  // => entity_type stays null - general profile UPDATE is an
+  // => account-level action per the logging convention
+  await logActivity({
+      actorType: 'Student',
+      actorId: studentId,
+      actorName,
+      action: ACTIVITY_ACTIONS.UPDATE,
+      actionDetail: formatDiffDetail('Profile & Address', changes),
+  });
 };
 
 // CHANGE PASSWORD
@@ -104,4 +165,20 @@ export const changeStudentPassword = async (studentId, { currentPassword, newPas
 
   const newHash = await bcrypt.hash(newPassword, 10);
   await updatePassword(pool, studentId, newHash);
+
+  // => Fetch display name for the log's actor_name snapshot
+  const nameRow = await Student.findNameById(studentId);
+  const actorName = nameRow
+      ? [nameRow.first_name, nameRow.last_name].filter(Boolean).join(' ')
+      : 'Student';
+
+  // => entity_type stays null - PASSWORD_CHANGE is an account-level
+  // => action per the logging convention, same as the auth-side password flows
+  await logActivity({
+      actorType: 'Student',
+      actorId: studentId,
+      actorName,
+      action: ACTIVITY_ACTIONS.PASSWORD_CHANGE,
+      actionDetail: 'Password changed via Account Settings',
+  });
 };
