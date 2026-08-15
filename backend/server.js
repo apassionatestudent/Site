@@ -59,10 +59,7 @@ import classesRoutes from './routes/Classes/classesRoutes.js';
 //    are not scoped under enrollment or classes routes.
 import paymentsRoutes from './routes/Payments/paymentsRoutes.js';
 
-// Dashboard Badges
-// => Combined announcement + support ticket counts for the sidebar bubbles
-// => Own route since it doesn't belong to any single domain (reads from two tables)
-import dashboardBadgesRoutes from './routes/DashboardBadges/dashboardBadgesRoutes.js';
+
 
 // Public Pages (Privacy Policy + FAQs)
 // => Read-only, no auth - reads from the same cms_pages / faqs_sections /
@@ -71,8 +68,6 @@ import cmsPageRoutes from './routes/Pages/cmsPageRoutes.js';
 import faqRoutes from './routes/Pages/faqRoutes.js';
 
 // Announcements (Student Dashboard feed)
-// => Full announcement list, separate from dashboardBadgesRoutes which only
-//    returns the unread count for the sidebar bubble
 import announcementRoutes from './routes/Announcements/announcementRoutes.js';
 
 // => Student's own activity log history, read-only, strictly scoped to
@@ -158,9 +153,7 @@ app.use('/api/account', accountRoutes);
 // payments 
 app.use('/api/payments', paymentsRoutes);
 
-// => Sidebar badge counts - single combined endpoint, own route since it
-//    spans announcements and support_tickets rather than belonging to one domain
-app.use('/api/dashboard-badges', dashboardBadgesRoutes);
+
 
 // => Public Pages - Privacy Policy (by slug) and FAQs, read-only, no auth
 app.use('/api/public/pages', cmsPageRoutes);

@@ -43,6 +43,8 @@ const NAV_ITEMS = [
 const Sidebar = ({
   profilePicture = DefaultAvatar,
   profileName    = "Student Name",
+  // => New prop, defaults to "Student" so existing callers that don't pass it still work
+  profileRole    = "Student",
   onNavClick     = () => {},
 }) => {
   const [hoveredItem, setHoveredItem] = useState(null);
@@ -86,6 +88,9 @@ const Sidebar = ({
           />
         </div>
         <p className="sidebar-profile-name">{profileName}</p>
+        {/* => Small subtitle under the name identifying the account type */}
+        {/* => Uses <span>, same element type the admin sidebar uses for this badge */}
+        <span className="sidebar-profile-role">{profileRole}</span>
       </div>
 
       <div className="sidebar-divider" />
