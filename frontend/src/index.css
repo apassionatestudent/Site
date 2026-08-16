@@ -12,6 +12,32 @@ html {
 :root {
   --font-display: 'Cormorant Garamond', serif;
   --font-body: 'Merriweather', serif;
+
+  /* => Actual rendered navbar height per breakpoint, kept in sync with NavBar.css.
+     => Used by .home-hero (and any future full-screen hero) to calc(100dvh - navbar height)
+     => instead of guessing a flat percentage like 80vh. */
+  --navbar-height: 96px;
+}
+
+/* => tablet tier, matches NavBar.css's 1024px breakpoint where logo-icon shrinks to 3rem */
+@media (max-width: 1024px) {
+  :root {
+    --navbar-height: 80px;
+  }
+}
+
+/* => small tablet tier, matches NavBar.css's own top: 70px drawer offset at this breakpoint */
+@media (max-width: 768px) {
+  :root {
+    --navbar-height: 70px;
+  }
+}
+
+/* => mobile tier, matches NavBar.css's own top: 64px drawer offset at this breakpoint */
+@media (max-width: 640px) {
+  :root {
+    --navbar-height: 64px;
+  }
 }
 
 /* => Global Hero Page Sections */ 
