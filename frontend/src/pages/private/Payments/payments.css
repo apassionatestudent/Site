@@ -258,3 +258,65 @@
 .balance-figure--settled .balance-figure-value {
   color: #15803d;
 }
+
+/*  RWD  */
+
+/* => Responsive: tablet */
+@media (max-width: 1024px) {
+  .payments-page {
+    padding: 2rem 1.5rem;
+  }
+}
+
+/* => Responsive: small tablet */
+@media (max-width: 768px) {
+  .payments-title {
+    font-size: 1.5rem;
+  }
+
+  .payments-tabs {
+    /* => lets tabs scroll horizontally instead of wrapping awkwardly
+       => if a third tab is ever added later */
+    overflow-x: auto;
+  }
+
+  .payments-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .balance-card {
+    padding: 16px 18px;
+  }
+
+  .balance-card-figures {
+    gap: 16px;
+  }
+}
+
+/* => Responsive: mobile */
+@media (max-width: 640px) {
+  .payments-page {
+    /* => bottom padding clears the floating hamburger button */
+    padding: 1.5rem 1rem 5.5rem;
+  }
+
+  .payments-card {
+    padding: 16px 18px;
+  }
+
+  .payments-card-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .balance-card {
+    padding: 14px 16px;
+  }
+
+  .balance-figure {
+    min-width: 80px;
+  }
+}

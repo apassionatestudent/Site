@@ -41,6 +41,74 @@ p {
 /* => shrink offset on mobile to match the collapsed sidebar */
 @media (max-width: 768px) {
   .app-main-dashboard {
-    margin-left: 64px;
+    /* => sidebar overlays the content now instead of pushing it, so no offset needed */
+    margin-left: 0;
+  }
+}
+
+/* => Hamburger toggle button, only rendered/visible on dashboard routes below 768px */
+/* => moved to bottom-right, easier for thumb reach than top-left on a phone */
+.sidebar-toggle-btn {
+  display: none;
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  /* => lowered from 350, was climbing above modals like AddSupportTicketModal.
+     => Still above the sidebar (60, see SideBar.css) and overlay (55), just
+     => no longer competing with anything that opens on top of the page. */
+  z-index: 65;
+  width: 56px;
+  height: 56px;
+  border: none;
+  border-radius: 50%;
+  background-color: var(--sidebar-bg, #660911);
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  /* => shadow lifts it off the page content so it reads as a floating button */
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
+.sidebar-toggle-icon {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
+
+/* => Landscape phones (short viewport) - shrinks the floating button so
+   => it eats less of the already-limited vertical space, same reasoning
+   => as the SideBar.css short-viewport block */
+@media (max-height: 500px) {
+  .sidebar-toggle-btn {
+    width: 44px;
+    height: 44px;
+    bottom: 12px;
+    right: 12px;
+  }
+
+  .sidebar-toggle-icon {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+/* => Dark overlay behind the open sidebar, tapping it closes the menu */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  /* => lowered from 150, same reasoning as sidebar-toggle-btn above */
+  z-index: 55;
+}
+
+@media (max-width: 768px) {
+  .sidebar-toggle-btn {
+    display: flex;
+  }
+
+  /* => only shown while the menu is open, controlled by conditional render in App.jsx */
+  .sidebar-overlay--visible {
+    display: block;
   }
 }

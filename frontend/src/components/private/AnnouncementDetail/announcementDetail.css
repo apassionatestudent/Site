@@ -115,8 +115,49 @@
 
 /*  RWD  */
 
+/* => Responsive: small tablet */
+@media (max-width: 768px) {
+  .announcement-card-body {
+    padding: 0.95rem 1.25rem;
+  }
+
+  .announcement-title {
+    font-size: 1.05rem;
+  }
+}
+
+/* => Responsive: mobile */
+@media (max-width: 640px) {
+  /* => title and date now stack instead of sitting side by side,
+     => prevents the date from squeezing long titles into multiple cramped lines */
+  .announcement-card-top {
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .announcement-meta {
+    margin-top: 0;
+  }
+
+  .announcement-message {
+    font-size: 0.88rem;
+  }
+
+  .announcement-message img {
+    max-height: 220px;
+  }
+}
+
 @media (max-width: 480px) {
   .announcement-card-body {
     padding: 0.85rem 1.1rem;
+  }
+
+  .announcement-card-bar {
+    width: 4px;
+  }
+
+  .announcement-title {
+    font-size: 1rem;
   }
 }

@@ -125,3 +125,47 @@
   object-fit: contain;
   opacity: 0.6;
 }
+
+/*  RWD  */
+
+/* => Responsive: tablet */
+@media (max-width: 1024px) {
+  .classes-page {
+    padding: 2rem 1.5rem;
+  }
+}
+
+/* => Responsive: small tablet */
+@media (max-width: 768px) {
+  .classes-title {
+    font-size: 1.5rem;
+  }
+
+  .classes-card {
+    padding: 16px 18px;
+  }
+
+  /* => title + type badge stack instead of squeezing onto one row
+     => once the course title gets long on a narrow screen */
+  .classes-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+}
+
+/* => Responsive: mobile */
+@media (max-width: 640px) {
+  .classes-page {
+    /* => bottom padding clears the floating hamburger button */
+    padding: 1.5rem 1rem 5.5rem;
+  }
+
+  .classes-card {
+    padding: 14px 16px;
+  }
+
+  .classes-card-header h2 {
+    font-size: 1rem;
+  }
+}

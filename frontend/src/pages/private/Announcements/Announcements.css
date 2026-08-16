@@ -61,3 +61,55 @@
   flex-direction: column;
   gap: 0.85rem;
 }
+
+/* => Responsive: tablet */
+@media (max-width: 1024px) {
+  .announcements-page {
+    padding: 2rem 1.5rem;
+  }
+}
+
+/* => Responsive: small tablet */
+@media (max-width: 768px) {
+  .announcements-page {
+    padding: 2rem 1.25rem 1.5rem;
+  }
+
+  .announcements-title {
+    font-size: 1.5rem;
+  }
+
+  .announcements-subtitle {
+    font-size: 0.8rem;
+  }
+
+  .announcement-empty {
+    padding: 2.5rem 1.5rem;
+  }
+}
+
+/* => Responsive: mobile */
+@media (max-width: 640px) {
+  .announcements-page {
+    /* => bottom padding clears the floating hamburger button, now bottom-right */
+    padding: 1.5rem 1rem 5.5rem;
+  }
+
+  .announcements-header {
+    margin-bottom: 1.5rem;
+  }
+
+  .announcement-empty {
+    padding: 2rem 1rem;
+    gap: 0.75rem;
+  }
+
+  .announcement-empty-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .announcement-feed {
+    gap: 0.65rem;
+  }
+}

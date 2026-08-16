@@ -151,3 +151,58 @@
   margin-right: 6px;
   vertical-align: middle;
 }
+
+/*  RWD  */
+
+/* => Responsive: tablet */
+@media (max-width: 1024px) {
+  .class-detail-page {
+    padding: 2rem 1.5rem;
+  }
+
+  .class-detail-info-grid {
+    /* => tightens the auto-fit minimum so 2 columns fit more reliably on tablet
+       => instead of occasionally dropping to 1 depending on content width */
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
+}
+
+/* => Responsive: small tablet */
+@media (max-width: 768px) {
+  .class-detail-header h1 {
+    font-size: 1.3rem;
+  }
+
+  /* => title + status badge stack instead of squeezing when the
+     => course title runs long on a narrow screen */
+  .class-detail-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .class-detail-info-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* => Responsive: mobile */
+@media (max-width: 640px) {
+  .class-detail-page {
+    /* => bottom padding clears the floating hamburger button */
+    padding: 1.5rem 1rem 5.5rem;
+  }
+
+  .class-detail-section-title {
+    font-size: 1.05rem;
+  }
+
+  /* => table itself still scrolls horizontally via .class-detail-table-wrapper's
+     => overflow-x: auto, this just tightens cell padding so more columns
+     => are visible before the user needs to scroll */
+  .class-detail-table th,
+  .class-detail-table td {
+    padding: 12px 14px;
+    font-size: 0.85rem;
+  }
+}

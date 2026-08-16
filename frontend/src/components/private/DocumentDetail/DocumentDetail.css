@@ -87,7 +87,9 @@
 }
 
 .doc-detail-title {
-  font-family: var(--font-display);
+  /* => switched from font-display to font-body, matches Documents.css, 
+     => Account.css, and Enrollment.css list/detail titles */
+  font-family: var(--font-body);
   font-size: 1.7rem;
   font-weight: 400;
   color: var(--text-primary);
@@ -222,19 +224,35 @@
   border: 1px solid var(--border);
   border-radius: 10px;
   display: block;
+  /* => centers the image horizontally, since a block-level element sits
+     => flush left by default unless its own width is smaller than the
+     => container and margins are set to auto on both sides */
+  margin: 0 auto;
 }
 
 /*  RWD  */
+
+/* => Responsive: tablet */
+@media (max-width: 1024px) {
+  .doc-detail-page {
+    padding: 2rem 1.5rem;
+  }
+}
 
 @media (max-width: 768px) {
   .doc-detail-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+
+  .doc-detail-title {
+    font-size: 1.4rem;
+  }
 }
 
 @media (max-width: 480px) {
   .doc-detail-page {
-    padding: 1.5rem 1rem;
+    /* => bottom padding clears the floating hamburger button */
+    padding: 1.5rem 1rem 5.5rem;
   }
 
   .doc-detail-grid {
@@ -248,5 +266,21 @@
 
   .doc-preview-iframe {
     height: 60vh;
+  }
+
+  /* => PDF viewer controls (zoom, download, page nav) render inside the
+     => iframe by the browser itself, not by this CSS, so they can still
+     => be cramped on a narrow phone. Nothing to fix here on our end, just
+     => worth knowing this is a browser-native constraint, not a CSS gap. */
+}
+
+/* => Landscape phones (short viewport) - 75vh/60vh becomes a thin
+   => unreadable strip on a ~350-430px tall screen, this caps it to a
+   => fixed pixel height instead so the preview stays usable */
+@media (max-height: 500px) {
+  .doc-preview-iframe,
+  .doc-preview-img {
+    height: 300px;
+    max-height: 300px;
   }
 }

@@ -109,21 +109,25 @@ const RefundDetail = () => {
             fee_at_enrollment / total_misc_fee / total_paid / remaining_balance
             fields the backend now attaches to every refund detail row */}
       <div className="refund-detail-balance-block">
-        <div className="refund-detail-balance-row">
-          <span>Course Fee</span>
-          <span>{formatCurrency(refund.fee_at_enrollment)}</span>
+        {/* => switched from refund-detail-balance-row (never had matching
+            => CSS, rendered as unstyled plain text) to refund-detail-balance-figure,
+            => which already exists in refundDetail.css and matches the same
+            => card pattern paymentDetail.jsx uses for this identical section */}
+        <div className="refund-detail-balance-figure">
+          <span className="refund-detail-balance-label">Course Fee</span>
+          <span className="refund-detail-balance-value">{formatCurrency(refund.fee_at_enrollment)}</span>
         </div>
-        <div className="refund-detail-balance-row">
-          <span>Misc Fees</span>
-          <span>{formatCurrency(refund.total_misc_fee)}</span>
+        <div className="refund-detail-balance-figure">
+          <span className="refund-detail-balance-label">Misc Fees</span>
+          <span className="refund-detail-balance-value">{formatCurrency(refund.total_misc_fee)}</span>
         </div>
-        <div className="refund-detail-balance-row">
-          <span>Total Paid to Date</span>
-          <span>{formatCurrency(refund.total_paid)}</span>
+        <div className="refund-detail-balance-figure">
+          <span className="refund-detail-balance-label">Total Paid to Date</span>
+          <span className="refund-detail-balance-value">{formatCurrency(refund.total_paid)}</span>
         </div>
-        <div className="refund-detail-balance-row refund-detail-balance-row--remaining">
-          <span>Remaining Balance</span>
-          <span>{formatCurrency(refund.remaining_balance)}</span>
+        <div className="refund-detail-balance-figure refund-detail-balance-figure--remaining">
+          <span className="refund-detail-balance-label">Remaining Balance</span>
+          <span className="refund-detail-balance-value">{formatCurrency(refund.remaining_balance)}</span>
         </div>
       </div>
 

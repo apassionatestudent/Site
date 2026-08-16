@@ -214,8 +214,57 @@
   color: var(--accent);
 }
 
+/*  RWD  */
+
+/* => Responsive: tablet */
+@media (max-width: 1024px) {
+  .payment-detail-page {
+    padding: 2rem 1.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .payment-detail-header h1 {
+    font-size: 1.3rem;
+  }
+
+  /* => title + status/download actions stack instead of squeezing when
+     => the OR number runs long on a narrow screen */
+  .payment-detail-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .payment-detail-header-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
 @media (max-width: 720px) {
   .payment-detail-summary-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+/* => Responsive: mobile */
+@media (max-width: 640px) {
+  .payment-detail-page {
+    /* => bottom padding clears the floating hamburger button */
+    padding: 1.5rem 1rem 5.5rem;
+  }
+
+  .payment-detail-amount-value {
+    font-size: 1.6rem;
+  }
+
+  .payment-detail-balance-block {
+    padding: 16px 18px;
+  }
+
+  .payment-detail-download-btn span,
+  .payment-detail-download-btn {
+    font-size: 0.75rem;
   }
 }
