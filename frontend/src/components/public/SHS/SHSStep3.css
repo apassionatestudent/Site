@@ -340,7 +340,8 @@
   to   { transform: rotate(360deg); }
 }
 
-@media (max-width: 700px) {
+/* => migrated from 700px to the site-wide 768px tier */
+@media (max-width: 768px) {
   .shs3-wrap { padding: 1.2rem; }
   .shs3-g2,
   .shs3-g3 { grid-template-columns: 1fr; }

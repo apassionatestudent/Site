@@ -121,3 +121,44 @@
   object-fit: contain;
   vertical-align: middle;
 }
+
+/* => RWD  */
+
+/* => tablet tier */
+@media (max-width: 1024px) {
+  .shs-course-detail {
+    padding: 4rem 2rem 3rem;
+  }
+}
+
+/* => small tablet tier */
+@media (max-width: 768px) {
+  .shs-course-detail {
+    padding: 3.5rem 1.5rem 3rem;
+  }
+}
+
+/* => mobile tier */
+@media (max-width: 640px) {
+  .shs-course-detail {
+    padding: 3rem 1.25rem 2.5rem;
+  }
+
+  .shs-course-badge {
+    font-size: 0.75rem;
+    padding: 0.3rem 0.85rem;
+  }
+
+  /* => full-width button is an easier thumb target than a fixed-width one on a narrow screen */
+  .shs-course-enroll-btn {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+/* => landscape phones (short viewport), width-only breakpoints don't catch these */
+@media (max-height: 500px) {
+  .shs-course-detail {
+    padding: 2rem 1.5rem;
+  }
+}

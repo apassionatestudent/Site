@@ -225,6 +225,19 @@
 }
 
 /* => RWD  */
+
+/* => tablet tier, new addition - this file previously jumped straight from desktop to 768px with no tightening step */
+@media (max-width: 1024px) {
+  .footer-inner {
+    gap: 44px;
+    padding: 0 32px;
+  }
+
+  .footer-bottom {
+    padding: 20px 32px;
+  }
+}
+
 @media (max-width: 768px) {
   .footer-inner {
     grid-template-columns: 1fr;
@@ -244,7 +257,8 @@
   }
 }
 
-@media (max-width: 480px) {
+/* => migrated from 480px to the site-wide 640px tier */
+@media (max-width: 640px) {
   .footer {
     padding: 40px 0 0 0;
   }

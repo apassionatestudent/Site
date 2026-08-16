@@ -70,18 +70,34 @@
   align-items: center;
 }
 
+/* => floating circular button, bottom-right, matches .sidebar-toggle-btn in App.css exactly */
 .hamburger {
   display: none;
-  flex-direction: column;
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  /* => above .nav-right (900) and .nav-overlay (850), stays usable as a close button while the drawer is open */
+  z-index: 950;
+  width: 56px;
+  height: 56px;
+  border: none;
+  border-radius: 50%;
+  background-color: #660911; /* matches --sidebar-bg / .nav-right background */
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  gap: 4px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
 }
 
-.hamburger span {
-  width: 25px;
-  height: 3px;
-  background: #333;
-  transition: 0.3s;
+.hamburger-icon {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
+
+/* => floating theme toggle, bottom-left, mirrors .hamburger on the opposite corner. Hidden by default, shown only below 768px */
+.theme-toggle-fixed {
+  display: none;
 }
 
 
@@ -105,36 +121,165 @@
   color: #fff;
 }
 
+/* => dark backdrop behind the open drawer, hidden by default, only shown below 768px via .nav-overlay--visible */
+.nav-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 850; /* below the drawer (900) and the sticky navbar (1000), above page content */
+}
+
+/* => tablet tier, tightens spacing before the hamburger takes over at 768px */
+@media (max-width: 1024px) {
+  .nav-left .logo {
+    font-size: 1.2rem;
+  }
+
+  .logo-icon {
+    height: 3rem;
+  }
+
+  .nav-links {
+    gap: 0.25rem;
+  }
+
+  .nav-links a {
+    padding: 0.5rem 0.6rem;
+    font-size: 0.85rem;
+  }
+
+  .nav-links .theme-toggle-btn {
+    font-size: 0.75rem;
+    padding: 0.35rem 0.7rem;
+  }
+}
+
 /* responsive section */
+/* => drawer mechanic matches the dashboard SideBar.css exactly: fixed 240px width,
+   => slides in from the left, dark maroon background, white text inherited from
+   => the desktop .nav-links a styles further up this file. Kept as its own literal
+   => 240px here rather than a shared variable, per the no-shared-abstraction rule. */
 @media (max-width: 768px) {
   .nav-right {
     position: fixed;
-    top: 70px;
-    right: -100%;
-    width: 100%;
+    top: 70px; /* sits below the sticky navbar so the navbar (and hamburger) stays visible and on top */
+    left: 0;
+    width: 240px;
     height: calc(100vh - 70px);
-    background: #fff;
+    background: #660911; /* matches --sidebar-bg in SideBar.css */
     flex-direction: column;
-    align-items: center;
+    align-items: flex-start;
     justify-content: flex-start;
-    padding-top: 2rem;
-    box-shadow: -5px 0 10px rgba(0,0,0,0.1);
-    transition: right 0.3s;
+    padding: 20px 0;
+    /* => spread set to the negative of blur, a common one-sided shadow trick.
+       => it cancels the vertical bleed entirely so the shadow hugs the drawer's
+       => right edge only, instead of leaking upward into the navbar above */
+    box-shadow: 4px 0 24px -24px rgba(0, 0, 0, 0.35);
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    z-index: 900; /* below .navbar's 1000, so the navbar and hamburger stay clickable above the open drawer */
+    overflow-y: auto;
   }
 
   .nav-right.active {
-    right: 0;
+    transform: translateX(0);
+  }
+
+  .nav-overlay--visible {
+    display: block;
+    top: 70px; /* starts below the navbar, matching the drawer's top offset */
   }
 
   .nav-links {
     flex-direction: column;
-    gap: 1rem;
+    gap: 4px;
     width: 100%;
-    text-align: center;
+    text-align: left;
+    padding: 0 12px;
+  }
+
+  .nav-links a {
+    /* => stretches the clickable/highlighted area to the full row width, matching sidebar-nav-item in SideBar.css */
+    width: 100%;
+    padding: 10px 16px;
+    border-radius: 10px; /* matches --sidebar-radius */
   }
 
   .hamburger {
     display: flex;
+  }
+
+  /* => replaced by .theme-toggle-fixed below, hidden here to avoid a duplicate control inside the drawer */
+  /* => bumped specificity to match ".nav-links li" above, which was winning the specificity fight and keeping this toggle visible despite this rule */
+  .nav-links li.theme-item {
+    display: none;
+  }
+
+  /* => hidden by default now, only shown while the drawer is open via .theme-toggle-fixed.active below */
+  .theme-toggle-fixed {
+    display: none;
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    z-index: 950;
+  }
+
+  .theme-toggle-fixed.active {
+    display: flex;
+  }
+}
+
+/* => small phone tier, shrinks the navbar (and matches the drawer's top offset to it) */
+@media (max-width: 640px) {
+  .nav-right {
+    top: 64px;
+    height: calc(100vh - 64px);
+  }
+
+  .nav-overlay--visible {
+    top: 64px;
+  }
+
+  .logo-icon {
+    height: 2.5rem;
+  }
+
+  .nav-left .logo {
+    font-size: 1.1rem;
+  }
+}
+
+/* => landscape phones, width-only breakpoints do not catch these short viewports */
+/* => same reasoning as SideBar.css's own max-height: 500px block */
+@media (max-height: 500px) {
+  .nav-right {
+    padding: 10px 0;
+  }
+
+  .nav-links {
+    gap: 2px;
+  }
+
+  .nav-links a {
+    padding: 7px 16px;
+  }
+
+  .hamburger {
+    width: 44px;
+    height: 44px;
+    bottom: 12px;
+    right: 12px;
+  }
+
+  .hamburger-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .theme-toggle-fixed {
+    bottom: 12px;
+    left: 12px;
   }
 }
 

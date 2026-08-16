@@ -529,14 +529,16 @@
   animation: ts5b-spin 1s linear infinite;
 }
 
-@media (max-width: 700px) {
+/* => migrated from 700px to the site-wide 768px tier */
+@media (max-width: 768px) {
+  .ts4-wrap { padding: 1.2rem; }
+  .ts4-g2 { grid-template-columns: 1fr; }
+}/* -- Responsive -- */
+/* => migrated from 700px to the site-wide 768px tier; also merged the two separate 700px blocks that existed here into one, since both fired at the same width */
+@media (max-width: 768px) {
   .ts5-scholar-row { flex-direction: column; gap: 0; }
   .ts5-field-group--inline { min-width: 100%; }
   .ts5-scholar-other-input { width: 100%; }
-}
-
-/* -- Responsive -- */
-@media (max-width: 700px) {
   .ts5-wrap    { padding: 1.2rem; }
   .ts5-g2      { grid-template-columns: 1fr; }
   .ts5-uploads { grid-template-columns: 1fr; gap: 1.2rem; }

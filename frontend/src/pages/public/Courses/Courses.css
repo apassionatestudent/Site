@@ -183,3 +183,86 @@
   font-weight: 700;
   font-size: 0.9rem;
 }
+
+/* => RWD  */
+
+/* => tablet tier */
+@media (max-width: 1024px) {
+  .courses-hero {
+    padding: 4rem 2rem 2.5rem;
+  }
+
+  .courses-grid {
+    padding: 3rem 2rem;
+    gap: 1.25rem;
+  }
+
+  .courses-picker {
+    padding: 3rem 2rem;
+  }
+}
+
+/* => small tablet tier */
+@media (max-width: 768px) {
+  .courses-hero {
+    padding: 3.5rem 1.5rem 2rem;
+  }
+
+  .courses-grid {
+    /* => narrower minmax so cards do not squeeze into an awkward 2-up layout right before mobile */
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    padding: 2.5rem 1.5rem;
+    gap: 1.25rem;
+  }
+
+  .courses-picker {
+    padding: 2.5rem 1.5rem;
+  }
+
+  .courses-picker-grid {
+    gap: 1.25rem;
+  }
+
+  .courses-picker-card {
+    padding: 1.5rem;
+  }
+}
+
+/* => landscape phones (short viewport), width-only breakpoints don't catch these */
+@media (max-height: 500px) {
+  .courses-grid {
+    padding: 1.75rem 1.5rem;
+  }
+
+  .courses-picker {
+    padding: 1.75rem 1.5rem;
+  }
+}
+
+/* => mobile tier */
+@media (max-width: 640px) {
+  .courses-hero {
+    padding: 3rem 1.25rem 1.75rem;
+  }
+
+  .courses-grid {
+    grid-template-columns: 1fr;
+    padding: 2rem 1.25rem;
+  }
+
+  .course-card {
+    padding: 1.5rem;
+  }
+
+  .courses-picker {
+    padding: 2rem 1.25rem;
+  }
+
+  .courses-picker-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .courses-picker-card {
+    padding: 1.5rem;
+  }
+}

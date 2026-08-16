@@ -166,12 +166,14 @@
 .ts3-btn-next:hover { background: var(--enroll-btn-hover); }
 .ts3-btn-next:active { transform: scale(0.98); }
 
-@media (max-width: 700px) {
+/* => migrated from 700px to the site-wide 768px tier */
+@media (max-width: 768px) {
   .ts3-wrap { padding: 1.2rem; }
   .ts3-checkbox-grid { grid-template-columns: 1fr 1fr; }
 }
 
-@media (max-width: 420px) {
+/* => migrated from 420px to the site-wide 640px tier */
+@media (max-width: 640px) {
   .ts3-checkbox-grid { grid-template-columns: 1fr; }
 }
 
@@ -327,7 +329,8 @@
 .ts4-btn-next:hover { background: var(--enroll-btn-hover); }
 .ts4-btn-next:active { transform: scale(0.98); }
 
-@media (max-width: 700px) {
+/* => migrated from 700px to the site-wide 768px tier */
+@media (max-width: 768px) {
   .ts4-wrap { padding: 1.2rem; }
   .ts4-g2 { grid-template-columns: 1fr; }
 }

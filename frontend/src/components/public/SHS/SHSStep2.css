@@ -506,9 +506,9 @@
   box-shadow: 0 0 0 3px rgba(139, 26, 26, 0.1);
 }
 
-@media (max-width: 700px) {
+/* => migrated from 700px to the site-wide 768px tier; also removed a duplicate ".shs2-g2" rule that appeared twice here */
+@media (max-width: 768px) {
   .shs2-wrap { padding: 1.2rem; }
   .shs2-g2 { grid-template-columns: 1fr; }
   .shs2-uploads { grid-template-columns: 1fr; }
-  .shs2-g2 { grid-template-columns: 1fr; }
 }

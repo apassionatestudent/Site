@@ -671,21 +671,19 @@
    Responsive
    ============================================================ */
 
-@media (max-width: 600px) {
-  .enroll-cards {
-    grid-template-columns: 1fr;
+/* => tablet tier, matches the 1024px tier used site-wide (Home, About, Courses, NavBar) - new addition, this file previously started at 700px with no tablet tightening */
+@media (max-width: 1024px) {
+  .hero-strip {
+    padding: 5rem 2rem 3.5rem;
   }
 
-  .enroll-selection {
-    margin: 2rem auto;
-  }
-
-  .tesda-progress {
-    padding: 1rem 1.2rem 0.6rem;
+  .form-body {
+    padding: 1.5rem 2rem 1rem;
   }
 }
 
-@media (max-width: 700px) {
+/* => migrated from 700px to the site-wide 768px tier */
+@media (max-width: 768px) {
   .hero-title { font-size: 1.8rem; }
   .step-tabs { flex-direction: column; }
   .step-tab {
@@ -718,7 +716,45 @@
   }
 }
 
-@media (max-width: 420px) {
+/* => migrated from 600px/420px, merged into the site-wide 640px tier */
+@media (max-width: 640px) {
   .g-3, .g-2, .g-2l, .g-name-row { grid-template-columns: 1fr; }
   .birthplace-row { grid-template-columns: 1fr; }
+
+  .enroll-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .enroll-selection {
+    margin: 2rem auto;
+  }
+
+  .tesda-progress {
+    padding: 1rem 1.2rem 0.6rem;
+  }
+}
+
+/* => landscape phones (short viewport), width-only breakpoints do not catch these -
+   => step tabs can stay in a row at landscape widths above 768px, so this only
+   => trims vertical padding rather than restructuring the layout */
+@media (max-height: 500px) {
+  .hero-strip {
+    padding: 2rem 1.5rem;
+  }
+
+  .form-body {
+    padding: 1rem 1.5rem 0.75rem;
+  }
+
+  .step-tab {
+    padding: 10px 16px;
+  }
+
+  .tesda-progress {
+    padding: 0.75rem 1.2rem 0.5rem;
+  }
+
+  .enroll-selection {
+    margin: 1.5rem auto;
+  }
 }

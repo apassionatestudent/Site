@@ -3,6 +3,13 @@
   min-height: 100vh;
 }
 
+/* => centers the Back button under the hero's maroon rule */
+.shs-courses-back-wrap {
+  display: flex;
+  justify-content: center;
+  margin-top: 2rem;
+}
+
 .shs-courses-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -82,4 +89,47 @@
 
 .course-enroll-btn:hover {
   background: var(--accent-hover);
+}
+
+/* => RWD  */
+
+/* => tablet tier */
+@media (max-width: 1024px) {
+  .shs-courses-grid {
+    padding: 3rem 2rem;
+    gap: 1.25rem;
+  }
+}
+
+/* => small tablet tier */
+@media (max-width: 768px) {
+  .shs-courses-grid {
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    padding: 2.5rem 1.5rem;
+    gap: 1.25rem;
+  }
+}
+
+/* => mobile tier */
+@media (max-width: 640px) {
+  .shs-courses-grid {
+    grid-template-columns: 1fr;
+    padding: 2rem 1.25rem;
+  }
+
+  .course-card {
+    padding: 1.5rem;
+  }
+
+  .course-card h3 {
+    /* => card-card-header already wraps via flex-wrap, this just keeps the "(Grade 11)" suffix from crowding the title */
+    font-size: 1.25rem;
+  }
+}
+
+/* => landscape phones (short viewport), width-only breakpoints don't catch these */
+@media (max-height: 500px) {
+  .shs-courses-grid {
+    padding: 1.75rem 1.5rem;
+  }
 }

@@ -160,9 +160,41 @@
   background: var(--enroll-btn-hover);
 }
 
-@media (max-width: 600px) {
+/* => RWD  */
+
+/* => tablet tier */
+@media (max-width: 1024px) {
+  .support-ticket-section {
+    padding: 2.5rem 2rem 4rem;
+  }
+}
+
+/* => small tablet tier */
+@media (max-width: 768px) {
+  .support-ticket-section {
+    padding: 2rem 1.5rem 3.5rem;
+  }
+
+  .support-ticket-form {
+    padding: 2rem;
+  }
+}
+
+/* => mobile tier, migrated from 600px to the site-wide 640px tier */
+@media (max-width: 640px) {
+  .support-ticket-section {
+    padding: 1.5rem 1.25rem 3rem;
+  }
+
   .support-ticket-form {
     grid-template-columns: 1fr;
+    padding: 1.75rem;
+  }
+
+  /* => fixed 400px max-width would overflow a narrow phone screen once its own
+     => horizontal margin/padding is accounted for, so cap it relative to the viewport instead */
+  .support-ticket-modal {
+    max-width: 90vw;
     padding: 1.75rem;
   }
 }

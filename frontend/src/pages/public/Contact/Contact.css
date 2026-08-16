@@ -3,39 +3,6 @@
   min-height: 100vh;
 }
 
-.contact-hero {
-  padding: 5rem 2rem 3rem;
-  text-align: center;
-  background: linear-gradient(180deg, #1a0305 0%, #000 100%);
-}
-
-.contact-tag {
-  display: inline-block;
-  background: rgba(102, 9, 17, 0.4);
-  border: 1px solid #660911;
-  color: #ff6b7a;
-  font-size: 0.8rem;
-  font-weight: 600;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  padding: 0.3rem 1rem;
-  border-radius: 2rem;
-  margin-bottom: 1.5rem;
-}
-
-.contact-hero h1 {
-  font-size: clamp(2rem, 4vw, 3rem);
-  font-weight: 800;
-  margin-bottom: 1rem;
-}
-
-.contact-hero p {
-  color: #aaa;
-  max-width: 500px;
-  margin: 0 auto;
-  line-height: 1.7;
-}
-
 .contact-body {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -43,6 +10,47 @@
   padding: 4rem 2rem;
   max-width: 1100px;
   margin: 0 auto;
+}
+
+/* => RWD  */
+
+/* => tablet tier */
+@media (max-width: 1024px) {
+  .contact-body {
+    padding: 3.5rem 2rem;
+    gap: 1.25rem;
+  }
+}
+
+/* => small tablet tier */
+@media (max-width: 768px) {
+  .contact-body {
+    padding: 3rem 1.5rem;
+    gap: 1.25rem;
+  }
+
+  .contact-card {
+    padding: 1.75rem;
+  }
+}
+
+/* => mobile tier */
+@media (max-width: 640px) {
+  .contact-body {
+    grid-template-columns: 1fr;
+    padding: 2.5rem 1.25rem;
+  }
+
+  .contact-card {
+    padding: 1.5rem;
+  }
+}
+
+/* => landscape phones (short viewport), width-only breakpoints don't catch these */
+@media (max-height: 500px) {
+  .contact-body {
+    padding: 1.75rem 1.5rem;
+  }
 }
 
 .contact-card {
