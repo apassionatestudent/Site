@@ -213,6 +213,75 @@
 
 /*  RWD  */
 
+/* => Responsive: tablet */
+@media (max-width: 1024px) {
+  .stk-page {
+    padding: 2rem 1.5rem;
+  }
+}
+
+/* => Responsive: small tablet, this is also where the hamburger toggle
+   => button becomes visible (see App.css), so the FAB moves up to stack
+   => above it instead of overlapping. One rule handles it from here down
+   => to the smallest phone widths, since the hamburger button itself
+   => (App.css) doesn't move or resize below 768px, so the FAB doesn't
+   => need to move again either. */
+@media (max-width: 768px) {
+  .stk-title {
+    font-size: 1.5rem;
+  }
+
+  .stk-card-top {
+    flex-direction: column;
+  }
+
+  .stk-fab {
+    /* => hamburger sits at bottom:20px, right:20px, 56px tall (App.css),
+       => so its top edge is at 76px from the bottom. This leaves a clear
+       => 34px gap above it instead of the 16px gap that was overlapping. */
+    bottom: 110px;
+    right: 20px;
+    /* => dropped BELOW the sidebar overlay (z-index 55, App.css) on purpose.
+       => The FAB sits outside the sidebar's own width, so without this it
+       => stays tappable even while the mobile menu is open, letting a
+       => student open the New Ticket modal with the sidebar still open
+       => behind it. This way the overlay physically covers the FAB while
+       => the menu is open, so a tap there closes the menu instead of
+       => opening the modal, same as tapping anywhere else on the overlay. */
+    z-index: 40;
+  }
+
+  /* => Landscape phones (short viewport) - hamburger shrinks to 44px at
+     => bottom:12px (App.css), so its top edge is at 56px. This re-stacks
+     => the FAB above that new, smaller position instead of leaving the
+     => old 110px offset, which would open a large dead gap between them. */
+  @media (max-height: 500px) {
+    .stk-fab {
+      width: 48px;
+      height: 48px;
+      font-size: 1.5rem;
+      bottom: 68px;
+      right: 12px;
+    }
+  }
+}
+
+/* => Responsive: mobile */
+@media (max-width: 640px) {
+  .stk-page {
+    padding: 1.5rem 1rem;
+  }
+
+  .stk-card-body {
+    padding: 0.7rem 1rem;
+  }
+
+  .stk-card-meta {
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+}
+
 @media (max-width: 480px) {
   .stk-page {
     padding: 1.5rem 1rem;
@@ -221,10 +290,5 @@
   .stk-card-meta {
     flex-direction: column;
     gap: 0.3rem;
-  }
-
-  .stk-fab {
-    bottom: 1.5rem;
-    right: 1.5rem;
   }
 }

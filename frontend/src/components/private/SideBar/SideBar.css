@@ -34,7 +34,11 @@
   left: 0;
   width: var(--sidebar-width);
   height: 100vh;
-  z-index: 100;
+  /* => raised above the overlay (55) so nav links are clickable when the
+     => mobile menu is open. Lowered overall from 300 so this whole sidebar
+     => stack (sidebar/overlay/toggle) sits well below modals like
+     => AddSupportTicketModal, instead of climbing above them. */
+  z-index: 60;
 
   /* Layout */
   display: flex;
@@ -265,29 +269,78 @@
   margin-left: var(--sidebar-width);
 }
 
-/* Responsive - collapse sidebar on small screens */
-@media (max-width: 768px) {
+/* => Landscape phones (short viewport, not narrow) - shrinks the profile
+   => section and lets the nav list scroll internally instead of forcing
+   => the whole sidebar to cram everything into ~350-430px of height.
+   => max-height alone, no max-width pairing, since a short desktop
+   => browser window benefits from the same fix. */
+@media (max-height: 500px) {
   .sidebar {
-    /* Icon-only collapsed mode on mobile */
-    width: 64px;
+    padding: 12px 0 10px;
   }
 
-  .sidebar-profile-name,
-  .sidebar-profile-role,
-  .sidebar-nav-label {
-    display: none;
+  .sidebar-profile {
+    padding: 0 20px 10px;
+    gap: 4px;
+  }
+
+  .sidebar-avatar-ring {
+    width: calc(40px + 6px);
+    height: calc(40px + 6px);
+  }
+
+  .sidebar-avatar {
+    width: 40px;
+    height: 40px;
+  }
+
+  .sidebar-nav {
+    /* => was center-justified, which pushes items apart to fill height -
+       => on a short screen that means excess dead space between items
+       => instead of a clean list, flex-start keeps them tight and lets
+       => overflow scroll naturally via .sidebar's own overflow-y: auto */
+    justify-content: flex-start;
+    padding: 8px 0;
   }
 
   .sidebar-nav-item {
-    justify-content: center;
-    padding: 12px;
+    padding: 7px 20px;
+  }
+}
+
+/* Responsive - slide-in menu on tablet and mobile, replaces the old icon-only rail */
+@media (max-width: 768px) {
+  .sidebar {
+    /* => full width restored, no more icon-only collapse */
+    width: var(--sidebar-width);
+    /* => hidden off-screen to the left by default */
+    transform: translateX(-100%);
+    transition: transform var(--sidebar-transition);
+  }
+
+  /* => toggled on by App.jsx when the hamburger button is tapped */
+  .sidebar--open {
+    transform: translateX(0);
+  }
+
+  /* => labels stay visible since the sidebar is full-width when open, not icon-only */
+  .sidebar-profile-name,
+  .sidebar-profile-role,
+  .sidebar-nav-label {
+    display: block;
+  }
+
+  .sidebar-nav-item {
+    justify-content: flex-start;
+    padding: 10px 20px;
   }
 
   .sidebar-active-bar {
-    right: -4px;
+    right: -8px;
   }
 
   .main-content {
-    margin-left: 64px;
+    /* => content no longer pushed, sidebar now overlays instead of sitting inline */
+    margin-left: 0;
   }
 }

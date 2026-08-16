@@ -209,9 +209,51 @@
 
 /*  RWD  */
 
+/* => Responsive: tablet */
+@media (max-width: 1024px) {
+  .docs-page {
+    padding: 2rem 1.5rem;
+  }
+}
+
+/* => Responsive: small tablet */
+@media (max-width: 768px) {
+  .docs-title {
+    font-size: 1.5rem;
+  }
+
+  /* => type + source badge stack instead of squeezing onto one row
+     => once the document type label gets long on a narrow screen */
+  .docs-card-top {
+    flex-direction: column;
+  }
+
+  /* => arrow column shrinks so it doesn't eat width from the stacked text above */
+  .docs-card-arrow {
+    padding: 0 0.85rem;
+  }
+}
+
+/* => Responsive: mobile */
+@media (max-width: 640px) {
+  .docs-page {
+    /* => bottom padding clears the floating hamburger button */
+    padding: 1.5rem 1rem 5.5rem;
+  }
+
+  .docs-card-body {
+    padding: 0.9rem 1rem;
+  }
+
+  .docs-card-meta {
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+}
+
 @media (max-width: 480px) {
   .docs-page {
-    padding: 1.5rem 1rem;
+    padding: 1.5rem 1rem 5.5rem;
   }
 
   .docs-card-meta {

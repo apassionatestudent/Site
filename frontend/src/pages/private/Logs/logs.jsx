@@ -184,6 +184,9 @@ export default function Logs() {
       ) : fetchError ? (
         <LoadingState variant="error" message={fetchError} onRetry={fetchLogs} />
       ) : (
+        // => wrapper scrolls horizontally on narrow screens instead of the
+        // => whole page, same pattern as class-detail-table-wrapper
+        <div className="logs-table-wrapper">
         <table className="logs-table">
           <thead>
             <tr>
@@ -238,6 +241,7 @@ export default function Logs() {
             )}
           </tbody>
         </table>
+        </div>
       )}
 
       {!loading && !fetchError && totalPages > 1 && (

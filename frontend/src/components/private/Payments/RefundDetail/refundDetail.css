@@ -209,8 +209,52 @@
   color: var(--accent);
 }
 
+/*  RWD  */
+
+/* => Responsive: tablet */
+@media (max-width: 1024px) {
+  .refund-detail-page {
+    padding: 2rem 1.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .refund-detail-header h1 {
+    font-size: 1.3rem;
+  }
+
+  /* => title + status/download actions stack instead of squeezing when
+     => the refund number runs long on a narrow screen */
+  .refund-detail-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .refund-detail-header-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
 @media (max-width: 720px) {
   .refund-detail-summary-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+/* => Responsive: mobile */
+@media (max-width: 640px) {
+  .refund-detail-page {
+    /* => bottom padding clears the floating hamburger button */
+    padding: 1.5rem 1rem 5.5rem;
+  }
+
+  .refund-detail-amount-value {
+    font-size: 1.6rem;
+  }
+
+  .refund-detail-balance-block {
+    padding: 16px 18px;
   }
 }

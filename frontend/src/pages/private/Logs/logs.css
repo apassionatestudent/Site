@@ -296,3 +296,69 @@
   border-color: var(--accent);
   color: #fff;
 }
+
+/* ════════════════════════════════════
+   TABLE SCROLL WRAPPER
+   => Only this wrapper scrolls horizontally on narrow screens, the
+      page itself never gains a horizontal scrollbar
+   ════════════════════════════════════ */
+.logs-table-wrapper {
+  overflow-x: auto;
+  border-radius: 8px;
+}
+
+/*  RWD  */
+
+/* => Responsive: tablet */
+@media (max-width: 1024px) {
+  .logs-page {
+    padding: 2rem 1.5rem;
+  }
+}
+
+/* => Responsive: small tablet */
+@media (max-width: 768px) {
+  .logs-title {
+    font-size: 1.5rem;
+  }
+
+  /* => title block and Today/Total counts stack instead of squeezing
+     => onto one row */
+  .logs-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .logs-count-wrap {
+    align-self: flex-start;
+  }
+
+  .stu-search-input {
+    /* => drops the 220px floor so it can shrink with the flex row
+       => instead of forcing an overflow on narrow screens */
+    min-width: 0;
+  }
+}
+
+/* => Responsive: mobile */
+@media (max-width: 640px) {
+  .logs-page {
+    /* => bottom padding clears the floating hamburger button */
+    padding: 1.5rem 1rem 5.5rem;
+  }
+
+  .logs-table th,
+  .logs-table td {
+    padding: 10px 12px;
+    font-size: 0.8rem;
+  }
+
+  .logs-detail-cell {
+    max-width: 160px;
+  }
+
+  .logs-pagination {
+    justify-content: center;
+  }
+}

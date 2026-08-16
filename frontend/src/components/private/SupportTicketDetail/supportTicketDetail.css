@@ -212,17 +212,38 @@
 
 /*  RWD  */
 
+/* => Responsive: tablet */
+@media (max-width: 1024px) {
+  .stk-detail-page {
+    padding: 2rem 1.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .stk-detail-title {
+    font-size: 1.4rem;
+  }
+}
+
 @media (max-width: 480px) {
   .stk-detail-page {
-    padding: 1.5rem 1rem;
+    /* => bottom padding clears the floating hamburger button */
+    padding: 1.5rem 1rem 5.5rem;
   }
 
-  .stk-detail-grid {
+  .stk-detail-grid,
+  .stk-detail-grid--halves {
     grid-template-columns: 1fr;
   }
 
   .stk-detail-header {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .stk-detail-card {
+    /* => fixed min-height was sized for a 2-column layout, relax it at
+       => 1 column so cards don't carry unnecessary empty space */
+    min-height: unset;
   }
 }

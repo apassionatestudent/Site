@@ -2,6 +2,10 @@ import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import './App.css'
 
+// => Icons for the mobile hamburger toggle button
+import MenuIcon from './assets/icons/menu.png';
+import CloseIcon from './assets/icons/close.png';
+
 import { Toaster } from "react-hot-toast";
 // => reuses the same axios instance Sidebar already uses for logout
 import axiosStudent from './utils/axiosStudent';
@@ -81,6 +85,15 @@ const isLoggedIn =
   // => Holds the logged-in student's display name for the Sidebar
   const [studentName, setStudentName] = useState('Student Name');
 
+  // => Controls the mobile slide-in sidebar, only relevant below 768px
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  // => Auto-closes the mobile menu whenever the route changes,
+  // => covers cases like browser back/forward that skip the NavLink onClick
+  useEffect(() => {
+    setIsSidebarOpen(false);
+  }, [location.pathname]);
+
   // => Fetches the student's own profile once per login session
   // => Runs only when logged in, since /me is a protected route
   useEffect(() => {
@@ -106,7 +119,36 @@ const isLoggedIn =
       {/* => show public NavBar only on public pages */}
       {!isDashboard && <NavBar isLoggedIn={isLoggedIn} />}
       {/* => show Sidebar only on dashboard pages */}
-      {isDashboard && <Sidebar profileName={studentName} />}
+      {isDashboard && (
+        <Sidebar
+          profileName={studentName}
+          isOpen={isSidebarOpen}
+          onClose={() => setIsSidebarOpen(false)}
+        />
+      )}
+
+      {/* => hamburger button, only rendered on dashboard pages, hidden above 768px via CSS */}
+      {isDashboard && (
+        <button
+          className="sidebar-toggle-btn"
+          onClick={() => setIsSidebarOpen((prev) => !prev)}
+          aria-label={isSidebarOpen ? "Close menu" : "Open menu"}
+        >
+          <img
+            src={isSidebarOpen ? CloseIcon : MenuIcon}
+            alt=""
+            className="sidebar-toggle-icon"
+          />
+        </button>
+      )}
+
+      {/* => dark overlay behind the open sidebar, tapping it closes the menu */}
+      {isDashboard && (
+        <div
+          className={`sidebar-overlay ${isSidebarOpen ? "sidebar-overlay--visible" : ""}`}
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
       <main className={isDashboard ? 'app-main app-main-dashboard' : 'app-main'}>
         <Routes>
           {/* => public routes */}

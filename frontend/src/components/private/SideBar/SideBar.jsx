@@ -46,6 +46,11 @@ const Sidebar = ({
   // => New prop, defaults to "Student" so existing callers that don't pass it still work
   profileRole    = "Student",
   onNavClick     = () => {},
+  // => New props for the mobile slide-in menu
+  // => isOpen controls the transform (slid in vs off-screen), owned by App.jsx
+  // => onClose fires on overlay click and on nav click, so tapping a link auto-closes the menu
+  isOpen         = false,
+  onClose        = () => {},
 }) => {
   const [hoveredItem, setHoveredItem] = useState(null);
   // => Controls whether the logout confirmation modal is visible
@@ -77,7 +82,8 @@ const Sidebar = ({
     ].join(" ").trim();
 
   return (
-    <aside className="sidebar">
+    // => sidebar--open only matters below the 768px breakpoint, see SideBar.css
+    <aside className={`sidebar ${isOpen ? "sidebar--open" : ""}`}>
       <div className="sidebar-profile">
         <div className="sidebar-avatar-ring">
           <img
@@ -102,7 +108,8 @@ const Sidebar = ({
               <NavLink
                 to={to}
                 className={navLinkClass(id)}
-                onClick={() => onNavClick(id)}
+                // => also closes the mobile menu on tap, so navigating doesn't leave it open over the new page
+                onClick={() => { onNavClick(id); onClose(); }}
                 onMouseEnter={() => setHoveredItem(id)}
                 onMouseLeave={() => setHoveredItem(null)}
                 end={!!end}

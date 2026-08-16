@@ -7,6 +7,7 @@
 //    - onCancel  : fn      - called when admin clicks No or backdrop
 
 import React, { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import './ConfirmModal.css';
 
 export default function ConfirmModal({ isOpen, message, onConfirm, onCancel }) {
@@ -33,7 +34,18 @@ export default function ConfirmModal({ isOpen, message, onConfirm, onCancel }) {
   // => Don't render anything if not open
   if (!isOpen) return null;
 
-  return (
+  // => Rendered via a portal directly onto document.body, instead of wherever
+  // => this component is called from in the tree. Fixes a real CSS clipping
+  // => bug: SideBar.jsx renders this as a child of <aside className="sidebar">,
+  // => and that aside has overflow-y: auto, which clips position:fixed
+  // => descendants to the aside's own box (240px wide, 100vh tall), even
+  // => though "fixed" normally means viewport-relative. Without the portal,
+  // => the modal centers itself inside that narrow sidebar column instead
+  // => of the actual screen, and the hamburger toggle button (which lives
+  // => outside the sidebar) ends up rendering on top of it. The portal
+  // => escapes that ancestor entirely, so this fix applies wherever
+  // => ConfirmModal gets used going forward, not just the logout case.
+  return createPortal(
     <div className="confirm-backdrop" onClick={onCancel}>
       <div
         className="confirm-box"
@@ -49,6 +61,7 @@ export default function ConfirmModal({ isOpen, message, onConfirm, onCancel }) {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

@@ -240,9 +240,51 @@
 
 /*  RWD  */
 
+/* => Responsive: tablet */
+@media (max-width: 1024px) {
+  .enroll-page {
+    padding: 2rem 1.5rem;
+  }
+}
+
+/* => Responsive: small tablet */
+@media (max-width: 768px) {
+  .enroll-title {
+    font-size: 1.5rem;
+  }
+
+  /* => title + type/status tags stack instead of squeezing onto one row
+     => once the course name gets long on a narrow screen */
+  .enroll-card-top {
+    flex-direction: column;
+  }
+
+  .enroll-card-top-right {
+    /* => keeps tags left-aligned under the title instead of centered */
+    align-self: flex-start;
+  }
+}
+
+/* => Responsive: mobile */
+@media (max-width: 640px) {
+  .enroll-page {
+    /* => bottom padding clears the floating hamburger button */
+    padding: 1.5rem 1rem 5.5rem;
+  }
+
+  .enroll-card-body {
+    padding: 0.7rem 1rem;
+  }
+
+  .enroll-card-meta {
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+}
+
 @media (max-width: 480px) {
   .enroll-page {
-    padding: 1.5rem 1rem;
+    padding: 1.5rem 1rem 5.5rem;
   }
 
   .enroll-card-meta {

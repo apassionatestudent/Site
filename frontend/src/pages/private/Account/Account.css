@@ -259,13 +259,42 @@
   cursor: not-allowed;
 }
 
-/*  RWD - same breakpoints as ts1/shs1  */
+/*  RWD - same breakpoints as ts1/shs1, plus a 1024px tablet step and 768px title-row fix  */
+
+/* => Responsive: tablet */
+@media (max-width: 1024px) {
+  .acct-page { padding: 2rem 1.5rem; }
+}
+
+/* => Responsive: small tablet */
+@media (max-width: 768px) {
+  .acct-title { font-size: 1.5rem; }
+
+  /* => Display Preferences row (label + ThemeToggle) wraps instead of
+     => squeezing, since it uses inline justify-content: space-between */
+  .acct-card-title-row {
+    flex-wrap: wrap;
+  }
+}
 
 @media (max-width: 700px) {
   .acct-page { padding: 1.5rem 1rem; }
   .acct-card { padding: 1.3rem 1.2rem 1.5rem; }
   .acct-g2 { grid-template-columns: 1fr; }
   .acct-g3 { grid-template-columns: 1fr 1fr; }
+}
+
+/* => Responsive: mobile */
+@media (max-width: 640px) {
+  .acct-page {
+    /* => bottom padding clears the floating hamburger button, now bottom-right,
+       => this also resolves the earlier cascade bug where the 700px block below
+       => was silently overriding a top-padding value set here */
+    padding: 1.25rem 1rem 5.5rem;
+  }
+  .acct-card { padding: 1.1rem 1rem 1.3rem; }
+  .acct-card-title { font-size: 14px; }
+  .acct-btn-save { width: 100%; }
 }
 
 @media (max-width: 420px) {

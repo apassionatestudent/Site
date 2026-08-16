@@ -346,23 +346,44 @@
 
 /*  RWD  */
 
+/* => Responsive: tablet */
+@media (max-width: 1024px) {
+  .enroll-detail-page {
+    padding: 2rem 1.5rem;
+  }
+}
+
 @media (max-width: 768px) {
   .enroll-detail-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+
+  .enroll-detail-title {
+    font-size: 1.4rem;
+  }
 }
 
+/* => Responsive: mobile, halves grid also collapses to 1 column here
+   => since 2-column halves get cramped once the page itself is under 480px */
 @media (max-width: 480px) {
   .enroll-detail-page {
-    padding: 1.5rem 1rem;
+    /* => bottom padding clears the floating hamburger button */
+    padding: 1.5rem 1rem 5.5rem;
   }
 
-  .enroll-detail-grid {
+  .enroll-detail-grid,
+  .enroll-detail-grid.enroll-detail-grid--halves {
     grid-template-columns: 1fr;
   }
 
   .enroll-detail-header {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .enroll-detail-card {
+    /* => fixed min-height was sized for a 3-column desktop layout, relax it
+       => at 1 column so short cards don't carry unnecessary empty space */
+    min-height: unset;
   }
 }
