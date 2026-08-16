@@ -4,7 +4,10 @@
 }
 
 .home-hero {
-  min-height: 80vh;
+  /* => dvh instead of vh accounts for mobile browser chrome (address bar) shrinking/growing,
+     => and subtracting --navbar-height means hero + navbar together fill exactly one screen,
+     => instead of overflowing past it like flat 100vh would */
+  min-height: calc(100dvh - var(--navbar-height));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -112,9 +115,12 @@
   box-shadow: var(--card-glow);
 }
 
+/* => sized as an actual image now instead of an emoji font-size */
 .feature-icon {
-  font-size: 2.5rem;
+  width: 2.5rem;
+  height: 2.5rem;
   margin-bottom: 1rem;
+  object-fit: contain;
 }
 
 .home-feature-card h3 {
@@ -140,8 +146,6 @@
 /* => small tablet tier */
 @media (max-width: 768px) {
   .home-hero {
-    /* => 80vh felt too tall once mobile browser chrome eats into viewport height */
-    min-height: auto;
     padding: 3rem 1.5rem;
   }
 
@@ -182,7 +186,6 @@
 /* => landscape phones (short viewport), width-only breakpoints do not catch these */
 @media (max-height: 500px) {
   .home-hero {
-    min-height: auto;
     padding: 1.75rem 1.5rem;
   }
 
