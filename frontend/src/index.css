@@ -100,6 +100,23 @@ html {
   border-radius: 2px;
 }
 
+/* => landscape phones (short viewport), width-only breakpoints don't catch these -
+   => shrinks the shared hero so every page using .page-hero doesn't force extra
+   => scroll before content appears on a rotated phone */
+@media (max-height: 500px) {
+  .page-hero {
+    padding: 2rem 1.5rem;
+  }
+
+  .page-hero::before {
+    font-size: 4rem;
+  }
+
+  .page-hero-rule {
+    margin-top: 1.5rem;
+  }
+}
+
 /* => Light theme  */
 :root[data-theme="light"] {
   /* Base */

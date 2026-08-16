@@ -129,3 +129,68 @@
   line-height: 1.6;
   font-size: 0.95rem;
 }
+
+/* => tablet tier */
+@media (max-width: 1024px) {
+  .home-hero {
+    padding: 3.5rem 2rem;
+  }
+}
+
+/* => small tablet tier */
+@media (max-width: 768px) {
+  .home-hero {
+    /* => 80vh felt too tall once mobile browser chrome eats into viewport height */
+    min-height: auto;
+    padding: 3rem 1.5rem;
+  }
+
+  .home-features {
+    padding: 3rem 1.5rem;
+    gap: 1.25rem;
+  }
+}
+
+/* => mobile tier */
+@media (max-width: 640px) {
+  .home-hero {
+    padding: 2.5rem 1.25rem;
+  }
+
+  .home-hero-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  /* => full-width stacked buttons are easier thumb targets than side-by-side on a narrow screen */
+  .btn-primary,
+  .btn-secondary {
+    width: 100%;
+    text-align: center;
+  }
+
+  .home-features {
+    grid-template-columns: 1fr;
+    padding: 2.5rem 1.25rem;
+  }
+
+  .home-feature-card {
+    padding: 1.5rem;
+  }
+}
+
+/* => landscape phones (short viewport), width-only breakpoints do not catch these */
+@media (max-height: 500px) {
+  .home-hero {
+    min-height: auto;
+    padding: 1.75rem 1.5rem;
+  }
+
+  .home-hero-content h1 {
+    margin-bottom: 1rem;
+  }
+
+  .home-hero-content p {
+    margin-bottom: 1.5rem;
+  }
+}

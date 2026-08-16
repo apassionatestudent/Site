@@ -192,14 +192,16 @@
    Responsive
    ============================================================ */
 
-@media (max-width: 700px) {
+/* => migrated from 700px to the site-wide 768px tier */
+@media (max-width: 768px) {
   .ts1-wrap { padding: 1.2rem; }
   .ts1-name-row { grid-template-columns: 1fr 1fr; }
   .ts1-g3 { grid-template-columns: 1fr 1fr; }
   .ts1-g2 { grid-template-columns: 1fr; }
 }
 
-@media (max-width: 420px) {
+/* => migrated from 420px to the site-wide 640px tier */
+@media (max-width: 640px) {
   .ts1-name-row,
   .ts1-g3,
   .ts1-g2 { grid-template-columns: 1fr; }
@@ -433,14 +435,16 @@
   box-shadow: 0 0 0 3px rgba(192, 57, 43, 0.08);
 }
 
-@media (max-width: 700px) {
+/* => migrated from 700px to the site-wide 768px tier */
+@media (max-width: 768px) {
   .ts2-wrap { padding: 1.2rem; }
   .ts2-g2 { grid-template-columns: 1fr; }
   .ts2-g3 { grid-template-columns: 1fr 1fr; }
   .ts2-g4 { grid-template-columns: 1fr 1fr; }
 }
 
-@media (max-width: 420px) {
+/* => migrated from 420px to the site-wide 640px tier */
+@media (max-width: 640px) {
   .ts2-g3,
   .ts2-g4 { grid-template-columns: 1fr; }
 }

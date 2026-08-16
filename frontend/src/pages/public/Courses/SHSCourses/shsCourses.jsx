@@ -1,14 +1,16 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import './shsCourses.css';
 // => Shared loading/error UI, lives in components/public/LoadingState
 // => Path goes up 4 folders (SHSCourses > Courses > public > pages) to reach src, then back down
 import LoadingState from '../../../../components/public/LoadingState/loadingState';
+import BackButton from '../../../../components/public/BackButton/BackButton.jsx';
 
 // => Swap this for your existing axios instance if the public site already has one
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 export default function SHSCourses() {
+  const navigate = useNavigate(); // => explicit route target, so Back always lands on /courses regardless of browser history
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -58,6 +60,10 @@ export default function SHSCourses() {
           </p>
         </div>
         <div className="page-hero-rule" />
+        {/* => centered under the hero rule, points back to the Courses picker page instead of the browser history default */}
+        <div className="shs-courses-back-wrap">
+          <BackButton destination="Courses" onClick={() => navigate('/courses')} />
+        </div>
       </section>
 
       {/* => Shared spinner while the fetch is in flight */}

@@ -69,6 +69,54 @@
   max-width: 100%;
   height: auto;
   border-radius: 4px;
-  margin: 0.75rem 0;
+  /* => was "margin: 0.75rem 0", left-auto/right-auto centers the image when
+     => it's narrower than the answer column, e.g. the fixed-width Google
+     => Docs screenshot in the current FAQ content */
+  margin: 0.75rem auto;
   display: block;
+}
+
+/* => RWD  */
+
+/* => tablet tier */
+@media (max-width: 1024px) {
+  .faqs-body {
+    padding: 2.5rem 2rem 5rem;
+  }
+}
+
+/* => small tablet tier */
+@media (max-width: 768px) {
+  .faqs-body {
+    padding: 2rem 1.5rem 4rem;
+  }
+
+  .faqs-section-title {
+    font-size: 1.25rem;
+  }
+}
+
+/* => mobile tier */
+@media (max-width: 640px) {
+  .faqs-body {
+    padding: 1.5rem 1.25rem 3rem;
+  }
+
+  .faqs-section-title {
+    font-size: 1.1rem;
+  }
+
+  .faq-question {
+    /* => admin-authored questions can run long, this keeps the chevron from
+       => getting squeezed against the edge on a narrow phone */
+    font-size: 0.95rem;
+    gap: 0.75rem;
+  }
+}
+
+/* => landscape phones (short viewport), width-only breakpoints don't catch these */
+@media (max-height: 500px) {
+  .faqs-body {
+    padding: 1.5rem 1.5rem 2.5rem;
+  }
 }

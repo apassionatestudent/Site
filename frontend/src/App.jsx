@@ -76,6 +76,10 @@ function App() {
   const isDashboard = DASHBOARD_ROUTES.some(route =>
     location.pathname.startsWith(route)
   );
+  // => true on Login, ForgotPassword, and SetPassword - all three share the
+  // => same full-card layout that fills the viewport on its own, so the
+  // => Footer below any of them just adds unwanted scroll
+  const isLogin = ['/login', '/forgot-password', '/set-password'].includes(location.pathname);
 
   // => checks both storage types so this matches the dashboard route's login check
 const isLoggedIn =
@@ -229,8 +233,8 @@ const isLoggedIn =
         </Routes>
         <Toaster /> {/* For toast notifications */}
       </main>
-      {/* => show Footer only on public pages */}
-      {!isDashboard && <Footer />}
+      {/* => show Footer only on public pages, and never on the Login page */}
+      {!isDashboard && !isLogin && <Footer />}
     </div>
   )
 }

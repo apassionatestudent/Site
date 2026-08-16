@@ -3,6 +3,13 @@
   min-height: 100vh;
 }
 
+/* => centers the Back button under the hero's maroon rule */
+.tesda-courses-back-wrap {
+  display: flex;
+  justify-content: center;
+  margin-top: 2rem;
+}
+
 
 
 .tesda-courses-grid {
@@ -90,4 +97,46 @@
 
 .course-enroll-btn:hover {
   background: var(--accent-hover);
+}
+
+/* => RWD  */
+
+/* => tablet tier */
+@media (max-width: 1024px) {
+  .tesda-courses-grid {
+    padding: 3rem 2rem;
+    gap: 1.25rem;
+  }
+}
+
+/* => small tablet tier */
+@media (max-width: 768px) {
+  .tesda-courses-grid {
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    padding: 2.5rem 1.5rem;
+    gap: 1.25rem;
+  }
+}
+
+/* => mobile tier */
+@media (max-width: 640px) {
+  .tesda-courses-grid {
+    grid-template-columns: 1fr;
+    padding: 2rem 1.25rem;
+  }
+
+  .course-card {
+    padding: 1.5rem;
+  }
+
+  .course-card h3 {
+    font-size: 1.25rem;
+  }
+}
+
+/* => landscape phones (short viewport), width-only breakpoints don't catch these */
+@media (max-height: 500px) {
+  .tesda-courses-grid {
+    padding: 1.75rem 1.5rem;
+  }
 }
