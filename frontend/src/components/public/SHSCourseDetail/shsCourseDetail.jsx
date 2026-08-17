@@ -5,6 +5,7 @@ import graduationCapIcon from '../../../assets/icons/graduation-cap.png';
 import briefcaseIcon from '../../../assets/icons/briefcase.png';
 import linkIcon from '../../../assets/icons/link.png';
 import BackButton from '../BackButton/BackButton.jsx';
+import ChatbotWidget from '../ChatbotWidget/chatbotWidget.jsx';
 import './shsCourseDetail.css';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -86,6 +87,10 @@ export default function SHSCourseDetail() {
       )}
 
       <Link to="/enroll" className="shs-course-enroll-btn">Enroll Now</Link>
+
+      {/* => Course-scoped chatbot, only renders a FAB if an admin has an
+             active bot configured for this specific course */}
+      <ChatbotWidget scope="shs_course" courseId={course.course_id} />
     </main>
   );
 }

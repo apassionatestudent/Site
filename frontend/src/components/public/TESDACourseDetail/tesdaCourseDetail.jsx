@@ -5,6 +5,7 @@ import awardIcon from '../../../assets/icons/award.png';
 import briefcaseIcon from '../../../assets/icons/briefcase.png';
 import listIcon from '../../../assets/icons/list.png';
 import BackButton from '../BackButton/BackButton.jsx';
+import ChatbotWidget from '../ChatbotWidget/chatbotWidget.jsx';
 import './tesdaCourseDetail.css';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -105,6 +106,10 @@ export default function TESDACourseDetail() {
       )}
 
       <Link to="/enroll" className="tesda-course-enroll-btn">Enroll Now</Link>
+
+      {/* => Course-scoped chatbot, only renders a FAB if an admin has an
+             active bot configured for this specific course */}
+      <ChatbotWidget scope="tesda_course" courseId={course.course_id} />
     </main>
   );
 }

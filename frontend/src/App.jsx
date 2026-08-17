@@ -15,6 +15,9 @@ import NavBar from './components/public/Navbar/NavBar.jsx';
 import Footer from './components/public/Footer/Footer.jsx';
 import NotFound from './components/NotFound.jsx';
 
+import { ChatbotProvider } from './context/ChatbotContext.jsx';
+import ChatbotWidget from './components/public/ChatbotWidget/chatbotWidget.jsx';
+
 // => import private components
 import Sidebar from './components/private/SideBar/SideBar.jsx';
 // import EnrollmentDetail from './components/private/EnrollmentDetail/EnrollmentDetail.jsx';
@@ -81,6 +84,10 @@ function App() {
   // => Footer below any of them just adds unwanted scroll
   const isLogin = ['/login', '/forgot-password', '/set-password'].includes(location.pathname);
 
+  // => public_site chatbot only shows on Home and About, matching the
+  //    scope label used on the admin Chatbots page ("Public Site (Home + About)")
+  const isPublicChatPage = ['/', '/home', '/about'].includes(location.pathname);
+
   // => checks both storage types so this matches the dashboard route's login check
 const isLoggedIn =
   localStorage.getItem('isLoggedIn') === 'true' ||
@@ -119,6 +126,7 @@ const isLoggedIn =
   }, [isLoggedIn]);
 
   return (
+    <ChatbotProvider>
     <div className="app-shell">
       {/* => show public NavBar only on public pages */}
       {!isDashboard && <NavBar isLoggedIn={isLoggedIn} />}
@@ -233,9 +241,16 @@ const isLoggedIn =
         </Routes>
         <Toaster /> {/* For toast notifications */}
       </main>
+      {/* => Chatbot widgets - only one of these can ever render at a
+             time since isDashboard and isPublicChatPage are mutually
+             exclusive, each fetches its own active bot independently */}
+      {isDashboard && <ChatbotWidget scope="student_dashboard" />}
+      {isPublicChatPage && <ChatbotWidget scope="public_site" />}
+
       {/* => show Footer only on public pages, and never on the Login page */}
       {!isDashboard && !isLogin && <Footer />}
     </div>
+    </ChatbotProvider>
   )
 }
 export default App;

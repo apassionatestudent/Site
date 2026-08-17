@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import './TESDAStep3.css';
 import Info from '../../Info.jsx';
+import ChatbotWidget from '../ChatbotWidget/chatbotWidget.jsx';
 
 // => Base documents required for ALL TESDA courses
 const BASE_REQUIREMENTS = [
@@ -226,6 +227,12 @@ const TESDAStep3 = ({
 
   return (
     <div className="ts5-wrap">
+
+      {/* => Course-scoped chatbot, same one shown on this course's public
+             detail page - only renders once a course is actually picked
+             below, and re-fetches automatically if the student changes
+             their selection (ChatbotWidget keys its state on courseId) */}
+      {data.course && <ChatbotWidget scope="tesda_course" courseId={data.course} />}
 
       {/* -- Section: Course Selection -- */}
       <div className="ts5-section-title">Course & Schedule</div>
