@@ -74,6 +74,10 @@ import announcementRoutes from './routes/Announcements/announcementRoutes.js';
 // => actor_type = 'Student' AND actor_id = this student in the model layer
 import studentLogsRoutes from './routes/Logs/logsRoutes.js';
 
+// => Public/student chatbot widget - config fetch + message send, own
+//    copy of the admin side's Chatbots module, no shared code
+import chatbotRoutes from './routes/Chatbots/chatbotRoutes.js';
+
 import path from "path";
 
 dotenv.config();
@@ -162,6 +166,8 @@ app.use('/api/public/faqs', faqRoutes);
 app.use('/api/announcements', announcementRoutes);
 
 app.use('/api/student/logs', studentLogsRoutes);
+
+app.use('/api/chatbots', chatbotRoutes);
 
 async function initDB () {
   try {
