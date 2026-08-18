@@ -6,6 +6,7 @@ import briefcaseIcon from '../../../assets/icons/briefcase.png';
 import linkIcon from '../../../assets/icons/link.png';
 import BackButton from '../BackButton/BackButton.jsx';
 import ChatbotWidget from '../ChatbotWidget/chatbotWidget.jsx';
+import LoadingState from '../LoadingState/loadingState.jsx'; // => shared spinner/error block
 import './shsCourseDetail.css';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -33,14 +34,16 @@ export default function SHSCourseDetail() {
   }, [title]);
 
   if (loading) {
-    return <main className="shs-course-detail"><p>Loading...</p></main>;
+    // => Swapped the bare <p> for the shared spinner used across the public site
+    return <main className="shs-course-detail"><LoadingState message="Loading course..." /></main>;
   }
 
   if (error) {
     return (
       <main className="shs-course-detail">
         <BackButton destination="SHS Courses" />
-        <p className="shs-course-detail-error">{error}</p>
+        {/* => Same shared component, error variant instead of the old plain <p> */}
+        <LoadingState variant="error" message={error} />
       </main>
     );
   }

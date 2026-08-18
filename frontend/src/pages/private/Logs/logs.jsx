@@ -113,6 +113,29 @@ export default function Logs() {
       year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
     });
 
+  // => Builds a capped list of page numbers to render instead of one button
+  // => per page, which would overflow for students with many logs (e.g. 30
+  // => pages). Always shows first, last, current, and one neighbor on each
+  // => side, with '...' markers filling the gaps in between.
+  const getPageNumbers = (current, total) => {
+    const pages = [];
+    const addPage = (p) => pages.push(p);
+    const addEllipsis = () => pages.push('...');
+
+    const windowStart = Math.max(2, current - 1);
+    const windowEnd = Math.min(total - 1, current + 1);
+
+    addPage(1);
+    if (windowStart > 2) addEllipsis();
+
+    for (let p = windowStart; p <= windowEnd; p++) addPage(p);
+
+    if (windowEnd < total - 1) addEllipsis();
+    if (total > 1) addPage(total);
+
+    return pages;
+  };
+
   return (
     <main className="logs-page">
       <div className="logs-header">
@@ -253,15 +276,20 @@ export default function Logs() {
           >
             Prev
           </button>
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-            <button
-              key={p}
-              className={`logs-page-btn ${p === page ? 'logs-page-btn--active' : ''}`}
-              onClick={() => setPage(p)}
-            >
-              {p}
-            </button>
-          ))}
+          {/* => Capped page list instead of one button per page - see getPageNumbers above */}
+          {getPageNumbers(page, totalPages).map((p, idx) =>
+            p === '...' ? (
+              <span key={`ellipsis-${idx}`} className="logs-page-ellipsis">...</span>
+            ) : (
+              <button
+                key={p}
+                className={`logs-page-btn ${p === page ? 'logs-page-btn--active' : ''}`}
+                onClick={() => setPage(p)}
+              >
+                {p}
+              </button>
+            )
+          )}
           <button
             className="logs-page-btn"
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}

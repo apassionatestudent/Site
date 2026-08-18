@@ -44,6 +44,7 @@ import Login from './pages/public/Login/Login.jsx';
 import ForgotPassword from './pages/public/ForgotPassword/forgotPassword.jsx';
 import SetPassword from './pages/public/SetPassword/setPassword.jsx';
 import PrivacyPolicy from './pages/public/LegalPolicy/legalPolicy.jsx';
+import TermsAndConditions from './pages/public/TermsAndConditions/termsAndConditions.jsx'; 
 import FAQs from './pages/public/FAQs/faqs.jsx';
 
 // => import private (dashboard) pages
@@ -197,6 +198,7 @@ const isLoggedIn =
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/set-password" element={<SetPassword />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
           <Route path="/faqs" element={<FAQs />} />
           {/* => private / dashboard routes */}
           {/* => checks localStorage before rendering any dashboard route */}
