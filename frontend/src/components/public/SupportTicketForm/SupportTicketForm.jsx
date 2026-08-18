@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import successIcon from '../../../assets/icons/success.png';
 import './SupportTicketForm.css';
@@ -39,6 +39,10 @@ const INITIAL_FORM = {
   concern: '',
 };
 
+// => must match CHATBOT_TRANSCRIPT_KEY in chatbotWidget.jsx exactly - the
+//    widget writes here right before opening this page in a new tab
+const CHATBOT_TRANSCRIPT_KEY = 'chatbot_transcript';
+
 export default function SupportTicketForm() {
   const [form, setForm] = useState(INITIAL_FORM);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -47,6 +51,32 @@ export default function SupportTicketForm() {
 
   // => Inline field-level errors, same pattern as TESDAStep1.jsx
   const [emailError, setEmailError] = useState('');
+
+  // => true when the concern field was prefilled from a chatbot handoff,
+  //    controls the visible "conversation attached" indicator below
+  const [chatAttached, setChatAttached] = useState(false);
+
+  // => Runs once on mount - picks up the transcript the chatbot widget
+  //    stored in localStorage right before opening this tab, prefills
+  //    the concern field, then clears the key immediately so it never
+  //    leaks into a later unrelated ticket submission
+  // => localStorage, not sessionStorage - see handleEscalateClick's
+  //    comment in chatbotWidget.jsx for why
+  useEffect(() => {
+    const transcript = localStorage.getItem(CHATBOT_TRANSCRIPT_KEY);
+    if (transcript) {
+      setForm((prev) => ({ ...prev, concern: transcript }));
+      setChatAttached(true);
+      localStorage.removeItem(CHATBOT_TRANSCRIPT_KEY);
+    }
+  }, []);
+
+  // => lets the user discard the attached transcript and start the
+  //    concern field fresh, without needing to select-all/delete manually
+  const handleClearTranscript = () => {
+    setForm((prev) => ({ ...prev, concern: '' }));
+    setChatAttached(false);
+  };
 
   // => Generic handler for fields with no restriction (concernType, concern)
   const handleChange = (e) => {
@@ -161,10 +191,23 @@ export default function SupportTicketForm() {
 
         <div className="support-ticket-field support-ticket-field-full">
           <label htmlFor="concern">Concern</label>
+
+          {/* => only shown when the concern field was prefilled from a
+                 chatbot escalation, lets the admin's context be visible
+                 to the user too, and gives an easy way to remove it */}
+          {chatAttached && (
+            <div className="support-ticket-chat-attached">
+              <span>Your chatbot conversation was attached below for context.</span>
+              <button type="button" onClick={handleClearTranscript}>
+                Remove
+              </button>
+            </div>
+          )}
+
           <textarea
             id="concern"
             name="concern"
-            rows={5}
+            rows={chatAttached ? 10 : 5}
             value={form.concern}
             onChange={handleChange}
             required
