@@ -64,6 +64,32 @@
   filter: brightness(0) invert(1);
 }
 
+/* => disclaimer banner, sits between header and messages list */
+.chatbot-widget-disclaimer {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 8px 12px;
+  background: #fff7e6;
+  border-bottom: 1px solid #f0e0b8;
+  font-size: 0.6875rem;
+  line-height: 1.4;
+  color: #6b5a2a;
+}
+
+.chatbot-widget-disclaimer-icon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.chatbot-widget-disclaimer a {
+  color: #8a0d17;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
 .chatbot-widget-close-btn {
   background: none;
   border: none;

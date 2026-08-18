@@ -4,6 +4,7 @@ import axiosStudent from '../../../utils/axiosStudent';
 import { useChatbotContext } from '../../../context/ChatbotContext.jsx';
 import chatBubbleIcon from '../../../assets/icons/chat-bubble.png';
 import closeIcon from '../../../assets/icons/close.png';
+import warningIcon from '../../../assets/icons/warning.png';
 import './chatbotWidget.css';
 
 // => Same allowlist as the backend's chatbotGeminiService.js sanitizeHtml
@@ -12,6 +13,15 @@ const SANITIZE_CONFIG = {
     ALLOWED_TAGS: ['p', 'br', 'b', 'strong', 'i', 'em', 'ul', 'ol', 'li', 'a'],
     ALLOWED_ATTR: ['href', 'target', 'rel'],
 };
+
+// => strips bot HTML down to plain text for the transcript handoff, since
+//    ticket concern fields are plain text, reuses DOMPurify (already
+//    imported) instead of a regex-based strip
+const stripHtml = (html) => DOMPurify.sanitize(html, { ALLOWED_TAGS: [], ALLOWED_ATTR: [] });
+
+// => key the Contact page (and eventually the dashboard's ticket modal)
+//    reads on mount to prefill the concern field, then clears
+const CHATBOT_TRANSCRIPT_KEY = 'chatbot_transcript';
 
 // => scope is either 'public_site' or 'student_dashboard' - App.jsx
 //    decides which one (or neither) to render based on the current route
@@ -82,6 +92,53 @@ export default function ChatbotWidget({ scope, courseId }) {
         }
     };
 
+    // => caps the transcript to the most recent exchanges so the admin
+    //    isn't handed a huge wall of text - counted in messages (1 exchange
+    //    = 1 user turn + 1 bot turn), not characters, so no message gets
+    //    cut off mid-sentence
+    const MAX_TRANSCRIPT_MESSAGES = 12; // => last 6 exchanges
+
+    // => builds a plain-text transcript from the current conversation so
+    //    the admin resolving the eventual ticket has context on what the
+    //    AI already covered, bot messages get stripped of HTML first
+    const buildTranscript = () => {
+        if (!messages.length) return '';
+
+        const wasTruncated = messages.length > MAX_TRANSCRIPT_MESSAGES;
+        // => keeps only the tail end - most recent messages are the ones
+        //    that led to the user deciding to escalate
+        const recentMessages = wasTruncated
+            ? messages.slice(-MAX_TRANSCRIPT_MESSAGES)
+            : messages;
+
+        const transcriptBody = recentMessages
+            .map((m) => `${m.role === 'user' ? 'User' : 'Bot'}: ${m.role === 'user' ? m.text : stripHtml(m.text)}`)
+            .join('\n');
+
+        // => flags to the admin that this isn't the full conversation,
+        //    so they know earlier context exists but was cut for length
+        if (wasTruncated) {
+            return `[Earlier messages omitted for length, showing the last ${MAX_TRANSCRIPT_MESSAGES / 2} exchanges]\n\n${transcriptBody}`;
+        }
+
+        return transcriptBody;
+    };
+
+    // => fires on the disclaimer's escalation link click, stores the
+    //    transcript right before the new tab opens - target="_blank"
+    //    on the <a> itself handles the actual navigation
+    // => localStorage, not sessionStorage - sessionStorage only clones
+    //    into a new tab when that tab keeps a live opener reference, which
+    //    rel="noopener" on the link deliberately breaks. localStorage is
+    //    scoped to the origin instead of the browsing context, so it's
+    //    readable from the new tab regardless of noopener.
+    const handleEscalateClick = () => {
+        const transcript = buildTranscript();
+        if (transcript) {
+            localStorage.setItem(CHATBOT_TRANSCRIPT_KEY, transcript);
+        }
+    };
+
     // => Nothing active for this scope yet, or still loading - render nothing
     if (!configLoaded || !chatbot) return null;
 
@@ -111,6 +168,23 @@ export default function ChatbotWidget({ scope, courseId }) {
                         >
                             <img src={closeIcon} alt="Close" className="chatbot-widget-close-icon" />
                         </button>
+                    </div>
+
+                    {/* => persistent reminder + escalation link, sits above the
+                           messages list so it's visible without scrolling */}
+                    <div className="chatbot-widget-disclaimer">
+                        <img src={warningIcon} alt="" className="chatbot-widget-disclaimer-icon" />
+                        <span>
+                            AI Assistant may make mistakes. Not satisfied?{' '}
+                            <a
+                                href="/contact"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={handleEscalateClick}
+                            >
+                                Submit a support ticket
+                            </a>
+                        </span>
                     </div>
 
                     <div className="chatbot-widget-messages">

@@ -38,6 +38,31 @@
   color: var(--enroll-label-color);
 }
 
+/* => notice shown above the Concern textarea when a chatbot transcript was attached */
+.support-ticket-chat-attached {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  background: #fff7e6;
+  border: 1px solid #f0e0b8;
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8rem;
+  color: #6b5a2a;
+}
+
+.support-ticket-chat-attached button {
+  background: none;
+  border: none;
+  color: #8a0d17;
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-decoration: underline;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
 .support-ticket-field input,
 .support-ticket-field select,
 .support-ticket-field textarea {
