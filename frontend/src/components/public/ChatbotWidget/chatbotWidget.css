@@ -100,7 +100,6 @@
 .chatbot-widget-close-icon {
   width: 14px;
   height: 14px;
-  filter: brightness(0) invert(1);
 }
 
 .chatbot-widget-messages {
@@ -246,12 +245,39 @@
     width: calc(100vw - 32px);
     right: 16px;
     left: 16px;
-    bottom: 16px;
+    /* => was 16px, sat directly under the hamburger (bottom:20px, 56px tall,
+       => top edge at 76px) and hid the send button behind it. Lifted to
+       => clear that button with a clean gap above it. */
+    bottom: 90px;
     max-height: 70vh;
   }
 
+  /* => .chatbot-widget-fab is intentionally left untouched here now, so
+     => it falls back to the base right: 20px, bottom: 90px rule above,
+     => which matches the hamburger's own right: 20px at this same width */
+}
+
+/* => landscape phones (short viewport), width-only breakpoints don't catch these -
+   => mirrors the hamburger's own shrink at this breakpoint (NavBar.css / App.css)
+   => so the two stay aligned on the same right offset instead of drifting apart */
+@media (max-height: 500px) {
   .chatbot-widget-fab {
-    right: 16px;
-    bottom: 84px;
+    width: 44px;
+    height: 44px;
+    bottom: 66px; /* => hamburger's top edge sits at 12 + 44 = 56px here, this clears it with a 10px gap */
+    right: 12px;
+  }
+
+  .chatbot-widget-fab-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  /* => same reasoning as the fab above, hamburger shrinks to 44px/bottom:12px
+     => here, so the open panel needs to lift clear of it too, and the
+     => shorter viewport itself needs a taller max-height budget cut back */
+  .chatbot-widget-panel {
+    bottom: 66px;
+    max-height: 75vh;
   }
 }

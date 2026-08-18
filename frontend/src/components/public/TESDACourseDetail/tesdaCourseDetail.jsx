@@ -6,6 +6,7 @@ import briefcaseIcon from '../../../assets/icons/briefcase.png';
 import listIcon from '../../../assets/icons/list.png';
 import BackButton from '../BackButton/BackButton.jsx';
 import ChatbotWidget from '../ChatbotWidget/chatbotWidget.jsx';
+import LoadingState from '../LoadingState/loadingState.jsx'; // => shared spinner/error block
 import './tesdaCourseDetail.css';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -33,14 +34,16 @@ export default function TESDACourseDetail() {
   }, [title]);
 
   if (loading) {
-    return <main className="tesda-course-detail"><p>Loading...</p></main>;
+    // => Swapped the bare <p> for the shared spinner used across the public site
+    return <main className="tesda-course-detail"><LoadingState message="Loading course..." /></main>;
   }
 
   if (error) {
     return (
       <main className="tesda-course-detail">
         <BackButton destination="TESDA Courses" />
-        <p className="tesda-course-detail-error">{error}</p>
+        {/* => Same shared component, error variant instead of the old plain <p> */}
+        <LoadingState variant="error" message={error} />
       </main>
     );
   }

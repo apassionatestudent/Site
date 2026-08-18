@@ -264,6 +264,7 @@
 .logs-pagination {
   display: flex;
   align-items: center;
+  justify-content: center; /* => centers the page numbers instead of left-aligning */
   gap: 6px;
   margin-top: 18px;
   flex-wrap: wrap;
@@ -295,6 +296,13 @@
   background: var(--accent);
   border-color: var(--accent);
   color: #fff;
+}
+
+.logs-page-ellipsis {
+  padding: 7px 6px;
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+  user-select: none;
 }
 
 /* ════════════════════════════════════
