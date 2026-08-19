@@ -197,7 +197,16 @@ async function initDB () {
         updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
         -- => Nullable: stays NULL until the student logs in for the first time
-        last_login_at       TIMESTAMPTZ NULL
+        last_login_at       TIMESTAMPTZ NULL,
+
+        -- => Account lockout tracking: counts consecutive failed logins,
+        -- => resets to 0 on a successful login
+        failed_login_attempts INTEGER   NOT NULL DEFAULT 0,
+
+        -- => NULL means not locked. Set to a future timestamp once
+        -- => failed_login_attempts hits the threshold, checked on every
+        -- => login attempt rather than swept by a cron job
+        locked_until         TIMESTAMPTZ DEFAULT NULL
       )
     `;
 
@@ -283,6 +292,32 @@ async function initDB () {
           WHERE table_name = 'student_accounts' AND column_name = 'is_night_mode'
         ) THEN
           ALTER TABLE student_accounts ADD COLUMN is_night_mode BOOLEAN NOT NULL DEFAULT FALSE;
+        END IF;
+      END $$
+    `;
+
+    // => Account lockout columns for existing databases where the table
+    // => already existed before this feature. CREATE TABLE IF NOT EXISTS
+    // => above only applies on a fresh deploy, so this pair covers live
+    // => Neon databases the same way is_night_mode was added above.
+    await sql`
+      DO $$ BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_name = 'student_accounts' AND column_name = 'failed_login_attempts'
+        ) THEN
+          ALTER TABLE student_accounts ADD COLUMN failed_login_attempts INTEGER NOT NULL DEFAULT 0;
+        END IF;
+      END $$
+    `;
+
+    await sql`
+      DO $$ BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_name = 'student_accounts' AND column_name = 'locked_until'
+        ) THEN
+          ALTER TABLE student_accounts ADD COLUMN locked_until TIMESTAMPTZ DEFAULT NULL;
         END IF;
       END $$
     `;
