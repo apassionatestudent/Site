@@ -20,6 +20,11 @@ const cookieOptions = {
     maxAge: 30 * 24 * 60 * 60 * 1000, // => 30 days but I may change it later on, if God willing 
 };
 
+// => Account lockout policy for student login, adjust these two if the
+// => threshold or cooldown duration ever needs to change
+const MAX_FAILED_LOGIN_ATTEMPTS = 5;
+const LOCKOUT_DURATION_MINUTES = 15;
+
 // => Generates a JWT token carrying essential student identity info
 const generateStudentToken = (student) => {
     return jwt.sign(
@@ -90,6 +95,23 @@ export const loginStudent = async (req, res) => {
             return res.status(403).json({ message: 'Your account has been deactivated. Please contact support.' });
         }
 
+        // => Reject if the account is currently locked out, checked before
+        // => password comparison so a locked account never leaks whether
+        // => the submitted password would have been correct
+        // => lockedUntil sent as a raw ISO timestamp, not a pre-formatted
+        // => sentence, so the frontend can run its own live countdown
+        // => instead of showing a number that goes stale
+        // => message intentionally identical to the rate limiter's own
+        // => "too many requests" wording - this keeps a locked real account
+        // => indistinguishable from plain IP throttling on a fake email, so
+        // => nobody probing a list of addresses can tell which ones exist
+        if (student.locked_until && new Date(student.locked_until) > new Date()) {
+            return res.status(403).json({
+                message: 'Too many requests. Please wait before trying again.',
+                lockedUntil: student.locked_until,
+            });
+        }
+
         // => Reject if no password has been set yet
         if (!student.password_hash) {
             return res.status(403).json({ message: 'No password set for this account. Please complete your registration.' });
@@ -98,8 +120,31 @@ export const loginStudent = async (req, res) => {
         // => Compare submitted password against stored hash
         const isMatch = await bcrypt.compare(password, student.password_hash);
         if (!isMatch) {
+            // => records the failed attempt, locks the account once the
+            // => threshold is hit in the same query, no separate read needed
+            const attemptResult = await Student.recordFailedLogin(
+                student.student_id,
+                MAX_FAILED_LOGIN_ATTEMPTS,
+                LOCKOUT_DURATION_MINUTES
+            );
+
+            // => Same generic wording as the check above, on purpose. The
+            // => moment this attempt is the one that trips the lockout is
+            // => exactly when the "account exists" signal would otherwise
+            // => leak, so the message stays identical either way
+            if (attemptResult?.locked_until) {
+                return res.status(403).json({
+                    message: 'Too many requests. Please wait before trying again.',
+                    lockedUntil: attemptResult.locked_until,
+                });
+            }
+
             return res.status(400).json({ message: 'Invalid credentials' });
         }
+
+        // => Successful login clears any prior failed attempts, prevents
+        // => stale lockout data from ever accumulating on the row
+        await Student.resetFailedAttempts(student.student_id);
 
         // => Update last_login_at on successful login
         await Student.updateLastLogin(student.student_id);

@@ -57,6 +57,35 @@ export const Student = {
         `;
     },
 
+    // => Called on every wrong password attempt. Increments the counter,
+    // => and if the new count reaches maxAttempts, sets locked_until to
+    // => now + lockoutMinutes in the same query, avoiding a race between
+    // => a separate read-then-write
+    recordFailedLogin: async (student_id, maxAttempts, lockoutMinutes) => {
+        const result = await sql`
+            UPDATE student_accounts
+            SET failed_login_attempts = failed_login_attempts + 1,
+                locked_until = CASE
+                    WHEN failed_login_attempts + 1 >= ${maxAttempts}
+                    THEN NOW() + make_interval(mins => ${lockoutMinutes})
+                    ELSE locked_until
+                END
+            WHERE student_id = ${student_id}
+            RETURNING failed_login_attempts, locked_until
+        `;
+        return result.rows[0] || null;
+    },
+
+    // => Called on successful login, clears the lockout state entirely
+    resetFailedAttempts: async (student_id) => {
+        await sql`
+            UPDATE student_accounts
+            SET failed_login_attempts = 0,
+                locked_until = NULL
+            WHERE student_id = ${student_id}
+        `;
+    },
+
     // => Sets password_hash for a student who previously had none (post-
     // => enrollment setup) or is overwriting an existing one (forgot-password
     // => reset). Called by passwordTokenService.js after a token is validated.
