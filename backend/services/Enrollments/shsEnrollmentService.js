@@ -67,15 +67,31 @@ export const processShsEnrollmentSubmission = async (body, files) => {
     return await uploadToR2(file.buffer, key, file.mimetype);
   };
 
+  // => grade10ReportCard can now carry up to 2 files (front/back) - this
+  // => uploads each one to R2 and returns an array of keys instead of a
+  // => single key. The index suffix on the R2 key keeps both files from
+  // => colliding if they land in the same millisecond.
+  const uploadFiles = async (fileArray, fieldName) => {
+    if (!fileArray?.length) return [];
+
+    return Promise.all(fileArray.map(async (file, index) => {
+      const ext = file.mimetype === 'image/png' ? 'png' : 'jpg';
+      const key = `primeenroll/shs-docs/${fieldName}_${Date.now()}_${index}.${ext}`;
+      return await uploadToR2(file.buffer, key, file.mimetype);
+    }));
+  };
+
   const psaBirthCertificateKey  = await uploadFile(files?.psaBirthCertificate,  'psaBirthCertificate');
-  const grade10ReportCardKey    = await uploadFile(files?.grade10ReportCard,    'grade10ReportCard');
+  const grade10ReportCardKeys   = await uploadFiles(files?.grade10ReportCard,   'grade10ReportCard');
   const goodMoralCertificateKey = await uploadFile(files?.goodMoralCertificate, 'goodMoralCertificate');
   const escCertificateKey       = await uploadFile(files?.escCertificate,       'escCertificate');
 
   // => Build docs array once - reused for shs_documents insert
+  // => grade10ReportCard contributes one row per uploaded file (1 or 2),
+  // => all sharing the same document_type label
   const docs = [
     { type: 'PSA Birth Certificate',  key: psaBirthCertificateKey  },
-    { type: 'Grade 10 Report Card',   key: grade10ReportCardKey    },
+    ...grade10ReportCardKeys.map((key) => ({ type: 'Grade 10 Report Card', key })),
     { type: 'Good Moral Certificate', key: goodMoralCertificateKey },
     { type: 'ESC Certificate',        key: escCertificateKey       },
   ].filter(d => d.key);

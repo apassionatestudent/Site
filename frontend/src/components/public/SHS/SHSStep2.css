@@ -234,6 +234,26 @@
      acting as the button), rebuilt here with shs2- prefixed classes so
      this file has no cross-file CSS dependency on TESDAStep5.css. */
 
+/* => Informational-only block for the 2x2/1x1 photo requirement - no
+     upload field, styled as a small bordered note card so it doesn't
+     look like an interactive upload box next to the real ones */
+.shs2-photo-requirements {
+  border: 1px solid var(--enroll-field-border);
+  border-radius: 8px;
+  padding: 0.9rem 1.1rem;
+  margin: 0.8rem 0 1.4rem;
+  background: var(--bg-secondary);
+}
+
+.shs2-photo-list {
+  margin: 6px 0 8px;
+  padding-left: 1.2rem;
+  font-size: 13.5px;
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  line-height: 1.6;
+}
+
 .shs2-upload-subtitle {
   font-size: 13px;
   color: var(--text-secondary);
@@ -278,11 +298,12 @@
   height: 0.1px;
 }
 
+/* => No flex here, matches TESDAStep3's .ts5-file-wrapper. Letting
+     .shs2-file-list and the upload label stack as normal block
+     children makes each file row span full width, instead of
+     shrinking into an inline chip beside the "Add file" button. */
 .shs2-file-wrapper {
   position: relative;
-  display: flex;
-  align-items: center;
-  gap: 8px;
 }
 
 .shs2-file-label {
@@ -426,6 +447,60 @@
   font-size: 12px;
   color: #c0392b;
   font-family: var(--font-body);
+}
+
+/* => List of individually-removable files for one requirement - mirrors
+     TESDAStep3's .ts5-file-list/.ts5-file-row so both enrollment forms
+     look and behave the same way */
+.shs2-file-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+/* => Icon sized for .shs2-file-remove-btn's 22px row button, mirrors
+     TESDAStep3's .ts5-file-remove-icon. This is a separate class from
+     .shs2-remove-icon below, which was sized for the older 28px
+     standalone button and chip pattern, not this row layout. */
+.shs2-file-remove-icon {
+  width: 12px;
+  height: 12px;
+  opacity: 0.7;
+}
+
+.shs2-file-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(102, 9, 17, 0.1) 0%, rgba(102, 9, 17, 0.05) 100%);
+  font-family: var(--font-body);
+}
+
+.shs2-file-row .shs2-file-name {
+  flex: 1;
+}
+
+.shs2-file-remove-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 4px;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.shs2-file-remove-btn:hover {
+  background: rgba(192, 57, 43, 0.12);
 }
 
 .shs2-error-banner {

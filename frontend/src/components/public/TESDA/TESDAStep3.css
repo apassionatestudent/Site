@@ -169,6 +169,27 @@
   margin-bottom: 1.2rem;
 }
 
+/* => Informational-only block for the passport/1x1 photo requirement -
+     no upload field, styled as a small bordered note card so it doesn't
+     look like an interactive upload box next to the real ones. Mirrors
+     .shs2-photo-requirements on the SHS side. */
+.ts5-photo-requirements {
+  border: 1px solid var(--enroll-field-border);
+  border-radius: 8px;
+  padding: 0.9rem 1.1rem;
+  margin: 0 0 1.4rem;
+  background: var(--bg-secondary);
+}
+
+.ts5-photo-list {
+  margin: 6px 0 8px;
+  padding-left: 1.2rem;
+  font-size: 13.5px;
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  line-height: 1.6;
+}
+
 .ts5-loading {
   display: flex;
   align-items: center;
@@ -527,6 +548,54 @@
 /* => Submit spinner */
 .ts5-spinner {
   animation: ts5b-spin 1s linear infinite;
+}
+
+/* => List of individually-removable files for one requirement */
+.ts5-file-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.ts5-file-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(102, 9, 17, 0.1) 0%, rgba(102, 9, 17, 0.05) 100%);
+  font-family: var(--font-body);
+}
+
+.ts5-file-row .ts5-file-name {
+  flex: 1;
+}
+
+.ts5-file-remove-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 4px;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.ts5-file-remove-btn:hover {
+  background: rgba(192, 57, 43, 0.12);
+}
+
+.ts5-file-remove-icon {
+  width: 12px;
+  height: 12px;
+  opacity: 0.7;
 }
 
 /* => migrated from 700px to the site-wide 768px tier */

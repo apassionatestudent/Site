@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import './Enroll.css';
 
 import TESDAStep1 from '../../../components/public/TESDA/TESDAStep1';
@@ -99,14 +100,18 @@ const [tesdaCourse, setTesdaCourse] = useState({
   courseClass: '',
 });
 
-// => TESDA form data - File uploads (Step 5b)
-// => Base docs required for all + dynamic additional docs per course
-const [tesdaFiles, setTesdaFiles] = useState({
-  birthCert: null,
-  schoolDoc: null,
-  validId: null,
-  // => additional course-specific docs will be added dynamically
-});
+// => TESDA form data - File uploads (Step 3)
+// => No more hardcoded keys - every key is a requirement_id-based id
+// => added dynamically as TESDAStep3 fetches the course's requirements.
+// => Each value is now an array of Files, not a single File, since a
+// => requirement can allow more than one file (max_files)
+const [tesdaFiles, setTesdaFiles] = useState({});
+
+// => Mirrors tesdaFiles' keys with { id: documentType } pairs, kept in
+// => sync by TESDAStep3 via onRequirementsChange below. Needed at submit
+// => time since field ids like "req_12" are frontend-only - the backend
+// => needs the actual document_type string to write into tesda_documents
+const [tesdaRequirements, setTesdaRequirements] = useState([]);
 
 // => TESDA form data - Scholarship (Step 6)
 const [tesdaScholarship, setTesdaScholarship] = useState({
@@ -249,7 +254,8 @@ const resetAllForms = () => {
   setTesdaOthersText('');
   setTesdaNcae({ takenBefore: '', where: '', when: '' });
   setTesdaCourse({ sector: '', course: '', courseFee: '', courseClass: '' });
-  setTesdaFiles({ birthCert: null, schoolDoc: null, validId: null });
+  setTesdaFiles({});
+  setTesdaRequirements([]);
   setTesdaScholarship({ isScholar: '', scholarshipType: '', otherScholarship: '' });
   setTesdaPrivacy({ agreed: false });
 
@@ -343,12 +349,15 @@ const handleShsSubmit = async () => {
   formData.append('familyData', JSON.stringify(shsFamily));
   formData.append('privacyAgreed', shsPrivacy.agreed);
 
-  // => new: wires shsDocuments' actual File objects into the request -
-  // => same pattern as handleTesdaSubmit's file loop below. Only appends
-  // => when a file is present, since escCertificate can be null (Optional/
-  // => not required unless schoolType === 'private')
-  Object.entries(shsDocuments).forEach(([k, file]) => {
-    if (file) formData.append(k, file);
+  // => shsDocuments values are arrays now, since SHSStep2.jsx moved every
+  // => document field to array-based state so grade10ReportCard can hold
+  // => up to 2 files. Loop each array and append every File individually
+  // => under the same field name, so multer's .fields() collects them
+  // => together server-side. Empty arrays (e.g. escCertificate left blank)
+  // => are skipped entirely instead of appending a stray empty value.
+  Object.entries(shsDocuments).forEach(([k, fileArray]) => {
+    if (!fileArray || fileArray.length === 0) return;
+    fileArray.forEach((file) => formData.append(k, file));
   });
 
   try {
@@ -357,9 +366,13 @@ const handleShsSubmit = async () => {
       body: formData,
     });
 
-    if (!res.ok) throw new Error(`Server responded with ${res.status}`);
-
     const result = await res.json();
+
+    // => Reads the actual backend message (e.g. a specific validation
+    // => error) before throwing, instead of a generic "Server responded
+    // => with 400" that threw that detail away
+    if (!res.ok) throw new Error(result.message || `Server responded with ${res.status}`);
+
     console.log('SHS enrollment submitted:', result);
 
     setSubmissionStatus(result.status || null);
@@ -367,13 +380,21 @@ const handleShsSubmit = async () => {
     setShowInfoModal(true);
   } catch (err) {
     console.error('SHS submission failed:', err);
-    alert('Submission failed. Please try again.');
+    toast.error(err.message || 'Submission failed. Please try again.');
   }
 };
 
-// => Stable handler for TESDA file changes - lifted so Step 7 submit can access all files
-const handleTesdaFileChange = useCallback((key, file) => {
-  setTesdaFiles(prev => ({ ...prev, [key]: file }));
+// => Stable handler for TESDA file changes - lifted so Step 3 submit can
+// => access all files. fileList is now always an array (a requirement
+// => can hold more than one file when max_files > 1)
+const handleTesdaFileChange = useCallback((key, fileList) => {
+  setTesdaFiles(prev => ({ ...prev, [key]: fileList }));
+}, []);
+
+// => Stable handler receiving TESDAStep3's current requirement list
+// => whenever the selected course's requirements change
+const handleTesdaRequirementsChange = useCallback((requirements) => {
+  setTesdaRequirements(requirements);
 }, []);
 
 // => TESDA navigation helpers
@@ -411,10 +432,25 @@ const handleTesdaSubmit = async () => {
   formData.append('courseData', JSON.stringify(tesdaCourse));
   formData.append('scholarshipData', JSON.stringify(tesdaScholarship)); // scholarship
 
-  // => Step 5b: Files
-  Object.entries(tesdaFiles).forEach(([k, file]) => {
-    if (file) formData.append(k, file);
+  // => Step 3: Files - each requirement now holds an array of files, so
+  // => every file is appended under the same field name. Backend handling
+  // => for mapping each file back to its document_type on tesda_documents
+  // => is still separate not-yet-built work, this only fixes the FormData
+  // => shape on the frontend side.
+  Object.entries(tesdaFiles).forEach(([k, fileList]) => {
+    (fileList || []).forEach(file => {
+      if (file) formData.append(k, file);
+    });
   });
+
+  // => Manifest telling the backend which document_type each dynamic
+  // => field id corresponds to - field ids are frontend-only, the DB
+  // => needs the actual admin-defined document_type label
+  const documentRequirements = {};
+  tesdaRequirements.forEach((req) => {
+    documentRequirements[req.id] = req.documentType;
+  });
+  formData.append('documentRequirements', JSON.stringify(documentRequirements));
 
   // => Step 6: Scholarship
   Object.entries(tesdaScholarship).forEach(([k, v]) => formData.append(k, v));
@@ -431,9 +467,13 @@ const handleTesdaSubmit = async () => {
       body: formData,
     });
 
-    if (!res.ok) throw new Error(`Server responded with ${res.status}`);
-
     const result = await res.json();
+
+    // => Reads the actual backend message (e.g. a specific validation
+    // => error) before throwing, instead of a generic "Server responded
+    // => with 400" that threw that detail away
+    if (!res.ok) throw new Error(result.message || `Server responded with ${res.status}`);
+
     console.log('Enrollment submitted:', result);
 
     setSubmissionStatus(result.status || null);
@@ -441,7 +481,7 @@ const handleTesdaSubmit = async () => {
     setShowInfoModal(true);
   } catch (err) {
     console.error('Submission failed:', err);
-    alert('Submission failed. Please try again.');
+    toast.error(err.message || 'Submission failed. Please try again.');
   }
 };
 
@@ -631,6 +671,7 @@ const handleTesdaSubmit = async () => {
               onChange={(key, val) => setTesdaCourse(prev => ({ ...prev, [key]: val }))}
               files={tesdaFiles}
               onFileChange={handleTesdaFileChange}
+              onRequirementsChange={handleTesdaRequirementsChange}
               scholarData={tesdaScholarship}
               onScholarChange={(key, val) => setTesdaScholarship(prev => ({ ...prev, [key]: val }))}
               privacyData={tesdaPrivacy}

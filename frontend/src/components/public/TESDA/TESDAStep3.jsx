@@ -1,30 +1,15 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import './TESDAStep3.css';
 import Info from '../../Info.jsx';
 import ChatbotWidget from '../ChatbotWidget/chatbotWidget.jsx';
+import RemoveFileIcon from '../../../assets/icons/close.png';
 
-// => Base documents required for ALL TESDA courses
-const BASE_REQUIREMENTS = [
-  {
-    id: 'birthCert',
-    label: 'NSO / PSA Birth Certificate',
-    description: 'Original or certified true copy from PSA.',
-    content: 'Required for all TESDA enrollees to verify identity and age.',
-  },
-  {
-    id: 'schoolDoc',
-    label: 'Form 137, TOR, or Diploma',
-    description: 'Latest school records or diploma.',
-    content: "Form 137 (Report Card) or Transcript of Records (TOR) from your most recent school. A High School or College Diploma is also accepted.",
-  },
-  {
-    id: 'validId',
-    label: 'Valid Government-Issued ID',
-    description: 'Any primary government-issued ID.',
-    content: "Accepted IDs: Passport, Driver's License, PhilSys National ID, SSS/GSIS ID, Voter's ID, or PRC ID.",
-  },
-];
-
+// => Requirements are no longer hardcoded here - every document a
+// => student must upload (NSO/PSA Birth Certificate, Form 137/TOR,
+// => Valid ID, etc.) is now defined by the admin per course in
+// => tesda_course_requirements, fetched below. Removes the duplicate
+// => upload boxes that showed up when an admin's requirement overlapped
+// => with what used to be hardcoded here.
 const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png'];
 const MAX_SIZE_MB = 5;
 
@@ -38,6 +23,7 @@ const RESERVATION_FEE = 1000;
 const TESDAStep3 = ({
   data, onChange,
   files, onFileChange,
+  onRequirementsChange,       // => notifies Enroll.jsx of the current id -> document_type list
   scholarData, onScholarChange,
   privacyData, onPrivacyChange,
   onBack, onSubmit,           // => onSubmit replaces onNext since this is now the last step
@@ -132,40 +118,99 @@ const TESDAStep3 = ({
       .finally(() => setLoadingDocs(false));
   }, [data.course]);
 
-  // => All requirements = base docs + course-specific additional docs
-  const allRequirements = [
-    ...BASE_REQUIREMENTS,
-    ...additionalDocs.map(doc => ({
-      id: `additional_${doc.requirement_id}`,
-      label: doc.label,
-      description: doc.description,
-      content: doc.content || '',
-    })),
-  ];
+  // => Every requirement now comes straight from the admin-defined
+  // => tesda_course_requirements table - no more hardcoded base set.
+  // => document_type doubles as both the display label and the value
+  // => that will later be written to tesda_documents.document_type on
+  // => upload, so it's carried through as documentType too. Memoized so
+  // => the effect below only re-fires when additionalDocs actually
+  // => changes, not on every render.
+  const allRequirements = useMemo(() => additionalDocs.map(doc => ({
+    id: `req_${doc.requirement_id}`,
+    label: doc.document_type,
+    description: '',
+    content: '',
+    documentType: doc.document_type,
+    isRequired: doc.is_required,
+    maxFiles: doc.max_files || 1,
+  })), [additionalDocs]);
 
-  // => Validates a single uploaded file
+  // => Lifts the id -> document_type mapping up to Enroll.jsx, which has
+  // => no other way to know what each dynamic file field (e.g. "req_12")
+  // => corresponds to when it builds the final submission manifest
+  useEffect(() => {
+    onRequirementsChange(allRequirements);
+  }, [allRequirements, onRequirementsChange]);
+
+  // => Validates a single uploaded file's type and size - only ever
+  // => called against a file that already exists in the array, the
+  // => "is anything uploaded at all" check lives in the function below
   const validateFile = (file) => {
-    if (!file) return 'This document is required.';
     if (!ALLOWED_TYPES.includes(file.type)) return 'Only JPG and PNG files are allowed.';
     if (file.size > MAX_SIZE_MB * 1024 * 1024) return `File size must be less than ${MAX_SIZE_MB}MB.`;
     return null;
   };
 
-  // => Handle file selection - delegates storage up to Enroll.jsx via onFileChange
-  const handleFileChange = useCallback((e, fieldId) => {
-    const file = e.target.files[0];
-    onFileChange(fieldId, file || null);
-    // => Validate inline so error clears as soon as user picks a valid file
-    const error = validateFile(file);
-    setFileErrors(prev => ({ ...prev, [fieldId]: error }));
-  }, [onFileChange]);
+  // => Validates the full set of files chosen for one requirement - the
+  // => required-but-empty case, the max_files ceiling set by the admin,
+  // => then each individual file's type/size
+  const validateFilesForRequirement = (fileList, requirement) => {
+    const list = fileList || [];
+    if (requirement.isRequired && list.length === 0) {
+      return 'This document is required.';
+    }
+    if (list.length > requirement.maxFiles) {
+      return `You can upload up to ${requirement.maxFiles} file${requirement.maxFiles !== 1 ? 's' : ''} for this requirement.`;
+    }
+    for (const file of list) {
+      const error = validateFile(file);
+      if (error) return error;
+    }
+    return null;
+  };
+
+  // => Handle file selection - ADDS the newly picked file(s) to whatever
+  // => was already chosen for this requirement, rather than replacing the
+  // => whole selection (native <input multiple> replaces by default, this
+  // => is why students could only ever get one file to "stick" before).
+  // => Still caps the combined total at the requirement's max_files.
+  const handleFileChange = useCallback((e, requirement) => {
+    const newlySelected = Array.from(e.target.files || []);
+
+    // => Resets the input's value so picking the exact same file again
+    // => still fires a change event - browsers don't fire onChange when
+    // => the selection doesn't change from the input's own perspective
+    e.target.value = '';
+
+    const existing = files[requirement.id] || [];
+    const combined = [...existing, ...newlySelected];
+    const capped = combined.slice(0, requirement.maxFiles);
+    onFileChange(requirement.id, capped);
+
+    const error = combined.length > requirement.maxFiles
+      ? `You can upload up to ${requirement.maxFiles} file${requirement.maxFiles !== 1 ? 's' : ''} for this requirement.`
+      : validateFilesForRequirement(capped, requirement);
+    setFileErrors(prev => ({ ...prev, [requirement.id]: error }));
+  }, [files, onFileChange]);
+
+  // => Removes one file from a requirement's list by index, re-validates
+  // => afterward so a now-satisfied or now-unsatisfied required box
+  // => updates its error state immediately
+  const handleRemoveFile = useCallback((requirement, index) => {
+    const existing = files[requirement.id] || [];
+    const updated = existing.filter((_, i) => i !== index);
+    onFileChange(requirement.id, updated);
+
+    const error = validateFilesForRequirement(updated, requirement);
+    setFileErrors(prev => ({ ...prev, [requirement.id]: error }));
+  }, [files, onFileChange]);
 
   // => Validates all selects + all file uploads together, scholarship, and data privacy notice
   const validate = () => {
     if (!data.course) return 'missing';
     if (!data.courseClass) return 'missing';
-    for (const { id } of allRequirements) {
-      if (validateFile(files[id])) return 'missing';
+    for (const requirement of allRequirements) {
+      if (validateFilesForRequirement(files[requirement.id], requirement)) return 'missing';
     }
     // => Scholarship validation
     if (!scholarData.isScholar) return 'missing';
@@ -185,9 +230,9 @@ const TESDAStep3 = ({
 
     // => Validate files
     const newFileErrors = {};
-    allRequirements.forEach(({ id }) => {
-      const error = validateFile(files[id]);
-      if (error) newFileErrors[id] = error;
+    allRequirements.forEach((requirement) => {
+      const error = validateFilesForRequirement(files[requirement.id], requirement);
+      if (error) newFileErrors[requirement.id] = error;
     });
     setFileErrors(newFileErrors);
 
@@ -387,9 +432,32 @@ const TESDAStep3 = ({
         Upload Requirements
       </div>
       <p className="ts5-upload-subtitle">
-        Please upload clear, legible scans or photos.
-        Only JPG and PNG files are accepted (max {MAX_SIZE_MB}MB each).
+        {!data.course ? (
+          'Please select a course above to view its document requirements.'
+        ) : (
+          <>Please upload clear, legible scans or photos. Only JPG and PNG files are accepted (max {MAX_SIZE_MB}MB each).</>
+        )}
       </p>
+
+      {/* => Informational only, not an upload field - these photos are
+           physical submissions, not uploaded through this form. Shown
+           for every TESDA course regardless of that course's admin-
+           configured requirements, mirrors the same static note used on
+           SHSStep2 */}
+      <div className="ts5-photo-requirements">
+        <p className="ts5-label">
+          Passport-size and 1x1 ID Pictures <span className="ts5-req">*</span>
+        </p>
+        <ul className="ts5-photo-list">
+          <li>Passport-size ID picture (formal attire, white background)</li>
+          <li>1x1 ID picture (formal attire, white background)</li>
+        </ul>
+        <p className="ts5-hint">
+          These are not uploaded here. Please prepare physical copies and
+          submit them at the office once your enrollment status has been
+          marked "Reviewed."
+        </p>
+      </div>
 
       {/* => Loading state for additional docs */}
       {loadingDocs && (
@@ -400,51 +468,92 @@ const TESDAStep3 = ({
 
       {/* => 2-column upload grid */}
       <div className="ts5-uploads">
-        {allRequirements.map(({ id, label, description, content }) => (
-          <div key={id} className="ts5-upload-group">
+        {allRequirements.map((requirement) => {
+          const { id, label, description, content, isRequired, maxFiles } = requirement;
+          const selectedFiles = files[id] || [];
 
-            <label className="ts5-upload-label">
-              <span className="ts5-label-row">
-                {label}
-                <span className="ts5-req">*</span>
-                {content && <Info content={content} />}
-              </span>
-            </label>
+          return (
+            <div key={id} className="ts5-upload-group">
 
-            <p className="ts5-upload-desc">{description}</p>
+              <label className="ts5-upload-label">
+                <span className="ts5-label-row">
+                  {label}
+                  {isRequired && <span className="ts5-req">*</span>}
+                  {content && <Info content={content} />}
+                </span>
+              </label>
 
-            <div className="ts5-file-wrapper">
-              <input
-                type="file"
-                id={id}
-                className="ts5-file-input"
-                accept="image/jpeg,image/jpg,image/png"
-                onChange={(e) => handleFileChange(e, id)}
-              />
-              <label
-                htmlFor={id}
-                className={`ts5-file-label ${files[id] ? 'has-file' : ''} ${fileErrors[id] ? 'ts5-file-label--error' : ''}`}
-              >
-                {files[id] ? (
+              {description && <p className="ts5-upload-desc">{description}</p>}
+
+              {/* => Always rendered, not just when max_files > 1 - keeps
+                   every box in the 2-column grid the same height so the
+                   row doesn't go misaligned when only one requirement
+                   next to it needs more than one file */}
+              <p className="ts5-upload-desc">
+                {maxFiles > 1
+                  ? `You may upload up to ${maxFiles} files (e.g. multiple pages).`
+                  : '1 file needed.'}
+              </p>
+
+              <div className="ts5-file-wrapper">
+
+                {/* => Each chosen file gets its own row with a remove
+                     button, replaces the old single collapsed label so
+                     multiple files are individually visible/removable */}
+                {selectedFiles.length > 0 && (
+                  <div className="ts5-file-list">
+                    {selectedFiles.map((file, index) => (
+                      <div key={`${file.name}-${index}`} className="ts5-file-row">
+                        <i className="ts5-file-icon ti ti-check" />
+                        <span className="ts5-file-name">{file.name}</span>
+                        <button
+                          type="button"
+                          className="ts5-file-remove-btn"
+                          onClick={() => handleRemoveFile(requirement, index)}
+                          aria-label={`Remove ${file.name}`}
+                        >
+                          <img src={RemoveFileIcon} alt="" className="ts5-file-remove-icon" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* => Only shown while there's still room left under
+                     max_files - hides once the cap is reached instead of
+                     letting the student try to add more and get truncated */}
+                {selectedFiles.length < maxFiles && (
                   <>
-                    <i className="ts5-file-icon ti ti-check" />
-                    <span className="ts5-file-name">{files[id].name}</span>
-                  </>
-                ) : (
-                  <>
-                    <i className="ts5-file-icon ti ti-upload" />
-                    <span>Choose file</span>
+                    <input
+                      type="file"
+                      id={id}
+                      className="ts5-file-input"
+                      accept="image/jpeg,image/jpg,image/png"
+                      multiple={maxFiles > 1}
+                      onChange={(e) => handleFileChange(e, requirement)}
+                    />
+                    <label
+                      htmlFor={id}
+                      className={`ts5-file-label ${fileErrors[id] ? 'ts5-file-label--error' : ''}`}
+                    >
+                      <i className="ts5-file-icon ti ti-upload" />
+                      <span>
+                        {selectedFiles.length > 0
+                          ? `Add file (${maxFiles - selectedFiles.length} remaining)`
+                          : `Choose file${maxFiles > 1 ? 's' : ''}`}
+                      </span>
+                    </label>
                   </>
                 )}
-              </label>
+              </div>
+
+              {fileErrors[id] && (
+                <span className="ts5-file-error">{fileErrors[id]}</span>
+              )}
+
             </div>
-
-            {fileErrors[id] && (
-              <span className="ts5-file-error">{fileErrors[id]}</span>
-            )}
-
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* -- Section: Scholarship Package -- */}
@@ -578,7 +687,7 @@ const TESDAStep3 = ({
       {showErrors && (!data.course || !data.courseClass) && (
         <div className="ts5-error-banner">
           <i className="ti ti-alert-circle" />
-          Please select a course and class before proceeding.
+          Please select a course and batch before proceeding.
         </div>
       )}
       {showFileBanner && (
