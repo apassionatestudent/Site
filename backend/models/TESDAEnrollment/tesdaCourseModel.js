@@ -27,3 +27,21 @@ export const getActiveCourses = async () => {
   `;
   return result.rows;
 };
+
+// => Fetches course-specific document requirements set by the admin for
+// => one TESDA course, used to render the dynamic Upload Requirements
+// => section on top of the fixed BASE_REQUIREMENTS on the frontend
+export const getRequirementsByCourseId = async (courseId) => {
+  const result = await sql`
+    SELECT
+      requirement_id,
+      course_id,
+      document_type,
+      is_required,
+      max_files
+    FROM tesda_course_requirements
+    WHERE course_id = ${courseId}
+    ORDER BY requirement_id ASC
+  `;
+  return result.rows;
+};

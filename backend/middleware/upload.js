@@ -37,15 +37,20 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
+// => Switched from .fields([...]) (a fixed whitelist of field names) to
+// => .any() since TESDA upload field names are now dynamic per course
+// => requirement (e.g. "req_12"), generated from tesda_course_requirements,
+// => not a fixed birthCert/schoolDoc/validId set. req.files becomes a flat
+// => array instead of a keyed object - the service layer groups them back
+// => by fieldname using a manifest sent alongside the files.
 export const upload = multer({
   storage,
   fileFilter,
-  limits: { fileSize: 5 * 1024 * 1024 }, // => 5MB limit per file, matching frontend validation
-}).fields([
-  { name: 'birthCert', maxCount: 1 },
-  { name: 'schoolDoc', maxCount: 1 },
-  { name: 'validId',   maxCount: 1 },
-]);
+  limits: {
+    fileSize: 5 * 1024 * 1024, // => 5MB limit per file, matching frontend validation
+    files: 30,                 // => Defensive ceiling across all requirements combined
+  },
+}).any();
 
 // => Stricter fileFilter for SHS uploads - JPG/PNG only, no PDF
 // => (SHSStep2 restricts to JPG/PNG with real MIME-type validation on
@@ -68,7 +73,9 @@ export const uploadShs = multer({
   limits: { fileSize: 5 * 1024 * 1024 }, // => same 5MB limit as TESDA
 }).fields([
   { name: 'psaBirthCertificate',  maxCount: 1 },
-  { name: 'grade10ReportCard',    maxCount: 1 },
+  // => raised from 1 to 2 - SHSStep2.jsx allows up to 2 files for this
+  // => field (e.g. front and back of the report card)
+  { name: 'grade10ReportCard',    maxCount: 2 },
   { name: 'goodMoralCertificate', maxCount: 1 },
   { name: 'escCertificate',       maxCount: 1 },
 ]);

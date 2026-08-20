@@ -22,9 +22,25 @@ import {
   insertEnrollmentDocuments,
 } from '../../models/Enrollments/tesdaEnrollmentModel.js';
 
+// => Reused straight from the public enrollment form's own requirements
+// => fetch - the authoritative source for what's actually required for a
+// => course, called directly here since services can call models across
+// => feature folders without going through HTTP
+import { getRequirementsByCourseId } from '../../models/TESDAEnrollment/tesdaCourseModel.js';
+
 import { issuePasswordToken } from '../passwordTokenService.js';
 import { logActivity } from '../Logs/logsService.js';
 import { ACTIVITY_ACTIONS } from '../../constants/activityActions.js';
+
+// => Maps a file's mimetype to the extension used in its R2 object key -
+// => previously only checked for pdf vs "everything else defaults to
+// => jpg", which silently mislabeled PNG uploads with a .jpg extension
+const EXTENSION_BY_MIME = {
+  'application/pdf': 'pdf',
+  'image/png':  'png',
+  'image/jpeg': 'jpg',
+  'image/jpg':  'jpg',
+};
 
 export const processTesdaEnrollmentSubmission = async (body, files) => {
   // => Parse the JSON blobs sent via FormData
@@ -45,34 +61,89 @@ export const processTesdaEnrollmentSubmission = async (body, files) => {
     throw Object.assign(new Error('Email address is required.'), { statusCode: 400 });
   }
 
+  // => Authoritative source of what this course actually requires right
+  // => now - never trusts the client-supplied documentRequirements field
+  // => for this. courseData.course was already parsed above.
+  const courseRequirements = await getRequirementsByCourseId(courseData.course);
+
+  // => Keyed by requirement_id as a string, matching the id parsed out of
+  // => each field name below
+  const requirementsById = new Map(
+    courseRequirements.map(r => [String(r.requirement_id), r])
+  );
+
+  // => Groups incoming files by requirement_id, read straight out of the
+  // => fieldname itself ("req_<requirement_id>" per TESDAStep3.jsx) rather
+  // => than trusted from any client-supplied label
+  const filesByRequirementId = new Map();
+  for (const file of files || []) {
+    const match = /^req_(\d+)$/.exec(file.fieldname);
+    if (!match) {
+      console.warn(`Skipping upload for unrecognized field: ${file.fieldname}`);
+      continue;
+    }
+
+    const requirementId = match[1];
+
+    // => Field doesn't correspond to a requirement currently configured
+    // => for this course - either stale (admin edited/removed it after
+    // => the student loaded the form) or a forged field. Either way,
+    // => rejected outright rather than silently dropped or trusted.
+    if (!requirementsById.has(requirementId)) {
+      throw Object.assign(
+        new Error("One of the submitted documents no longer matches this course's requirements. Please refresh and try again."),
+        { statusCode: 400 }
+      );
+    }
+
+    if (!filesByRequirementId.has(requirementId)) {
+      filesByRequirementId.set(requirementId, []);
+    }
+    filesByRequirementId.get(requirementId).push(file);
+  }
+
+  // => Enforce max_files per requirement, using the DB value
+  for (const [requirementId, fileGroup] of filesByRequirementId) {
+    const requirement = requirementsById.get(requirementId);
+    if (fileGroup.length > requirement.max_files) {
+      throw Object.assign(
+        new Error(`You can upload up to ${requirement.max_files} file(s) for "${requirement.document_type}".`),
+        { statusCode: 400 }
+      );
+    }
+  }
+
+  // => Enforce is_required - every required document needs at least one
+  // => uploaded file, checked against the full DB list, not just what
+  // => was submitted
+  for (const requirement of courseRequirements) {
+    if (requirement.is_required && !filesByRequirementId.has(String(requirement.requirement_id))) {
+      throw Object.assign(
+        new Error(`"${requirement.document_type}" is required.`),
+        { statusCode: 400 }
+      );
+    }
+  }
+
   // => Upload files to R2 BEFORE the DB transaction
   // => R2 uploads are external HTTP calls - they cannot be rolled back
   // => If the DB transaction fails later, orphaned R2 files are acceptable
-  // => (much better than a committed DB row with no file)
-  const uploadFile = async (fileArray, fieldName) => {
-    if (!fileArray?.[0]) return null;
+  // => (much better than a committed DB row with no file). All validation
+  // => above runs first so nothing gets uploaded for a submission that's
+  // => going to be rejected anyway.
+  const docs = [];
+  for (const [requirementId, fileGroup] of filesByRequirementId) {
+    const requirement = requirementsById.get(requirementId);
 
-    const file = fileArray[0];
+    for (const file of fileGroup) {
+      const ext = EXTENSION_BY_MIME[file.mimetype] || 'jpg';
+      const key = `primeenroll/student-docs/req_${requirementId}_${Date.now()}_${docs.length}.${ext}`;
+      const uploadedKey = await uploadToR2(file.buffer, key, file.mimetype);
 
-    // => Key format: folder/fieldName_timestamp.ext
-    // => Timestamp is enough to avoid collisions at this scale
-    const ext = file.mimetype === 'application/pdf' ? 'pdf' : 'jpg';
-    const key = `primeenroll/student-docs/${fieldName}_${Date.now()}.${ext}`;
-
-    return await uploadToR2(file.buffer, key, file.mimetype);
-  };
-
-  const birthCertKey = await uploadFile(files?.birthCert, 'birthCert');
-  const schoolDocKey = await uploadFile(files?.schoolDoc, 'schoolDoc');
-  const validIdKey   = await uploadFile(files?.validId,   'validId');
-
-  // => Build docs array once - reused for tesda_documents
-  // => filter() drops any that weren't uploaded
-  const docs = [
-    { type: 'PSA Birth Certificate',    key: birthCertKey },
-    { type: 'Form 137 / Diploma / TOR', key: schoolDocKey },
-    { type: 'Valid ID',                 key: validIdKey   },
-  ].filter(d => d.key);
+      // => document_type comes from the DB row, never from the client
+      docs.push({ type: requirement.document_type, key: uploadedKey });
+    }
+  }
 
   // => Get a dedicated client from the pool for the transaction
   // => pool.connect() gives a persistent client that supports BEGIN/COMMIT/ROLLBACK

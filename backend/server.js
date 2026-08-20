@@ -1148,6 +1148,10 @@ async function initDB () {
         -- => Renamed from instructor_id as part of the Instructor -> Trainer rename
         trainer_id      INTEGER       NULL REFERENCES trainers(trainer_id) ON DELETE SET NULL,
 
+        deleted_at            TIMESTAMPTZ NULL,
+        updated_at            TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        recurrence_group_id   UUID NULL,
+
         created_by      INTEGER       NOT NULL REFERENCES admins(admin_id) ON DELETE SET NULL,
         remarks         TEXT          NULL,
         created_at      TIMESTAMPTZ   NOT NULL DEFAULT NOW()

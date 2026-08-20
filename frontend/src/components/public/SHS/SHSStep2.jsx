@@ -42,11 +42,17 @@ const applyProperCase = (e, key, onChangeFn) => {
 // => anywhere else in the SHS flow) captures public-vs-private JHS
 // => status, so it can't be conditionally required yet. Flag raised
 // => separately - can gate this properly once that's decided.
+// => maxCount added to every entry so the requirement card can always
+// => show a concrete file count (mirrors TESDAStep3's "up to N files" /
+// => "1 file needed." messaging). Grade 10 Report Card is now multiple: true
+// => with maxCount: 2 - up to 2 files (e.g. front and back), not an exact
+// => count like the (currently unused) 2x2/1x1 photo pattern this file's
+// => multi-upload UI was originally built for.
 const REQUIRED_DOCUMENTS = [
-  { key: 'psaBirthCertificate', label: 'Original PSA Birth Certificate', required: true, multiple: false },
-  { key: 'grade10ReportCard', label: 'Photocopy of Recent Grade 10 Report Card', required: true, multiple: false },
-  { key: 'goodMoralCertificate', label: 'Good Moral Certificate', required: true, multiple: false },
-  { key: 'escCertificate', label: 'ESC Certificate (for Private Junior High School)', required: false, multiple: false },
+  { key: 'psaBirthCertificate', label: 'Original PSA Birth Certificate', required: true, multiple: false, maxCount: 1 },
+  { key: 'grade10ReportCard', label: 'Photocopy of Recent Grade 10 Report Card', required: true, multiple: true, maxCount: 2 },
+  { key: 'goodMoralCertificate', label: 'Good Moral Certificate', required: true, multiple: false, maxCount: 1 },
+  { key: 'escCertificate', label: 'ESC Certificate (for Private Junior High School)', required: false, multiple: false, maxCount: 1 },
 ];
 
 // => JPG/PNG only - no PDF, no other image formats. This is enforced here
@@ -160,14 +166,13 @@ const SHSStep2 = ({ data, onChange, documents, onDocumentsChange, onBack, onNext
     setDocTypeErrors(prev => ({ ...prev, [key]: false }));
   };
 
-  // => True if a single required document's value satisfies its rule -
-  // => single file present, or exact photo count for multi-file ones
+  // => True if a required document has between 1 and maxCount files
+  // => selected - every document is array-based now, maxCount: 1 just
+  // => means the array can only ever hold one file
   const isDocumentValid = (doc) => {
     if (!doc.required) return true;
-    const val = documents[doc.key];
-    return doc.multiple
-      ? Array.isArray(val) && val.length === doc.exactCount
-      : !!val;
+    const val = documents[doc.key] || [];
+    return val.length >= 1 && val.length <= doc.maxCount;
   };
 
   const allDocumentsValid = () => REQUIRED_DOCUMENTS.every(isDocumentValid);
@@ -184,40 +189,38 @@ const SHSStep2 = ({ data, onChange, documents, onDocumentsChange, onBack, onNext
     return 'valid';
   };
 
-  // => Handles both single-file and multi-file (2x2/1x1 photos) inputs.
-  // => Multi-file appends to whatever's already selected rather than
-  // => replacing, since the native <input multiple> re-fires with only
-  // => the newly-picked batch each time, not the cumulative selection.
-  // => Rejects the WHOLE batch if any file isn't JPG/PNG, rather than
-  // => silently dropping just the bad one - so it's obvious something
-  // => needs to be re-picked instead of quietly having fewer files than expected.
-  const handleFileChange = (key, fileList, multiple) => {
+  // => Appends newly picked files to whatever's already selected rather
+  // => than replacing, since native <input multiple> re-fires with only
+  // => the newly-picked batch each time, not the cumulative selection -
+  // => same behavior as TESDAStep3's handleFileChange. Caps the combined
+  // => total at doc.maxCount. Rejects the WHOLE batch if any file isn't
+  // => JPG/PNG, rather than silently dropping just the bad one.
+  const handleFileChange = (doc, fileList) => {
     const files = Array.from(fileList);
     if (files.length === 0) return;
 
     const hasInvalidType = files.some((f) => !isValidFileType(f));
     if (hasInvalidType) {
-      setDocErrors((prev) => ({ ...prev, [key]: true }));
-      setDocTypeErrors((prev) => ({ ...prev, [key]: true }));
+      setDocErrors((prev) => ({ ...prev, [doc.key]: true }));
+      setDocTypeErrors((prev) => ({ ...prev, [doc.key]: true }));
       return;
     }
 
-    if (multiple) {
-      const existing = documents[key] || [];
-      onDocumentsChange(key, [...existing, ...files]);
-    } else {
-      onDocumentsChange(key, files[0] || null);
-    }
-    clearDocError(key);
+    const existing = documents[doc.key] || [];
+    const combined = [...existing, ...files].slice(0, doc.maxCount);
+    onDocumentsChange(doc.key, combined);
+    clearDocError(doc.key);
   };
 
-  const removeFile = (key, index) => {
-    const existing = documents[key] || [];
-    onDocumentsChange(key, existing.filter((_, i) => i !== index));
-  };
+  // => Removes one file by index and re-validates immediately, same
+  // => pattern as TESDAStep3's handleRemoveFile
+  const handleRemoveFile = (doc, index) => {
+    const existing = documents[doc.key] || [];
+    const updated = existing.filter((_, i) => i !== index);
+    onDocumentsChange(doc.key, updated);
 
-  const removeSingleFile = (key) => {
-    onDocumentsChange(key, null);
+    const stillValid = !doc.required || (updated.length >= 1 && updated.length <= doc.maxCount);
+    setDocErrors((prev) => ({ ...prev, [doc.key]: !stillValid }));
   };
 
   const handleNext = () => {
@@ -423,108 +426,107 @@ const SHSStep2 = ({ data, onChange, documents, onDocumentsChange, onBack, onNext
         <strong>Note:</strong> The 1x1 and 2x2 pictures must be submitted physically at the office.
         Original documents may still be presented at the office for verification, and its photocopies may be submitted physically.
       </p>
-      <br />
 
+      {/* => Informational only, not an upload field - these photos are
+           physical submissions handled at the office, not through this
+           form, so this just tells the applicant what to prepare and
+           when they're allowed to bring it in */}
+      <div className="shs2-photo-requirements">
+        <p className="shs2-label">
+          2x2 and 1x1 ID Pictures <span className="shs2-req">*</span>
+        </p>
+        <ul className="shs2-photo-list">
+          <li>2x2 picture - 2 pcs</li>
+          <li>1x1 picture - 4 pcs</li>
+        </ul>
+        <p className="shs2-upload-desc">
+          These are not uploaded here. Please prepare physical copies and
+          submit them at the office once your enrollment status has been
+          marked "Reviewed."
+        </p>
+      </div>
 
       <div className="shs2-uploads">
-        {REQUIRED_DOCUMENTS.map((doc) => (
-          <div key={doc.key} className="shs2-upload-group">
-            <label className="shs2-upload-label">
-              {doc.label} {doc.required && <span className="shs2-req">*</span>}
-            </label>
+        {REQUIRED_DOCUMENTS.map((doc) => {
+          const selectedFiles = documents[doc.key] || [];
 
-            {/* => Single-file documents: Birth Certificate, Report Card,
-                 Good Moral, ESC Certificate */}
-            {!doc.multiple && (
+          return (
+            <div key={doc.key} className="shs2-upload-group">
+              <label className="shs2-upload-label">
+                {doc.label} {doc.required && <span className="shs2-req">*</span>}
+              </label>
+
               <div className="shs2-file-wrapper">
-                <input
-                  type="file"
-                  id={`upload-${doc.key}`}
-                  className="shs2-file-input"
-                  accept="image/jpeg,image/png,.jpg,.jpeg,.png"
-                  onChange={(e) => handleFileChange(doc.key, e.target.files, false)}
-                />
-                <label
-                  htmlFor={`upload-${doc.key}`}
-                  className={`shs2-file-label ${documents[doc.key] ? 'has-file' : ''} ${docErrors[doc.key] ? 'shs2-file-label--error' : ''}`}
-                >
-                  <i className={`ti ${documents[doc.key] ? 'ti-circle-check' : 'ti-upload'} shs2-file-icon`} />
-                  <span className="shs2-file-name">
-                    {documents[doc.key] ? documents[doc.key].name : 'Click to upload file'}
-                  </span>
-                </label>
-                {documents[doc.key] && (
-                  <button
-                    type="button"
-                    className="shs2-file-remove"
-                    onClick={() => removeSingleFile(doc.key)}
-                    aria-label="Remove file"
-                  >
-                    {/* => Using your own rejected.png instead of a webfont
-                         icon - avoids depending on the icon font loading
-                         or having that specific glyph included at all. */}
-                    <img src={rejectedIcon} alt="Remove file" className="shs2-remove-icon" />
-                  </button>
-                )}
-              </div>
-            )}
 
-            {/* => Multi-file documents: 2x2 and 1x1 photos, each needing an
-                 exact count rather than "at least one" */}
-            {doc.multiple && (
-              <>
-                <div className="shs2-file-wrapper">
-                  <input
-                    type="file"
-                    id={`upload-${doc.key}`}
-                    className="shs2-file-input"
-                    accept="image/jpeg,image/png,.jpg,.jpeg,.png"
-                    multiple
-                    onChange={(e) => {
-                      handleFileChange(doc.key, e.target.files, true);
-                      e.target.value = ''; // => allow re-selecting the same filename later
-                    }}
-                  />
-                  <label
-                    htmlFor={`upload-${doc.key}`}
-                    className={`shs2-file-label ${(documents[doc.key]?.length > 0) ? 'has-file' : ''} ${docErrors[doc.key] ? 'shs2-file-label--error' : ''}`}
-                  >
-                    <i className="ti ti-upload shs2-file-icon" />
-                    <span className="shs2-file-name">
-                      Add photo ({(documents[doc.key] || []).length} of {doc.exactCount} selected)
-                    </span>
-                  </label>
-                </div>
-                {(documents[doc.key] || []).length > 0 && (
-                  <div className="shs2-file-chip-list">
-                    {documents[doc.key].map((file, idx) => (
-                      <span key={`${file.name}-${idx}`} className="shs2-file-chip">
-                        {file.name}
-                        <button type="button" onClick={() => removeFile(doc.key, idx)} aria-label="Remove file">
-                          <img src={rejectedIcon} alt="Remove file" className="shs2-remove-icon shs2-remove-icon--small" />
+                {/* => Each chosen file gets its own row with a remove
+                     button - same pattern as TESDAStep3's upload list,
+                     kept visually consistent across both enrollment forms */}
+                {selectedFiles.length > 0 && (
+                  <div className="shs2-file-list">
+                    {selectedFiles.map((file, index) => (
+                      <div key={`${file.name}-${index}`} className="shs2-file-row">
+                        <i className="ti ti-circle-check shs2-file-icon" />
+                        <span className="shs2-file-name">{file.name}</span>
+                        <button
+                          type="button"
+                          className="shs2-file-remove-btn"
+                          onClick={() => handleRemoveFile(doc, index)}
+                          aria-label={`Remove ${file.name}`}
+                        >
+                          <img src={rejectedIcon} alt="" className="shs2-file-remove-icon" />
                         </button>
-                      </span>
+                      </div>
                     ))}
                   </div>
                 )}
-              </>
-            )}
 
-            <p className="shs2-upload-desc">
-              {doc.multiple
-                ? `Exactly ${doc.exactCount} recent photo${doc.exactCount > 1 ? 's' : ''} required.`
-                : doc.required ? 'Required document.' : 'Optional - only needed if applicable.'}
-            </p>
+                {/* => Only shown while there's still room left under
+                     maxCount - hides once the cap is reached */}
+                {selectedFiles.length < doc.maxCount && (
+                  <>
+                    <input
+                      type="file"
+                      id={`upload-${doc.key}`}
+                      className="shs2-file-input"
+                      accept="image/jpeg,image/png,.jpg,.jpeg,.png"
+                      multiple={doc.maxCount > 1}
+                      onChange={(e) => {
+                        handleFileChange(doc, e.target.files);
+                        e.target.value = ''; // => allow re-selecting the same filename later
+                      }}
+                    />
+                    <label
+                      htmlFor={`upload-${doc.key}`}
+                      className={`shs2-file-label ${docErrors[doc.key] ? 'shs2-file-label--error' : ''}`}
+                    >
+                      <i className="ti ti-upload shs2-file-icon" />
+                      <span>
+                        {selectedFiles.length > 0
+                          ? `Add file (${doc.maxCount - selectedFiles.length} remaining)`
+                          : `Click to upload file${doc.maxCount > 1 ? 's' : ''}`}
+                      </span>
+                    </label>
+                  </>
+                )}
+              </div>
 
-            {docErrors[doc.key] && (
-              <span className="shs2-file-error">
-                {docTypeErrors[doc.key]
-                  ? 'Only JPG and PNG files are allowed.'
-                  : doc.multiple ? `Please upload exactly ${doc.exactCount} photos.` : 'This document is required.'}
-              </span>
-            )}
-          </div>
-        ))}
+              <p className="shs2-upload-desc">
+                {doc.maxCount > 1
+                  ? `You may upload up to ${doc.maxCount} files.`
+                  : '1 file needed.'}
+                {!doc.required && ' Optional - only needed if applicable.'}
+              </p>
+
+              {docErrors[doc.key] && (
+                <span className="shs2-file-error">
+                  {docTypeErrors[doc.key]
+                    ? 'Only JPG and PNG files are allowed.'
+                    : `Please upload at least 1 file${doc.maxCount > 1 ? ` (up to ${doc.maxCount})` : ''}.`}
+                </span>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {/* => Error banner */}
