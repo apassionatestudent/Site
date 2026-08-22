@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import axiosStudent from '../../../utils/axiosStudent.js';
 import './setPassword.css';
 
@@ -7,6 +8,17 @@ import EyeIcon from '../../../assets/icons/eye.png';
 import EyeOffIcon from '../../../assets/icons/eye-off.png';
 import SuccessIcon from '../../../assets/icons/success.png';
 import WarningIcon from '../../../assets/icons/warning.png';
+import CheckIcon from '../../../assets/icons/checkmark.png';
+import CircleIcon from '../../../assets/icons/circle.png';
+
+// => Same 4 rules enforced server-side in passwordTokenService.js -
+// => keep both lists in sync if the rule set ever changes
+const PASSWORD_RULES = [
+  { label: 'At least 8 characters', test: (v) => v.length >= 8 },
+  { label: 'One uppercase letter', test: (v) => /[A-Z]/.test(v) },
+  { label: 'One number', test: (v) => /[0-9]/.test(v) },
+  { label: 'One special character', test: (v) => /[^A-Za-z0-9]/.test(v) },
+];
 
 export default function SetPassword() {
   const [searchParams] = useSearchParams();
@@ -17,8 +29,10 @@ export default function SetPassword() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(null);
   const [isDone, setIsDone] = useState(false);
+
+  const allRulesMet = PASSWORD_RULES.every(rule => rule.test(password));
+  const passwordsMatch = password && password === confirmPassword;
 
   // => No token in the URL at all - nothing to submit, show the error
   // => state immediately without ever calling the backend
@@ -26,15 +40,15 @@ export default function SetPassword() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(null);
 
-    // => Mirrors the 8-character minimum enforced server-side in setPassword
-    if (password.length < 8) {
-      setError('Password must be at least 8 characters long.');
+    // => Mirrors the full rule set enforced server-side in
+    // => passwordTokenService.js validatePasswordStrength
+    if (!allRulesMet) {
+      toast.error('Password does not meet the requirements below.');
       return;
     }
-    if (password !== confirmPassword) {
-      setError('Passwords do not match.');
+    if (!passwordsMatch) {
+      toast.error('Passwords do not match.');
       return;
     }
 
@@ -45,7 +59,7 @@ export default function SetPassword() {
     } catch (err) {
       // => Backend returns 'invalid or expired' here if the 10-minute
       // => window already passed or the link was already used
-      setError(err.response?.data?.message || 'Something went wrong. Please try again.');
+      toast.error(err.response?.data?.message || 'Something went wrong. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -113,7 +127,22 @@ export default function SetPassword() {
                 />
               </button>
             </div>
-            <span className="setpass-hint">At least 8 characters.</span>
+            {/* => Live checklist, ticks off each rule in real time as the student types */}
+            <ul className="setpass-password-rules">
+              {PASSWORD_RULES.map(rule => {
+                const met = rule.test(password);
+                return (
+                  <li key={rule.label} className={met ? 'setpass-rule-met' : ''}>
+                    <img
+                      src={met ? CheckIcon : CircleIcon}
+                      alt=""
+                      className="setpass-rule-icon"
+                    />
+                    {rule.label}
+                  </li>
+                );
+              })}
+            </ul>
           </div>
 
           <div className="setpass-field-group">
@@ -140,8 +169,6 @@ export default function SetPassword() {
               </button>
             </div>
           </div>
-
-          {error && <p className="setpass-error">{error}</p>}
 
           <button type="submit" className="setpass-submit" disabled={isLoading}>
             {isLoading ? 'Setting Password...' : 'Set Password'}

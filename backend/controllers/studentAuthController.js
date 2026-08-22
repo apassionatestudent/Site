@@ -39,42 +39,6 @@ const generateStudentToken = (student) => {
     );
 };
 
-// => POST /api/student-auth/register
-export const registerStudent = async (req, res) => {
-    const { username, password } = req.body;
-
-    if (!username || !password) {
-        return res.status(400).json({ message: 'Please provide a username (email) and password' });
-    }
-
-    try {
-        // => Check if a student with this email already exists
-        const existing = await Student.findByUsername(username);
-        if (existing) {
-            return res.status(400).json({ message: 'A student with this email already exists' });
-        }
-
-        // => Hash the password before storing
-        // => 12 salt rounds: more secure than 10, still performant
-        const password_hash = await bcrypt.hash(password, 12);
-
-        // => Create the new student
-        const student = await Student.create(username, password_hash);
-        if (!student) {
-            return res.status(500).json({ message: 'Failed to create student account' });
-        }
-
-        const token = generateStudentToken(student);
-        res.cookie('token', token, cookieOptions);
-
-        return res.status(201).json({ student });
-
-    } catch (error) {
-        console.error('Student registration error:', error);
-        return res.status(500).json({ message: 'Server error' });
-    }
-};
-
 // => POST /api/student-auth/login
 export const loginStudent = async (req, res) => {
     const { username, password, rememberMe } = req.body;

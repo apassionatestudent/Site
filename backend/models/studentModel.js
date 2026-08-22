@@ -38,16 +38,6 @@ export const Student = {
         return result.rows[0] || null;
     },
 
-    // => Create a new student account
-    create: async (username, password_hash) => {
-        const result = await sql`
-            INSERT INTO student_accounts (username, password_hash)
-            VALUES (${username}, ${password_hash})
-            RETURNING student_id, public_id, username, is_active, created_at
-        `;
-        return result.rows[0] || null;
-    },
-
     // => Update last_login_at on every successful login
     updateLastLogin: async (student_id) => {
         await sql`

@@ -36,11 +36,12 @@ export const csrfProtection = (req, res, next) => {
         return next();
     }
 
-    // => Register/login/logout are exempt - no token can exist yet for
-    // => register/login (this is where one gets issued), and logout is
-    // => protected instead by invalidating the token server-side
+    // => Login/logout are exempt - no token can exist yet for login (this
+    // => is where one gets issued), and logout is protected instead by
+    // => invalidating the token server-side. register removed - dead
+    // => route, accounts are only ever created via the enrollment-then-
+    // => invite-link flow, never direct registration
     const exemptRoutes = [
-        '/api/student-auth/register',
         '/api/student-auth/login',
         '/api/student-auth/logout',
         '/api/student-auth/forgot-password',
