@@ -17,6 +17,10 @@ import { Student } from '../models/studentModel.js';
 import { sendEmail } from '../utils/sendEmail.js';
 import { passwordSetupTemplate, passwordResetTemplate } from '../utils/emailTemplates.js';
 
+// => for the password update audit trail below
+import { ACTIVITY_ACTIONS } from '../constants/activityActions.js';
+import { logActivity } from './Logs/logsService.js';
+
 // => 10 minutes for both purposes - matches the InformationModal's mockup
 // => copy for 'setup'. 'reset' wasn't separately confirmed, so it's using
 // => the same value for now; easy to split later since it's one constant.
@@ -80,6 +84,37 @@ export const consumePasswordToken = async ({ rawToken, newPassword }) => {
   const passwordHash = await bcrypt.hash(newPassword, 12);
   await Student.setPassword(tokenRow.student_id, passwordHash);
   await markTokenUsed(tokenRow.token_id);
+
+  // => Audit trail for the actual password update. This is the missing half
+  // => of the flow, only the reset email being sent was logged before, never
+  // => whether the password was actually changed. Logged regardless of who
+  // => submitted the form, since the whole point is having a timestamp on
+  // => record either way, the account owner or a bad actor racing them to it.
+  // => Wrapped in its own try/catch (not left to logActivity's internal
+  // => swallow) so a name lookup failure here can never block or roll back
+  // => the password change itself, which has already succeeded above.
+  try {
+    const nameRow = await Student.findNameById(tokenRow.student_id);
+    const studentRow = await Student.findById(tokenRow.student_id);
+    const actorName = nameRow
+      ? [nameRow.first_name, nameRow.last_name].filter(Boolean).join(' ')
+      : studentRow?.username;
+
+    // => purpose distinguishes first-time setup from an actual reset of an
+    // => existing password, both log the same action but with a different
+    // => actionDetail so the admin log view can tell them apart at a glance
+    await logActivity({
+      actorType: 'Student',
+      actorId: tokenRow.student_id,
+      actorName,
+      action: ACTIVITY_ACTIONS.PASSWORD_CHANGE,
+      actionDetail: tokenRow.purpose === 'reset'
+        ? 'Password reset via forgot password link'
+        : 'Password set via account setup link',
+    });
+  } catch (err) {
+    console.error('Failed to log password change activity:', err);
+  }
 
   return tokenRow.student_id;
 };
