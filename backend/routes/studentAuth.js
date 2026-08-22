@@ -1,12 +1,13 @@
 import express from 'express';
-import { registerStudent, loginStudent, logoutStudent, getMe, requestPasswordReset, setPassword } from '../controllers/studentAuthController.js';
+import { loginStudent, logoutStudent, getMe, requestPasswordReset, setPassword } from '../controllers/studentAuthController.js';
 import { protectStudent } from '../middleware/studentAuth.js';
 import { authLimiter, readLimiter, floodLimiter } from '../middleware/rateLimiters.js';
 
 const studentAuthRouter = express.Router();
 
 // => Public routes: no token required
-studentAuthRouter.post('/register', authLimiter, registerStudent);
+// => registerStudent removed - dead code, accounts are only ever created
+// => via the enrollment-then-invite-link flow, never direct registration
 studentAuthRouter.post('/login', authLimiter, loginStudent);
 studentAuthRouter.post('/logout', logoutStudent);
 
