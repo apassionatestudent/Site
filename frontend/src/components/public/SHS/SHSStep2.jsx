@@ -6,6 +6,10 @@ import './SHSStep2.css';
 import rejectedIcon from '../../../assets/icons/rejected.png';
 
 import Info from '../../Info.jsx';
+// => reuses the existing shs_course scoped chatbot, same one already
+// => used on SHSCourseDetail, adjust the relative path below if this
+// => file sits at a different depth under src/
+import ChatbotWidget from '../../../components/public/ChatbotWidget/chatbotWidget.jsx';
 
 // => Academic Track removed - Prime Academy only offers the Technical
 // => Professional Track per the SY 2026-2027 flyer, so the track choice
@@ -156,6 +160,19 @@ const SHSStep2 = ({ data, onChange, documents, onDocumentsChange, onBack, onNext
   // => True once we've actually checked and confirmed there's nothing open -
   // => used to decide whether "no batch selected" is valid (Reserve) or an error
   const noBatchesAvailable = batchesFetched && shsBatches.length === 0;
+
+  // => Picks the course used for chatbot lookup. SHS clusters bundle 2+
+  // => courses, but chatbot config is course_id based (same pattern
+  // => already used by shs_course scope on SHSCourseDetail). Anchors on
+  // => the first Grade 11 course in the cluster since that is the year
+  // => the student is actually enrolling into right now, Grade 12
+  // => entries are future curriculum. Falls back to the first course
+  // => overall if none is tagged Grade 11, so this never returns null.
+  const getChatbotAnchorCourseId = (clusterId) => {
+    const courses = clusterCourses[clusterId] || [];
+    const grade11Course = courses.find((c) => c.grade_level === 'Grade 11');
+    return grade11Course?.course_id || courses[0]?.course_id || null;
+  };
 
   const clearError = (field) => {
     setFieldErrors(prev => ({ ...prev, [field]: false }));
@@ -359,6 +376,12 @@ const SHSStep2 = ({ data, onChange, documents, onDocumentsChange, onBack, onNext
           )}
         </div>
       </div>
+
+      {/* => only mounts once a cluster is picked, since there is nothing
+             to anchor the chatbot lookup to before that */}
+      {data.cluster && (
+        <ChatbotWidget scope="shs_course" courseId={getChatbotAnchorCourseId(data.cluster)} />
+      )}
 
       <div className="shs2-field-group">
         <label className="shs2-label">
