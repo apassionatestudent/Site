@@ -15,9 +15,15 @@ import ThemeToggle from '../../../components/ThemeToggle.jsx';
 // => errorIcon reused from Enrollment.jsx's existing assets, still needed
 // => for the rate-limit state's icon below
 import errorIcon    from '../../../assets/icons/warning.png';
-// => NEW IMPORT NEEDED: lock.png doesn't exist yet in assets/icons - add
-// => an actual lock icon asset here, never a text/emoji substitute
 import lockIcon     from '../../../assets/icons/lock.png';
+// => Reused from setPassword.jsx's same checklist pattern - checkmark.png
+// => should already exist on the student side from that page, circle.png
+// => needs to be added if it isn't already there
+import checkIcon    from '../../../assets/icons/checkmark.png';
+import circleIcon   from '../../../assets/icons/circle.png';
+// => Same eye/eye-off pair setPassword.jsx already uses on the student side
+import eyeIcon      from '../../../assets/icons/eye.png';
+import eyeOffIcon   from '../../../assets/icons/eye-off.png';
 
 // => NCR has no province level in PSGC - same constant TESDAStep1.jsx uses
 const NCR_REGION_CODE = '1300000000';
@@ -57,6 +63,16 @@ const toProperCase = (value) => {
     .replace(/(^\w|(?<=[\s\-\/#.,])\w)/g, (c) => c.toUpperCase());
 };
 
+// => Same 4 rules enforced server-side in accountServices.js
+// => validatePasswordStrength - keep both lists in sync if the rule set
+// => ever changes
+const PASSWORD_RULES = [
+  { label: 'At least 8 characters', test: (v) => v.length >= 8 },
+  { label: 'One uppercase letter', test: (v) => /[A-Z]/.test(v) },
+  { label: 'One number', test: (v) => /[0-9]/.test(v) },
+  { label: 'One special character', test: (v) => /[^A-Za-z0-9]/.test(v) },
+];
+
 const Account = () => {
   // => Page-level fetch state - mirrors Enrollment.jsx's loading/error/rate-limit pattern
   const [loading, setLoading] = useState(true);
@@ -88,6 +104,15 @@ const Account = () => {
     currentPassword: '', newPassword: '', confirmPassword: '',
   });
   const [savingPassword, setSavingPassword] = useState(false);
+
+  // => Independent toggle per field - showing New Password shouldn't
+  // => reveal Current or Confirm at the same time
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const passwordRulesMet = PASSWORD_RULES.every(rule => rule.test(passwordForm.newPassword));
+  const newPasswordsMatch = passwordForm.newPassword && passwordForm.newPassword === passwordForm.confirmPassword;
 
   // => Address cascade state - same shape as TESDAStep1.jsx's addr* state
   const [regions, setRegions] = useState([]);
@@ -282,7 +307,13 @@ const Account = () => {
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
 
-    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+    // => Mirrors the full rule set enforced server-side in
+    // => accountServices.js validatePasswordStrength
+    if (!passwordRulesMet) {
+      toast.error('New password does not meet the requirements below.');
+      return;
+    }
+    if (!newPasswordsMatch) {
       toast.error('New password and confirmation do not match.');
       return;
     }
@@ -619,37 +650,95 @@ const Account = () => {
           <div className="acct-grid acct-g3">
             <div className="acct-field-group">
               <label className="acct-label">Current Password <span className="acct-req">*</span></label>
-              <input
-                type="password"
-                className="acct-input"
-                value={passwordForm.currentPassword}
-                onChange={(e) => setPasswordForm(prev => ({ ...prev, currentPassword: e.target.value }))}
-                required
-              />
+              <div className="acct-password-wrapper">
+                <input
+                  type={showCurrentPassword ? 'text' : 'password'}
+                  className="acct-input"
+                  value={passwordForm.currentPassword}
+                  onChange={(e) => setPasswordForm(prev => ({ ...prev, currentPassword: e.target.value }))}
+                  required
+                />
+                <button
+                  type="button"
+                  className="acct-password-toggle"
+                  onClick={() => setShowCurrentPassword(prev => !prev)}
+                  tabIndex={-1}
+                >
+                  <img
+                    src={showCurrentPassword ? eyeOffIcon : eyeIcon}
+                    alt={showCurrentPassword ? 'Hide password' : 'Show password'}
+                    className="acct-password-icon"
+                  />
+                </button>
+              </div>
             </div>
 
             <div className="acct-field-group">
               <label className="acct-label">New Password <span className="acct-req">*</span></label>
-              <input
-                type="password"
-                className="acct-input"
-                minLength={8}
-                value={passwordForm.newPassword}
-                onChange={(e) => setPasswordForm(prev => ({ ...prev, newPassword: e.target.value }))}
-                required
-              />
+              <div className="acct-password-wrapper">
+                <input
+                  type={showNewPassword ? 'text' : 'password'}
+                  className="acct-input"
+                  minLength={8}
+                  value={passwordForm.newPassword}
+                  onChange={(e) => setPasswordForm(prev => ({ ...prev, newPassword: e.target.value }))}
+                  required
+                />
+                <button
+                  type="button"
+                  className="acct-password-toggle"
+                  onClick={() => setShowNewPassword(prev => !prev)}
+                  tabIndex={-1}
+                >
+                  <img
+                    src={showNewPassword ? eyeOffIcon : eyeIcon}
+                    alt={showNewPassword ? 'Hide password' : 'Show password'}
+                    className="acct-password-icon"
+                  />
+                </button>
+              </div>
+              {/* => Live checklist, ticks off each rule in real time as the student types */}
+              <ul className="acct-password-rules">
+                {PASSWORD_RULES.map(rule => {
+                  const met = rule.test(passwordForm.newPassword);
+                  return (
+                    <li key={rule.label} className={met ? 'acct-rule-met' : ''}>
+                      <img
+                        src={met ? checkIcon : circleIcon}
+                        alt=""
+                        className="acct-rule-icon"
+                      />
+                      {rule.label}
+                    </li>
+                  );
+                })}
+              </ul>
             </div>
 
             <div className="acct-field-group">
               <label className="acct-label">Confirm New Password <span className="acct-req">*</span></label>
-              <input
-                type="password"
-                className="acct-input"
-                minLength={8}
-                value={passwordForm.confirmPassword}
-                onChange={(e) => setPasswordForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                required
-              />
+              <div className="acct-password-wrapper">
+                <input
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  className="acct-input"
+                  minLength={8}
+                  value={passwordForm.confirmPassword}
+                  onChange={(e) => setPasswordForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                  required
+                />
+                <button
+                  type="button"
+                  className="acct-password-toggle"
+                  onClick={() => setShowConfirmPassword(prev => !prev)}
+                  tabIndex={-1}
+                >
+                  <img
+                    src={showConfirmPassword ? eyeOffIcon : eyeIcon}
+                    alt={showConfirmPassword ? 'Hide password' : 'Show password'}
+                    className="acct-password-icon"
+                  />
+                </button>
+              </div>
             </div>
           </div>
 

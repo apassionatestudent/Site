@@ -21,6 +21,17 @@ import { logActivity } from '../Logs/logsService.js';
 import { buildFieldDiff, formatDiffDetail } from '../../utils/buildFieldDiff.js';
 import { buildAddressDiff } from '../../utils/resolveAddressNames.js';
 
+// => Same 4 rules enforced everywhere else a student/admin sets a password
+// => (passwordTokenService.js, staffInviteService.js). This is the real
+// => gate, keep it in sync if the rule set ever changes.
+const validatePasswordStrength = (value) => {
+  if (!value || value.length < 8) return 'Password must be at least 8 characters';
+  if (!/[A-Z]/.test(value)) return 'Password must include at least one uppercase letter';
+  if (!/[0-9]/.test(value)) return 'Password must include at least one number';
+  if (!/[^A-Za-z0-9]/.test(value)) return 'Password must include at least one special character';
+  return null;
+};
+
 // GET ACCOUNT
 export const getStudentAccount = async (studentId) => {
   return await getAccountByStudentId(pool, studentId);
@@ -144,10 +155,9 @@ export const changeStudentPassword = async (studentId, { currentPassword, newPas
   if (newPassword !== confirmPassword) {
     throw Object.assign(new Error('New password and confirmation do not match.'), { statusCode: 400 });
   }
-  // => Basic minimum length guard - tighten here later (uppercase/number/
-  //    symbol requirements) if needed, kept simple for now
-  if (newPassword.length < 8) {
-    throw Object.assign(new Error('New password must be at least 8 characters.'), { statusCode: 400 });
+  const passwordError = validatePasswordStrength(newPassword);
+  if (passwordError) {
+    throw Object.assign(new Error(passwordError), { statusCode: 400 });
   }
 
   const currentHash = await getPasswordHashByStudentId(pool, studentId);
