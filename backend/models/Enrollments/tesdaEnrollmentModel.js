@@ -123,3 +123,61 @@ export const insertEnrollmentDocuments = async (client, { enrollmentId, docs }) 
     );
   }
 };
+
+
+// GET COURSE SECTOR + FEE (for re-enrollment)
+// => Authoritative source for fee_at_enrollment and the same-sector check -
+// => never trust a client-supplied course fee or sector value
+export const getCourseSectorAndFee = async (client, courseId) => {
+  const result = await client.query(
+    `SELECT sector_id, amount, deleted_at
+     FROM tesda_courses
+     WHERE course_id = $1`,
+    [courseId]
+  );
+  return result.rows[0] || null;
+};
+
+// GET MOST RECENT TESDA ENROLLMENT (for re-enrollment carryover)
+// => Used by processTesdaReEnrollmentSubmission to carry over NCAE and
+// => Scholarship answers, since the re-enrollment modal doesn't ask
+// => these questions again. Returns null if the student has never had a
+// => TESDA enrollment before (first-ever TESDA enrollment via cross mode).
+export const getMostRecentTesdaEnrollmentData = async (client, studentId) => {
+  const result = await client.query(
+    `SELECT enrollment_id, ncae_taken, ncae_where, ncae_when,
+            is_tesda_scholar, scholarship_type, other_scholarship
+     FROM tesda_enrollments
+     WHERE student_id = $1
+     ORDER BY submitted_at DESC
+     LIMIT 1`,
+    [studentId]
+  );
+  return result.rows[0] || null;
+};
+
+// GET CLASSIFICATIONS FOR AN ENROLLMENT (for re-enrollment carryover)
+export const getClientClassificationsByEnrollmentId = async (client, enrollmentId) => {
+  const result = await client.query(
+    `SELECT classification_value, others_text
+     FROM tesda_client_classifications
+     WHERE enrollment_id = $1`,
+    [enrollmentId]
+  );
+  return result.rows;
+};
+
+// INSERT CLASSIFICATIONS CARRIED OVER FROM A PRIOR ENROLLMENT
+// => Same target table as insertClientClassifications above, but takes
+// => fully formed rows (each with its own others_text already resolved)
+// => instead of a flat array + one shared othersText, since carried-over
+// => rows already know their own others_text from the prior enrollment
+export const insertCarriedOverClassifications = async (client, { enrollmentId, rows }) => {
+  for (const row of rows) {
+    await client.query(
+      `INSERT INTO tesda_client_classifications (enrollment_id, classification_value, others_text)
+       VALUES ($1, $2, $3)`,
+      [enrollmentId, row.classification_value, row.others_text]
+    );
+  }
+};
