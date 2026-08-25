@@ -8,6 +8,7 @@ import {
   insertStudentAccount,
   insertStudentProfile,
   insertStudentAddress,
+  getDuplicateStudentAccount,
 } from '../../models/Enrollments/sharedEnrollmentModel.js';
 
 import {
@@ -42,6 +43,23 @@ export const processShsEnrollmentSubmission = async (body, files) => {
   // => guard in processTesdaEnrollmentSubmission
   if (!body.email || !body.email.trim()) {
     throw Object.assign(new Error('Email address is required.'), { statusCode: 400 });
+  }
+
+  // => Duplicate enrollment guard - same reasoning as TESDA's guard in
+  // => processTesdaEnrollmentSubmission. This path always creates a brand
+  // => new student_accounts row, so a matching email or facebook_link
+  // => would otherwise slip through (email raw-crashes the DB, facebook
+  // => link has no constraint backing it at all).
+  const duplicateAccount = await getDuplicateStudentAccount(pool, {
+    email: body.email.trim(),
+    facebookLink: (body.facebookLink || '').trim(),
+  });
+  if (duplicateAccount) {
+    const fieldLabel = duplicateAccount.matched_field === 'email' ? 'email address' : 'Facebook link';
+    throw Object.assign(
+      new Error(`An account with this ${fieldLabel} already exists. Please log in and use the Re-enroll option instead.`),
+      { statusCode: 400 }
+    );
   }
 
   // => Guards mirroring the DB CHECK constraints on shs_enrollments -

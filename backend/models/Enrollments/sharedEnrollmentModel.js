@@ -29,6 +29,35 @@ export const insertStudentAccount = async (client, { email }) => {
   return result.rows[0].student_id;
 };
 
+// CHECK EMAIL OR FACEBOOK LINK ALREADY REGISTERED
+// => username in student_accounts IS the email - same column the unique
+// => constraint students_username_key protects. facebook_link lives in
+// => student_profile instead and has NO unique constraint at the DB
+// => level, so that half of this check is purely an application-level
+// => rule, not something Postgres would ever catch on its own.
+// => Checked before insertStudentAccount runs so a duplicate surfaces as
+// => a clean 400 message instead of a raw 500 from the DB constraint
+// => violation (email case only - facebook_link was never going to throw
+// => one in the first place).
+// => matched_field tells the caller which one collided, so the error
+// => message shown to the student can be specific instead of vague.
+export const getDuplicateStudentAccount = async (client, { email, facebookLink }) => {
+  const result = await client.query(
+    `SELECT sa.student_id,
+            CASE
+              WHEN LOWER(sa.username) = LOWER($1) THEN 'email'
+              ELSE 'facebook'
+            END AS matched_field
+     FROM student_accounts sa
+     JOIN student_profile sp ON sp.student_id = sa.student_id
+     WHERE LOWER(sa.username) = LOWER($1)
+        OR LOWER(sp.facebook_link) = LOWER($2)
+     LIMIT 1`,
+    [email, facebookLink]
+  );
+  return result.rows[0] || null;
+};
+
 // GET STUDENT NAME BY ID
 // => Used for activity log actorName on re-enrollment submissions. Unlike
 // => first-time enrollment, body.firstName/lastName aren't sent since the
