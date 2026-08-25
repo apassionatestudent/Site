@@ -16,7 +16,7 @@ import {
   insertStudentGuardian,
 } from '../../models/Enrollments/sharedEnrollmentModel.js';
 
-import { getStudentNameById } from '../../models/Enrollments/sharedEnrollmentModel.js';
+import { getStudentNameById, getDuplicateStudentAccount } from '../../models/Enrollments/sharedEnrollmentModel.js';
 import { getEnrollmentEligibility } from './enrollmentEligibilityService.js';
 
 import {
@@ -66,6 +66,25 @@ export const processTesdaEnrollmentSubmission = async (body, files) => {
   // => this clean validation message.
   if (!body.email || !body.email.trim()) {
     throw Object.assign(new Error('Email address is required.'), { statusCode: 400 });
+  }
+
+  // => Duplicate enrollment guard - this path always creates a brand new
+  // => student_accounts row, so a matching email would otherwise hit the
+  // => students_username_key unique constraint and surface as a raw 500.
+  // => facebook_link has no DB constraint backing it, so that half of
+  // => the check is purely an application-level rule. Checked with the
+  // => plain pool (no transaction open yet) so it fails fast before any
+  // => R2 uploads happen.
+  const duplicateAccount = await getDuplicateStudentAccount(pool, {
+    email: body.email.trim(),
+    facebookLink: (body.facebookLink || '').trim(),
+  });
+  if (duplicateAccount) {
+    const fieldLabel = duplicateAccount.matched_field === 'email' ? 'email address' : 'Facebook link';
+    throw Object.assign(
+      new Error(`An account with this ${fieldLabel} already exists. Please log in and use the Re-enroll option instead.`),
+      { statusCode: 400 }
+    );
   }
 
   // => Authoritative source of what this course actually requires right

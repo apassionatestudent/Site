@@ -45,7 +45,7 @@ const MONTHS = [
 ];
 
 // => Age gate: student must be at least 12, no older than 100.
-const MIN_AGE = 12;
+const MIN_AGE = 15; // => Raised from 12 to 15 per updated enrollment policy
 const MAX_AGE = 100;
 
 // => Capitalizes the first letter of each word
