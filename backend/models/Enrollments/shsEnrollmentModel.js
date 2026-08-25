@@ -17,6 +17,28 @@ export const findClusterNameById = async (client, clusterId) => {
   return result.rows[0]?.name || null;
 };
 
+
+// GET MOST RECENT SHS ENROLLMENT (for re-enrollment carryover)
+// => Pulls the academic history, emergency contact, health info, and LRN
+// => that the re-enrollment modal doesn't ask for again. lrn lives on
+// => shs_enrollments itself, not the shared student_profile table, so it
+// => needs to be carried over the same way. Returns null if the student
+// => has never had an SHS enrollment before.
+export const getMostRecentShsEnrollmentData = async (client, studentId) => {
+  const result = await client.query(
+    `SELECT lrn, last_school_attended, school_address, grade_level_completed,
+            school_year_completed, electives,
+            emergency_name, emergency_relationship, emergency_contact_no, emergency_address,
+            has_medical_condition, medical_condition_detail, allergies, maintenance_medication
+     FROM shs_enrollments
+     WHERE student_id = $1
+     ORDER BY submitted_at DESC
+     LIMIT 1`,
+    [studentId]
+  );
+  return result.rows[0] || null;
+};
+
 // => Core SHS enrollment transaction record - academic history, track/
 // => cluster, emergency contact, and health info all live here (Step 2 + 3
 // => fields that AREN'T identity/address/family, which live in the shared

@@ -238,6 +238,54 @@
   border: 1px solid rgba(59, 130, 246, 0.3);
 }
 
+
+/*  FLOATING ACTION BUTTON
+    => Fixed bottom-right, matches SupportTickets.css's .stk-fab pattern  */
+
+.enroll-fab {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #22c55e;
+  color: #fff;
+  border: none;
+  font-size: 1.75rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transition: background 0.18s ease, transform 0.18s ease;
+}
+
+.enroll-fab:hover {
+  background: #16a34a;
+  transform: translateY(-2px);
+}
+
+/* => Responsive: stacks above the hamburger toggle, same offsets as
+   => SupportTickets.css's .stk-fab */
+@media (max-width: 768px) {
+  .enroll-fab {
+    bottom: 110px;
+    right: 20px;
+    z-index: 40;
+  }
+
+  @media (max-height: 500px) {
+    .enroll-fab {
+      width: 48px;
+      height: 48px;
+      bottom: 68px;
+      right: 12px;
+    }
+  }
+}
+
 /*  RWD  */
 
 /* => Responsive: tablet */

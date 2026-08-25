@@ -16,10 +16,17 @@ import {
   insertStudentGuardian,
 } from '../../models/Enrollments/sharedEnrollmentModel.js';
 
+import { getStudentNameById } from '../../models/Enrollments/sharedEnrollmentModel.js';
+import { getEnrollmentEligibility } from './enrollmentEligibilityService.js';
+
 import {
   insertTesdaEnrollment,
   insertClientClassifications,
   insertEnrollmentDocuments,
+  getCourseSectorAndFee,
+  getMostRecentTesdaEnrollmentData,
+  getClientClassificationsByEnrollmentId,
+  insertCarriedOverClassifications,
 } from '../../models/Enrollments/tesdaEnrollmentModel.js';
 
 // => Reused straight from the public enrollment form's own requirements
@@ -228,6 +235,187 @@ export const processTesdaEnrollmentSubmission = async (body, files) => {
     throw err;
   } finally {
     // => Always release back to the pool whether it succeeded or failed
+    client.release();
+  }
+};
+
+
+// => POST /api/enrollment/re-enroll/tesda
+// => Re-enrollment for an EXISTING student picking up another TESDA
+// => course. Unlike processTesdaEnrollmentSubmission, this never touches
+// => student_accounts / student_profile / student_address / student_guardian -
+// => those already exist for this student_id. NCAE, Scholarship, and
+// => Client Classification answers aren't re-asked by AddEnrollmentModal.jsx,
+// => so they're carried over from the student's most recent TESDA
+// => enrollment instead (see getMostRecentTesdaEnrollmentData).
+export const processTesdaReEnrollmentSubmission = async (studentId, body, files) => {
+  if (!body.courseId) {
+    throw Object.assign(new Error('Course selection is required.'), { statusCode: 400 });
+  }
+  if (!body.batchId) {
+    throw Object.assign(new Error('Batch selection is required.'), { statusCode: 400 });
+  }
+
+  // => Re-verify eligibility server-side - the frontend's eligibility prop
+  // => is a UI convenience only, never a security boundary. A direct API
+  // => call could otherwise bypass the cross-program lock or same-sector
+  // => restriction entirely.
+  const eligibility = await getEnrollmentEligibility(studentId);
+  if (!eligibility.canEnrollTESDA) {
+    throw Object.assign(new Error('You are not currently eligible to enroll in a new TESDA course.'), { statusCode: 400 });
+  }
+
+  // => Authoritative course lookup - sector_id for the same-sector check,
+  // => amount for fee_at_enrollment. Never trust a client-supplied fee.
+  const course = await getCourseSectorAndFee(pool, body.courseId);
+  if (!course || course.deleted_at) {
+    throw Object.assign(new Error('Selected course was not found.'), { statusCode: 400 });
+  }
+  if (eligibility.tesdaMode === 'same-sector' && !eligibility.eligibleSectorIds.includes(course.sector_id)) {
+    throw Object.assign(new Error('Selected course is outside your currently eligible sector.'), { statusCode: 400 });
+  }
+
+  // => Defense in depth - the frontend already filters this course out of
+  // => the dropdown, but a direct API call could otherwise bypass that
+  // => and re-enroll into a course the student already has an active
+  // => (including Reserved) enrollment in
+  if (eligibility.activeCourseIds.map(String).includes(String(body.courseId))) {
+    throw Object.assign(new Error('You already have an active enrollment in this course.'), { statusCode: 400 });
+  }
+
+  // => Authoritative source of what this course actually requires right
+  // => now - never trusts any client-supplied requirement list.
+  // => Mirrors processTesdaEnrollmentSubmission's validation block exactly,
+  // => duplicated here on purpose per this project's no-shared-abstraction convention.
+  const courseRequirements = await getRequirementsByCourseId(body.courseId);
+
+  const requirementsById = new Map(
+    courseRequirements.map(r => [String(r.requirement_id), r])
+  );
+
+  const filesByRequirementId = new Map();
+  for (const file of files || []) {
+    const match = /^req_(\d+)$/.exec(file.fieldname);
+    if (!match) {
+      console.warn(`Skipping upload for unrecognized field: ${file.fieldname}`);
+      continue;
+    }
+
+    const requirementId = match[1];
+
+    if (!requirementsById.has(requirementId)) {
+      throw Object.assign(
+        new Error("One of the submitted documents no longer matches this course's requirements. Please refresh and try again."),
+        { statusCode: 400 }
+      );
+    }
+
+    if (!filesByRequirementId.has(requirementId)) {
+      filesByRequirementId.set(requirementId, []);
+    }
+    filesByRequirementId.get(requirementId).push(file);
+  }
+
+  for (const [requirementId, fileGroup] of filesByRequirementId) {
+    const requirement = requirementsById.get(requirementId);
+    if (fileGroup.length > requirement.max_files) {
+      throw Object.assign(
+        new Error(`You can upload up to ${requirement.max_files} file(s) for "${requirement.document_type}".`),
+        { statusCode: 400 }
+      );
+    }
+  }
+
+  for (const requirement of courseRequirements) {
+    if (requirement.is_required && !filesByRequirementId.has(String(requirement.requirement_id))) {
+      throw Object.assign(
+        new Error(`"${requirement.document_type}" is required.`),
+        { statusCode: 400 }
+      );
+    }
+  }
+
+  // => Upload to R2 before the transaction - same reasoning as
+  // => processTesdaEnrollmentSubmission: orphaned R2 files on a failed
+  // => DB transaction are an acceptable tradeoff
+  const docs = [];
+  for (const [requirementId, fileGroup] of filesByRequirementId) {
+    const requirement = requirementsById.get(requirementId);
+
+    for (const file of fileGroup) {
+      const ext = EXTENSION_BY_MIME[file.mimetype] || 'jpg';
+      const key = `primeenroll/student-docs/req_${requirementId}_${Date.now()}_${docs.length}.${ext}`;
+      const uploadedKey = await uploadToR2(file.buffer, key, file.mimetype);
+      docs.push({ type: requirement.document_type, key: uploadedKey });
+    }
+  }
+
+  const client = await pool.connect();
+
+  try {
+    await client.query('BEGIN');
+
+    // => Carry over NCAE, Scholarship, and Classification answers from
+    // => this student's most recent TESDA enrollment, per your direction -
+    // => 'no'/null defaults only apply if no prior TESDA enrollment exists
+    const priorEnrollment = await getMostRecentTesdaEnrollmentData(client, studentId);
+
+    const ncaeData = {
+      takenBefore: priorEnrollment?.ncae_taken ? 'yes' : 'no',
+      where: priorEnrollment?.ncae_where || null,
+      when: priorEnrollment?.ncae_when || null,
+    };
+
+    const scholarshipData = {
+      isScholar: priorEnrollment?.is_tesda_scholar ? 'yes' : 'no',
+      scholarshipType: priorEnrollment?.scholarship_type || null,
+      otherScholarship: priorEnrollment?.other_scholarship || null,
+    };
+
+    const { enrollmentId, status, reservedReason } = await insertTesdaEnrollment(client, {
+      studentId,
+      courseData: {
+        course: body.courseId,
+        courseClass: body.batchId,
+        courseFee: course.amount,
+      },
+      ncaeData,
+      scholarshipData,
+    });
+
+    // => Classification rows carried over with their own others_text
+    // => intact, not collapsed under one shared value like a fresh submission
+    if (priorEnrollment) {
+      const priorClassifications = await getClientClassificationsByEnrollmentId(client, priorEnrollment.enrollment_id);
+      if (priorClassifications.length > 0) {
+        await insertCarriedOverClassifications(client, { enrollmentId, rows: priorClassifications });
+      }
+    }
+
+    await insertEnrollmentDocuments(client, { enrollmentId, docs });
+
+    await client.query('COMMIT');
+
+    // => No password setup email here - unlike processTesdaEnrollmentSubmission,
+    // => this is an existing student with an existing account already set up
+
+    const studentName = await getStudentNameById(pool, studentId);
+    await logActivity({
+      entityType: 'tesda_enrollment',
+      entityId: enrollmentId,
+      actorType: 'Student',
+      actorId: studentId,
+      actorName: studentName ? `${studentName.first_name} ${studentName.last_name}` : 'Student',
+      action: ACTIVITY_ACTIONS.CREATE,
+      actionDetail: `Submitted TESDA re-enrollment application, status: ${status}`,
+    });
+
+    return { enrollmentId, status, reservedReason };
+
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
     client.release();
   }
 };

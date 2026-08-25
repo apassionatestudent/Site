@@ -15,11 +15,15 @@ import {
   insertShsFamilyMembers,
   insertShsDocuments,
   findClusterNameById,
+  getMostRecentShsEnrollmentData,
 } from '../../models/Enrollments/shsEnrollmentModel.js';
 
 import { issuePasswordToken } from '../passwordTokenService.js';
 import { logActivity } from '../Logs/logsService.js';
 import { ACTIVITY_ACTIONS } from '../../constants/activityActions.js';
+
+import { getStudentNameById } from '../../models/Enrollments/sharedEnrollmentModel.js';
+import { getEnrollmentEligibility } from './enrollmentEligibilityService.js';
 
 export const processShsEnrollmentSubmission = async (body, files) => {
   // => Parse the JSON blobs sent via FormData - same pattern as processTesdaEnrollmentSubmission
@@ -175,6 +179,143 @@ export const processShsEnrollmentSubmission = async (body, files) => {
 
   } catch (err) {
     // => Any failure rolls back ALL inserts - no partial records ever persist
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
+};
+
+// => POST /api/enrollment/re-enroll/shs
+// => Re-enrollment for an EXISTING student picking up SHS. Skips
+// => student_accounts / student_profile / student_address entirely, and
+// => intentionally skips insertShsFamilyMembers too - shs_family_members
+// => is keyed by student_id with UNIQUE(student_id, role), not per-enrollment,
+// => so those rows already exist from the student's first submission and
+// => calling insertShsFamilyMembers again would violate that constraint.
+// => Academic history, emergency contact, and health info aren't re-asked
+// => by AddEnrollmentModal.jsx either, so they're carried over from the
+// => student's most recent SHS enrollment (see getMostRecentShsEnrollmentData).
+export const processShsReEnrollmentSubmission = async (studentId, body, files) => {
+  if (!body.clusterId) {
+    throw Object.assign(new Error('Cluster selection is required.'), { statusCode: 400 });
+  }
+
+  // => Re-verify eligibility server-side - same reasoning as the TESDA
+  // => re-enrollment flow, the frontend eligibility prop is UI-only
+  const eligibility = await getEnrollmentEligibility(studentId);
+  if (!eligibility.canEnrollSHS) {
+    throw Object.assign(new Error('You are not currently eligible to enroll in SHS.'), { statusCode: 400 });
+  }
+
+  // => Same upload helpers as processShsEnrollmentSubmission, duplicated
+  // => on purpose per this project's no-shared-abstraction convention
+  const uploadFile = async (fileArray, fieldName) => {
+    if (!fileArray?.[0]) return null;
+    const file = fileArray[0];
+    const ext = file.mimetype === 'image/png' ? 'png' : 'jpg';
+    const key = `primeenroll/shs-docs/${fieldName}_${Date.now()}.${ext}`;
+    return await uploadToR2(file.buffer, key, file.mimetype);
+  };
+
+  const uploadFiles = async (fileArray, fieldName) => {
+    if (!fileArray?.length) return [];
+    return Promise.all(fileArray.map(async (file, index) => {
+      const ext = file.mimetype === 'image/png' ? 'png' : 'jpg';
+      const key = `primeenroll/shs-docs/${fieldName}_${Date.now()}_${index}.${ext}`;
+      return await uploadToR2(file.buffer, key, file.mimetype);
+    }));
+  };
+
+  const psaBirthCertificateKey  = await uploadFile(files?.psaBirthCertificate,  'psaBirthCertificate');
+  const grade10ReportCardKeys   = await uploadFiles(files?.grade10ReportCard,   'grade10ReportCard');
+  const goodMoralCertificateKey = await uploadFile(files?.goodMoralCertificate, 'goodMoralCertificate');
+  const escCertificateKey       = await uploadFile(files?.escCertificate,       'escCertificate');
+
+  const docs = [
+    { type: 'PSA Birth Certificate',  key: psaBirthCertificateKey  },
+    ...grade10ReportCardKeys.map((key) => ({ type: 'Grade 10 Report Card', key })),
+    { type: 'Good Moral Certificate', key: goodMoralCertificateKey },
+    { type: 'ESC Certificate',        key: escCertificateKey       },
+  ].filter(d => d.key);
+
+  const client = await pool.connect();
+
+  try {
+    await client.query('BEGIN');
+
+    const clusterName = await findClusterNameById(client, body.clusterId);
+    if (!clusterName) {
+      throw Object.assign(new Error('Selected cluster was not found.'), { statusCode: 400 });
+    }
+
+    // => Carry over academic history, emergency contact, health info, and
+    // => LRN from this student's most recent SHS enrollment, per your
+    // => direction. These are NOT NULL on shs_enrollments, so a student
+    // => re-enrolling into SHS for the very first time (e.g. coming from a
+    // => cleared TESDA enrollment) has nothing to carry over - that case
+    // => is rejected explicitly below rather than silently inserting
+    // => NULLs into required columns.
+    const priorEnrollment = await getMostRecentShsEnrollmentData(client, studentId);
+    if (!priorEnrollment) {
+      throw Object.assign(
+        new Error('No prior SHS enrollment found to carry information over from. Please contact support to complete this enrollment.'),
+        { statusCode: 400 }
+      );
+    }
+
+    const academicData = {
+      lastSchoolAttended: priorEnrollment.last_school_attended,
+      schoolAddress: priorEnrollment.school_address,
+      gradeLevelCompleted: priorEnrollment.grade_level_completed,
+      schoolYearCompleted: priorEnrollment.school_year_completed,
+      electives: priorEnrollment.electives,
+      cluster: body.clusterId,
+      class: body.batchId || null,
+    };
+
+    const familyData = {
+      emergencyName: priorEnrollment.emergency_name,
+      emergencyRelationship: priorEnrollment.emergency_relationship,
+      emergencyContactNo: priorEnrollment.emergency_contact_no,
+      emergencyAddress: priorEnrollment.emergency_address,
+      hasMedicalCondition: priorEnrollment.has_medical_condition,
+      medicalConditionDetail: priorEnrollment.medical_condition_detail,
+      allergies: priorEnrollment.allergies,
+      maintenanceMedication: priorEnrollment.maintenance_medication,
+    };
+
+    const { enrollmentId, status, reservedReason } = await insertShsEnrollment(client, {
+      studentId,
+      body: { lrn: priorEnrollment.lrn },
+      academicData,
+      familyData,
+      clusterName,
+    });
+
+    // => insertShsFamilyMembers intentionally NOT called here - see the
+    // => note at the top of this function
+
+    await insertShsDocuments(client, { enrollmentId, docs });
+
+    await client.query('COMMIT');
+
+    // => No password setup email here - existing student, existing account
+
+    const studentName = await getStudentNameById(pool, studentId);
+    await logActivity({
+      entityType: 'shs_enrollment',
+      entityId: enrollmentId,
+      actorType: 'Student',
+      actorId: studentId,
+      actorName: studentName ? `${studentName.first_name} ${studentName.last_name}` : 'Student',
+      action: ACTIVITY_ACTIONS.CREATE,
+      actionDetail: `Submitted SHS re-enrollment application, status: ${status}`,
+    });
+
+    return { enrollmentId, status, reservedReason };
+
+  } catch (err) {
     await client.query('ROLLBACK');
     throw err;
   } finally {

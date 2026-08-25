@@ -6,6 +6,7 @@ import axiosStudent from '../../../utils/axiosStudent.js';
 import RateLimitNotice from '../../../components/RateLimitNotice.jsx';
 
 import LoadingState from '../../../components/private/LoadingState/loadingState.jsx';
+import AddEnrollmentModal from '../../../components/private/AddEnrollmentModal/addEnrollmentModal.jsx';
 
 // icons
 import errorIcon      from "../../../assets/icons/warning.png";
@@ -46,6 +47,11 @@ function Enrollment() {
   const [listError,   setListError]   = useState(null);
   const [rateLimitInfo, setRateLimitInfo] = useState(null); // => seconds remaining, null if not rate limited
 
+  // => Drives whether the "+" FAB renders and what the modal offers -
+  // => null while loading, so the FAB stays hidden until we actually know
+  const [eligibility, setEligibility] = useState(null);
+  const [showAddModal, setShowAddModal] = useState(false);
+
   // => Wrapped in useCallback so RateLimitNotice can call this exact same
   // => function again once its countdown finishes, instead of duplicating
   // => the fetch logic in a separate "retry" function.
@@ -72,10 +78,32 @@ function Enrollment() {
     }
   }, []);
 
-  // => Fetch the enrollment list on mount
+  // => Separate from fetchEnrollments/fetchListLoading on purpose - a
+  // => rate limit or failure on this call shouldn't block the list from
+  // => rendering, it should just keep the FAB hidden
+  const fetchEligibility = useCallback(async () => {
+    try {
+      const response = await axiosStudent.get('/enrollment/eligibility');
+      setEligibility(response.data.eligibility);
+    } catch (err) {
+      console.error('Failed to fetch enrollment eligibility:', err);
+      // => Fails closed - no FAB shown if we can't confirm eligibility
+      setEligibility(null);
+    }
+  }, []);
+
+  // => Fetch the enrollment list and eligibility on mount
   useEffect(() => {
     fetchEnrollments();
-  }, [fetchEnrollments]);
+    fetchEligibility();
+  }, [fetchEnrollments, fetchEligibility]);
+
+  // => Called by the modal after a successful submission, refetches both
+  // => so the list AND the FAB's eligibility reflect the new enrollment
+  const handleEnrollmentCreated = () => {
+    fetchEnrollments();
+    fetchEligibility();
+  };
 
   const handleCardClick = (enrollment) => {
     // => Route to the type-specific detail page - TESDA and SHS render
@@ -198,6 +226,27 @@ function Enrollment() {
             </li>
           ))}
         </ul>
+      )}
+
+      {/* => Fixed bottom-right FAB, only rendered once eligibility has
+          => loaded AND at least one program is currently enrollable */}
+      {eligibility && (eligibility.canEnrollTESDA || eligibility.canEnrollSHS) && (
+        <button
+          type="button"
+          className="enroll-fab"
+          onClick={() => setShowAddModal(true)}
+          aria-label="New Enrollment"
+        >
+          +
+        </button>
+      )}
+
+      {showAddModal && eligibility && (
+        <AddEnrollmentModal
+          eligibility={eligibility}
+          onClose={() => setShowAddModal(false)}
+          onCreated={handleEnrollmentCreated}
+        />
       )}
     </div>
   );

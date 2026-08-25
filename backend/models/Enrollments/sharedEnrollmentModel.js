@@ -29,6 +29,18 @@ export const insertStudentAccount = async (client, { email }) => {
   return result.rows[0].student_id;
 };
 
+// GET STUDENT NAME BY ID
+// => Used for activity log actorName on re-enrollment submissions. Unlike
+// => first-time enrollment, body.firstName/lastName aren't sent since the
+// => profile already exists, so the name is read back instead of re-typed
+export const getStudentNameById = async (client, studentId) => {
+  const result = await client.query(
+    `SELECT first_name, last_name FROM student_profile WHERE student_id = $1`,
+    [studentId]
+  );
+  return result.rows[0] || null;
+};
+
 // STUDENT PROFILE
 // => Anchored to student_id (not profile_id anymore)
 // => contact_no, facebook_link, email stored directly here

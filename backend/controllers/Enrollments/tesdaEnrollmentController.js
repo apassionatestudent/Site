@@ -1,8 +1,7 @@
 // => public/controllers/Enrollments/tesdaEnrollmentController.js
 // => Split out of the old enrollmentController.js - TESDA-only submission endpoint
 
-import { processTesdaEnrollmentSubmission } from '../../services/Enrollments/tesdaEnrollmentService.js';
-
+import { processTesdaEnrollmentSubmission, processTesdaReEnrollmentSubmission } from '../../services/Enrollments/tesdaEnrollmentService.js';
 // => POST /api/enrollment/submit
 // => Renamed from submitEnrollment to submitTesdaEnrollment - internal
 //    rename only, the route path itself is unchanged
@@ -30,6 +29,31 @@ export const submitTesdaEnrollment = async (req, res) => {
     // => Validation errors (statusCode 400) get their real message shown -
     // => genuine server/DB errors stay generic so internals aren't leaked.
     // => Mirrors submitShsEnrollment's existing pattern.
+    const statusCode = err.statusCode || 500;
+    res.status(statusCode).json({
+      success: false,
+      message: statusCode === 400 ? err.message : 'Enrollment submission failed. Please try again.',
+    });
+  }
+};
+
+
+// => POST /api/enrollment/re-enroll/tesda
+// => student_id comes from req.student (set by protectStudent middleware),
+// => never from the request body, so a student can never re-enroll on
+// => someone else's behalf
+export const submitTesdaReEnrollment = async (req, res) => {
+  try {
+    const result = await processTesdaReEnrollmentSubmission(req.student.student_id, req.body, req.files);
+    res.status(201).json({
+      success: true,
+      message: 'Enrollment submitted successfully.',
+      enrollment_id: result.enrollmentId,
+      status: result.status,
+      reserved_reason: result.reservedReason,
+    });
+  } catch (err) {
+    console.error('TESDA re-enrollment submission error:', err);
     const statusCode = err.statusCode || 500;
     res.status(statusCode).json({
       success: false,
