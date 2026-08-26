@@ -769,15 +769,6 @@ async function initDB () {
     `;
 
     await sql`
-      -- => enrollment_requirements holds the general required doc types (e.g. PSA, Valid ID)
-      -- => Wired up but not yet used in services - reserved for admin configuration of required docs per course
-      CREATE TABLE IF NOT EXISTS enrollment_requirements (
-        enrollment_requirement_id SERIAL       PRIMARY KEY,
-        enrollment_requirement    VARCHAR(255) NOT NULL
-      )
-    `;
-
-    await sql`
       -- => tesda_documents (renamed from enrollment_documents): Step 5 file uploads
       -- => document_key stores the R2 object key (e.g. primeenroll/student-docs/birthCert_123.jpg)
       -- => Never stores a public URL - the proxy route resolves the key on demand
@@ -1005,19 +996,6 @@ async function initDB () {
         is_original     BOOLEAN      NOT NULL DEFAULT TRUE,
         -- => fixed typo: was "IMESTAMPTZ" (missing leading T)
         uploaded_at     TIMESTAMPTZ  NOT NULL DEFAULT NOW()
-      )
-    `;
-
-    await sql`
-      -- => student_docs: student-level documents (not tied to a specific enrollment)
-      -- => Same pattern as enrollment_documents but scoped to the student account
-      CREATE TABLE IF NOT EXISTS student_docs (
-        document_id      SERIAL       PRIMARY KEY,
-        student_id       BIGINT       NOT NULL REFERENCES student_accounts(student_id) ON DELETE CASCADE,
-        public_id        UUID         NOT NULL DEFAULT gen_random_uuid() UNIQUE,
-        document_type    VARCHAR(100) NOT NULL,
-        document_key     TEXT         NOT NULL,
-        uploaded_at      TIMESTAMPTZ  NOT NULL DEFAULT NOW()
       )
     `;
 
