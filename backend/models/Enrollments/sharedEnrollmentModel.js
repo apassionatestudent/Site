@@ -282,7 +282,6 @@ export const getEnrollmentByPublicId = async (pool, publicId, studentId) => {
           c.expiration_date,
           c.amount                  AS course_amount,
           c.hours                   AS course_hours,
-          c.cover_image_url,
           job_opps.jobs              AS job_opportunities,
           NULL::VARCHAR(150)        AS cluster_name,
           NULL::JSON                AS cluster_courses
@@ -341,7 +340,6 @@ export const getEnrollmentByPublicId = async (pool, publicId, studentId) => {
           NULL::DATE                AS expiration_date,
           NULL::NUMERIC(10,2)       AS course_amount,
           NULL::INT                 AS course_hours,
-          NULL::TEXT                AS cover_image_url,
           NULL::JSON                AS job_opportunities,
           -- => resolved cluster display name + BOTH Grade 11 and Grade 12
           -- => course rows for whichever cluster the student enrolled in
@@ -363,7 +361,6 @@ export const getEnrollmentByPublicId = async (pool, publicId, studentId) => {
               'title',             sc.title,
               'grade_level',       sc.grade_level,
               'description',       sc.description,
-              'cover_image_url',   sc.cover_image_url,
               'course_link',       sc.course_link,
               'status',            sc.status,
               'job_opportunities', (

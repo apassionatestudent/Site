@@ -33,7 +33,6 @@ export async function findPublicShsCourseByTitle(title) {
       sc.course_id,
       sc.title,
       sc.description,
-      sc.cover_image_url,
       sc.course_link,
       sc.grade_level,
       cl.cluster_id,

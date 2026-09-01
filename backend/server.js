@@ -381,8 +381,6 @@ async function initDB () {
         -- => Required training hours set by TESDA
         hours            INT            NOT NULL,
 
-        -- => Reserved for future use
-        cover_image_url  TEXT,
 
         -- => Controls public visibility and enrollment availability
         status           VARCHAR(10)    NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'inactive')),
@@ -882,7 +880,6 @@ async function initDB () {
         cluster_id       INT          NOT NULL REFERENCES shs_clusters(cluster_id) ON DELETE RESTRICT,
         title            VARCHAR(255) NOT NULL,
         description      TEXT,
-        cover_image_url  TEXT,
 
         -- => grade_level: a cluster is a fixed 2-year curriculum, not a
         -- => course the student picks between - every course row is tagged

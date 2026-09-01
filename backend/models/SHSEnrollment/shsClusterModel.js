@@ -17,7 +17,7 @@ export const findAllClusters = async () => {
 // => Active courses belonging to one cluster, tagged by grade level
 export const findCoursesByClusterId = async (clusterId) => {
   const result = await sql`
-    SELECT course_id, title, description, cover_image_url, grade_level, course_link
+    SELECT course_id, title, description, grade_level, course_link
     FROM shs_courses
     WHERE cluster_id = ${clusterId}
       AND status = 'active'
