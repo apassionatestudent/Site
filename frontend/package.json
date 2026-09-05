@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "axios": "^1.16.1",
+    "browserslist": "^4.28.9",
     "dompurify": "^3.4.13",
     "launch-editor": "^2.14.1",
     "react": "^19.2.5",
