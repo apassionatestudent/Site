@@ -67,12 +67,14 @@ export const getOpenBatchesByCourseId = async (courseId) => {
       WHERE te.batch_id = cb.batch_id
     ) counts ON true
     WHERE cb.course_id = ${courseId}
-      AND cb.status IN ('Pending', 'Ongoing')
+      -- => Only Pending batches are open for new enrollment. Ongoing
+      -- => batches are already in progress and should not appear as a
+      -- => selectable option on the public enrollment form.
+      AND cb.status = 'Pending'
       -- => Approved-full blocks regardless of pool room
       AND COALESCE(counts.approved_count, 0) < cb.max_students
       -- => Pool-full blocks even if no one's Approved yet
       AND COALESCE(counts.applicant_count, 0) < cb.max_applicants
-      -- TODO: confirm whether enrollment into Ongoing batches should be allowed
     ORDER BY cb.start_date ASC
   `;
   return result.rows;

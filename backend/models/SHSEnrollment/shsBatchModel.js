@@ -32,7 +32,11 @@ export const findOpenBatchesByClusterId = async (clusterId) => {
       WHERE se.batch_id = sb.batch_id
     ) counts ON true
     WHERE sb.cluster_id = ${clusterId}
-      AND sb.status IN ('Pending', 'Ongoing')
+      -- => Only Pending batches are open for new enrollment, same rule
+      -- => as tesdaBatchModel.js's getOpenBatchesByCourseId. Ongoing
+      -- => batches are already in progress and should not appear as a
+      -- => selectable option on the public enrollment form.
+      AND sb.status = 'Pending'
       AND COALESCE(counts.approved_count, 0) < sb.max_students
       AND COALESCE(counts.applicant_count, 0) < sb.max_applicants
     ORDER BY sb.batch_sequence ASC
