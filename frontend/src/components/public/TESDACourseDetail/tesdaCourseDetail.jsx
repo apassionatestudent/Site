@@ -33,6 +33,13 @@ export default function TESDACourseDetail() {
       .finally(() => setLoading(false));
   }, [title]);
 
+  // => Formats the raw numeric amount into a peso-prefixed, comma-separated string
+  // => Falls back to "N/A" when amount is null/undefined, e.g. course not yet priced
+  const formatFee = (amount) => {
+    if (amount === null || amount === undefined) return 'N/A';
+    return `\u20b1${Number(amount).toLocaleString('en-PH', { maximumFractionDigits: 0 })}`;
+  };
+
   if (loading) {
     // => Swapped the bare <p> for the shared spinner used across the public site
     return <main className="tesda-course-detail"><LoadingState message="Loading course..." /></main>;
@@ -59,7 +66,7 @@ export default function TESDACourseDetail() {
         </span>
         <h1>{course.title}</h1>
         <p className="tesda-course-meta">
-          <img src={clockIcon} alt="" className="tesda-course-icon" /> {course.hours} hours &nbsp;|&nbsp; Sector: {course.sector || 'N/A'}
+          <img src={clockIcon} alt="" className="tesda-course-icon" /> {course.hours} hours &nbsp;|&nbsp; Sector: {course.sector || 'N/A'} &nbsp;|&nbsp; Fee: {formatFee(course.amount)}
         </p>
         <p className="tesda-course-desc">{course.description}</p>
       </section>
