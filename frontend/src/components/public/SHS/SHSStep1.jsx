@@ -442,6 +442,7 @@ const SHSStep1 = ({ data, onChange, onNext }) => {
           <input
             type="text"
             className={`shs1-input ${fieldErrors.lastName ? 'shs1-input--error' : ''}`}
+            placeholder="e.g. Dela Cruz"
             value={data.lastName}
             onChange={(e) => { applyProperCase(e, 'lastName', onChange); clearError('lastName'); }}
           />
@@ -451,6 +452,7 @@ const SHSStep1 = ({ data, onChange, onNext }) => {
           <input
             type="text"
             className={`shs1-input ${fieldErrors.firstName ? 'shs1-input--error' : ''}`}
+            placeholder="e.g. Juan"
             value={data.firstName}
             onChange={(e) => { applyProperCase(e, 'firstName', onChange); clearError('firstName'); }}
           />
@@ -460,6 +462,7 @@ const SHSStep1 = ({ data, onChange, onNext }) => {
           <input
             type="text"
             className="shs1-input"
+            placeholder="e.g. Santos"
             value={data.middleName}
             onChange={(e) => applyProperCase(e, 'middleName', onChange)}
           />
@@ -501,7 +504,8 @@ const SHSStep1 = ({ data, onChange, onNext }) => {
           </div>
         </div>
         <div className="shs1-field-group">
-          <label className="shs1-label">Month <span className="shs1-req">*</span></label>
+          {/* => relabeled from "Month" - clearer when this field sits next to Sex and Age in the same row */}
+          <label className="shs1-label">Birth Month <span className="shs1-req">*</span></label>
           <select
             className={`shs1-select ${fieldErrors.birthMonth ? 'shs1-input--error' : ''}`}
             value={data.birthMonth}
@@ -512,7 +516,8 @@ const SHSStep1 = ({ data, onChange, onNext }) => {
           </select>
         </div>
         <div className="shs1-field-group">
-          <label className="shs1-label">Day <span className="shs1-req">*</span></label>
+          {/* => relabeled from "Day" for the same reason as Birth Month above */}
+          <label className="shs1-label">Birth Day <span className="shs1-req">*</span></label>
           <select
             className={`shs1-select ${fieldErrors.birthDay ? 'shs1-input--error' : ''}`}
             value={data.birthDay}
@@ -523,7 +528,8 @@ const SHSStep1 = ({ data, onChange, onNext }) => {
           </select>
         </div>
         <div className="shs1-field-group">
-          <label className="shs1-label">Year <span className="shs1-req">*</span></label>
+          {/* => relabeled from "Year" for the same reason as Birth Month above */}
+          <label className="shs1-label">Birth Year <span className="shs1-req">*</span></label>
           <select
             className={`shs1-select ${fieldErrors.birthYear ? 'shs1-input--error' : ''}`}
             value={data.birthYear}
