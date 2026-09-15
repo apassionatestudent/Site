@@ -56,6 +56,17 @@ const SHSStep3 = ({
 
   const [privacyErrors, setPrivacyErrors] = useState({ agreed: false });
 
+  // => Live format-validation errors for optional contact numbers - separate
+  // => from fieldErrors since these fields are optional (only checked for
+  // => format when something is actually typed in, not for being empty)
+  const [fatherContactError, setFatherContactError] = useState('');
+  const [motherContactError, setMotherContactError] = useState('');
+  const [guardianContactError, setGuardianContactError] = useState('');
+  // => Same idea for Emergency Contact, kept separate from fieldErrors.emergencyContactNo
+  // => (which only tracks "missing") so a format error shows red as you type,
+  // => not just after Submit
+  const [emergencyContactError, setEmergencyContactError] = useState('');
+
   const clearError = (field) => {
     setFieldErrors(prev => ({ ...prev, [field]: false }));
   };
@@ -154,16 +165,22 @@ const SHSStep3 = ({
             <label className="shs3-label">Contact Number</label>
             <input
               type="text"
-              className="shs3-input"
+              className={`shs3-input ${fatherContactError ? 'shs3-input--error' : ''}`}
               maxLength={11}
               placeholder="09XXXXXXXXX"
               value={data.fatherContactNo}
               onChange={(e) => {
                 const raw = e.target.value.replace(/\D/g, '').slice(0, 11);
                 onChange('fatherContactNo', raw);
+                // => live-validates as the person types, mirrors the pattern used for
+                // => Contact Number in SHSStep1
+                setFatherContactError(validateMobile(raw) || '');
               }}
             />
-            <span className="shs3-field-hint">Must start with 09 and be exactly 11 digits.</span>
+            {fatherContactError
+              ? <span className="shs3-field-error">{fatherContactError}</span>
+              : <span className="shs3-field-hint">Must start with 09 and be exactly 11 digits.</span>
+            }
           </div>
         </div>
 
@@ -190,16 +207,20 @@ const SHSStep3 = ({
             <label className="shs3-label">Contact Number</label>
             <input
               type="text"
-              className="shs3-input"
+              className={`shs3-input ${motherContactError ? 'shs3-input--error' : ''}`}
               maxLength={11}
               placeholder="09XXXXXXXXX"
               value={data.motherContactNo}
               onChange={(e) => {
                 const raw = e.target.value.replace(/\D/g, '').slice(0, 11);
                 onChange('motherContactNo', raw);
+                setMotherContactError(validateMobile(raw) || '');
               }}
             />
-            <span className="shs3-field-hint">Must start with 09 and be exactly 11 digits.</span>
+            {motherContactError
+              ? <span className="shs3-field-error">{motherContactError}</span>
+              : <span className="shs3-field-hint">Must start with 09 and be exactly 11 digits.</span>
+            }
           </div>
         </div>
       </div>
@@ -236,16 +257,20 @@ const SHSStep3 = ({
           <label className="shs3-label">Contact Number</label>
           <input
             type="text"
-            className="shs3-input"
+            className={`shs3-input ${guardianContactError ? 'shs3-input--error' : ''}`}
             maxLength={11}
             placeholder="09XXXXXXXXX"
             value={data.guardianContactNo}
             onChange={(e) => {
               const raw = e.target.value.replace(/\D/g, '').slice(0, 11);
               onChange('guardianContactNo', raw);
+              setGuardianContactError(validateMobile(raw) || '');
             }}
           />
-          <span className="shs3-field-hint">Must start with 09 and be exactly 11 digits.</span>
+          {guardianContactError
+            ? <span className="shs3-field-error">{guardianContactError}</span>
+            : <span className="shs3-field-hint">Must start with 09 and be exactly 11 digits.</span>
+          }
         </div>
       </div>
 
@@ -274,6 +299,9 @@ const SHSStep3 = ({
               clearError('emergencyName');
               clearError('emergencyRelationship');
               clearError('emergencyContactNo');
+              // => re-checks format against the copied-in value, so a stale red
+              // => state from manual typing doesn't linger after a quick-fill
+              setEmergencyContactError(validateMobile(data.fatherContactNo) || '');
             }}
           >
             Same as Father
@@ -290,6 +318,7 @@ const SHSStep3 = ({
               clearError('emergencyName');
               clearError('emergencyRelationship');
               clearError('emergencyContactNo');
+              setEmergencyContactError(validateMobile(data.motherContactNo) || '');
             }}
           >
             Same as Mother
@@ -306,6 +335,7 @@ const SHSStep3 = ({
               clearError('emergencyName');
               clearError('emergencyRelationship');
               clearError('emergencyContactNo');
+              setEmergencyContactError(validateMobile(data.guardianContactNo) || '');
             }}
           >
             Same as Guardian
@@ -318,6 +348,8 @@ const SHSStep3 = ({
               onChange('emergencyName', '');
               onChange('emergencyRelationship', '');
               onChange('emergencyContactNo', '');
+              // => clears out any leftover red state from before, since the field is now blank
+              setEmergencyContactError('');
             }}
           >
             Someone Else
@@ -354,16 +386,23 @@ const SHSStep3 = ({
           <label className="shs3-label">Contact Number <span className="shs3-req">*</span></label>
           <input
             type="text"
-            className={`shs3-input ${fieldErrors.emergencyContactNo ? 'shs3-input--error' : ''}`}
+            className={`shs3-input ${(fieldErrors.emergencyContactNo || emergencyContactError) ? 'shs3-input--error' : ''}`}
             maxLength={11}
             placeholder="09XXXXXXXXX"
             value={data.emergencyContactNo}
             onChange={(e) => {
-              onChange('emergencyContactNo', e.target.value.replace(/\D/g, '').slice(0, 11));
+              const raw = e.target.value.replace(/\D/g, '').slice(0, 11);
+              onChange('emergencyContactNo', raw);
               clearError('emergencyContactNo');
+              // => re-checks format on every keystroke instead of just clearing the
+              // => red state outright, so an invalid number stays flagged red
+              setEmergencyContactError(validateMobile(raw) || '');
             }}
           />
-          <span className="shs3-field-hint">Must start with 09 and be exactly 11 digits.</span>
+          {emergencyContactError
+            ? <span className="shs3-field-error">{emergencyContactError}</span>
+            : <span className="shs3-field-hint">Must start with 09 and be exactly 11 digits.</span>
+          }
         </div>
         <div className="shs3-field-group">
           <label className="shs3-label">Address <span className="shs3-req">*</span></label>
