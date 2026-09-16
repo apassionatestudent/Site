@@ -55,9 +55,15 @@ export const processShsEnrollmentSubmission = async (body, files) => {
     facebookLink: (body.facebookLink || '').trim(),
   });
   if (duplicateAccount) {
-    const fieldLabel = duplicateAccount.matched_field === 'email' ? 'email address' : 'Facebook link';
+    // => Field-level specificity intentionally dropped from the message -
+    // => telling the caller exactly WHICH field matched (email vs
+    // => Facebook link) would let someone confirm a specific Facebook
+    // => profile is tied to an existing account here, without ever
+    // => logging in. matched_field is still logged server-side only,
+    // => for support/debugging, never sent back to the client.
+    console.warn(`SHS duplicate enrollment attempt blocked (matched: ${duplicateAccount.matched_field}).`);
     throw Object.assign(
-      new Error(`An account with this ${fieldLabel} already exists. Please log in and use the Re-enroll option instead.`),
+      new Error('An account with matching details already exists. Please log in and use the Re-enroll option instead.'),
       { statusCode: 400 }
     );
   }
@@ -67,6 +73,13 @@ export const processShsEnrollmentSubmission = async (body, files) => {
   // => instead of letting a raw Postgres constraint-violation reach the client
   if (!['none', 'yes'].includes(familyData.hasMedicalCondition)) {
     throw Object.assign(new Error('Medical condition status is required.'), { statusCode: 400 });
+  }
+
+  // => Grade Level Completed is readOnly on the frontend, locked to
+  // => 'Grade 10', but that's a UI convenience, not a security boundary -
+  // => a direct API call could still send anything else
+  if (academicData.gradeLevelCompleted !== 'Grade 10') {
+    throw Object.assign(new Error('Grade Level Completed must be Grade 10.'), { statusCode: 400 });
   }
 
   // => academicData.cluster is now a cluster_id (SHSStep2.jsx fetches
