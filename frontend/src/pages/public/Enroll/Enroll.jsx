@@ -165,7 +165,10 @@ const [shsProfile, setShsProfile] = useState({
 const [shsAcademic, setShsAcademic] = useState({
   lastSchoolAttended: '',
   schoolAddress: '',
-  gradeLevelCompleted: '',
+  // => Locked to Grade 10 since SHS enrollment always follows JHS
+  // => completion, shown as a readOnly field in SHSStep2, never
+  // => editable by the student
+  gradeLevelCompleted: 'Grade 10',
   schoolYearCompleted: '',
   // => Academic Track removed from the UI - only Technical Professional
   // => Track is offered per the SY 2026-2027 flyer. Hardcoded here rather

@@ -928,7 +928,9 @@ async function initDB () {
         -- => Academic Information
         last_school_attended      VARCHAR(150)   NOT NULL,
         school_address             TEXT          NOT NULL,
-        grade_level_completed      VARCHAR(30)   NOT NULL,
+        -- => Locked to 'Grade 10' since SHS enrollment always follows JHS
+        -- => completion, mirrors the guard in shsEnrollmentService.js
+        grade_level_completed      VARCHAR(30)   NOT NULL CHECK (grade_level_completed = 'Grade 10'),
         school_year_completed      VARCHAR(20)   NOT NULL,
 
         -- => Strengthened SHS Enrollment Details

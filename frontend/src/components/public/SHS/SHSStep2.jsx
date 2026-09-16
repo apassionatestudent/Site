@@ -66,6 +66,30 @@ const REQUIRED_DOCUMENTS = [
 const ALLOWED_FILE_TYPES = ['image/jpeg', 'image/png'];
 const isValidFileType = (file) => ALLOWED_FILE_TYPES.includes(file.type);
 
+// => Builds the School Year Completed dropdown, from SY 2016-2017 (when
+// => Strengthened SHS started) up to the most recently COMPLETED school
+// => year, newest first. PH school years run roughly June to March/April,
+// => so before June the year that started the previous June hasn't
+// => finished yet and is excluded, only fully completed years belong here.
+const getSchoolYearOptions = () => {
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth(); // => 0 = Jan ... 5 = June
+
+  // => End year of the most recently completed school year
+  const lastCompletedEndYear = currentMonth >= 5 ? currentYear : currentYear - 1;
+
+  const years = [];
+  for (let endYear = lastCompletedEndYear; endYear >= 2017; endYear--) {
+    years.push(`${endYear - 1}-${endYear}`);
+  }
+  return years;
+};
+
+// => Computed once at module load, not per render, since the list only
+// => changes once a year and doesn't depend on any component state
+const SCHOOL_YEAR_OPTIONS = getSchoolYearOptions();
+
 const SHSStep2 = ({ data, onChange, documents, onDocumentsChange, onBack, onNext }) => {
 
   const [showErrors, setShowErrors] = useState(false);
@@ -287,6 +311,7 @@ const SHSStep2 = ({ data, onChange, documents, onDocumentsChange, onBack, onNext
           className={`shs2-input ${fieldErrors.lastSchoolAttended ? 'shs2-input--error' : ''}`}
           value={data.lastSchoolAttended}
           onChange={(e) => { applyProperCase(e, 'lastSchoolAttended', onChange); clearError('lastSchoolAttended'); }}
+          placeholder="e.g. Cebu City National Science High School"
         />
       </div>
 
@@ -304,23 +329,34 @@ const SHSStep2 = ({ data, onChange, documents, onDocumentsChange, onBack, onNext
       <div className="shs2-grid shs2-g2">
         <div className="shs2-field-group">
           <label className="shs2-label">Grade Level Completed <span className="shs2-req">*</span></label>
+          {/* => readOnly, not disabled, so this stays keyboard-focusable
+               and screen-reader announced per WCAG 2.1 Level A. A
+               student can't enroll into SHS without finishing Grade 10,
+               so this is locked instead of left open to typos like
+               "Grade 8". Prefilled from Enroll.jsx's shsAcademic default. */}
           <input
             type="text"
-            className={`shs2-input ${fieldErrors.gradeLevelCompleted ? 'shs2-input--error' : ''}`}
-            placeholder="e.g. Grade 10"
+            className="shs2-input shs2-input--readonly"
             value={data.gradeLevelCompleted}
-            onChange={(e) => { applyProperCase(e, 'gradeLevelCompleted', onChange); clearError('gradeLevelCompleted'); }}
+            readOnly
           />
         </div>
         <div className="shs2-field-group">
           <label className="shs2-label">School Year Completed <span className="shs2-req">*</span></label>
-          <input
-            type="text"
-            className={`shs2-input ${fieldErrors.schoolYearCompleted ? 'shs2-input--error' : ''}`}
-            placeholder="e.g. 2025-2026"
+          {/* => Dropdown instead of free text, options generated from
+               SY 2016-2017 (when Strengthened SHS started) up to the most
+               recently completed year, newest first, see
+               getSchoolYearOptions above */}
+          <select
+            className={`shs2-select ${fieldErrors.schoolYearCompleted ? 'shs2-input--error' : ''}`}
             value={data.schoolYearCompleted}
             onChange={(e) => { onChange('schoolYearCompleted', e.target.value); clearError('schoolYearCompleted'); }}
-          />
+          >
+            <option value="">Select school year</option>
+            {SCHOOL_YEAR_OPTIONS.map((sy) => (
+              <option key={sy} value={sy}>{sy}</option>
+            ))}
+          </select>
         </div>
       </div>
 

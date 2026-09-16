@@ -41,17 +41,38 @@ export const insertStudentAccount = async (client, { email }) => {
 // => one in the first place).
 // => matched_field tells the caller which one collided, so the error
 // => message shown to the student can be specific instead of vague.
+// => Facebook links rarely match byte-for-byte even when they point to the
+// => exact same profile - "facebook.com/juan", "https://www.facebook.com/juan/",
+// => and "https://web.facebook.com/juan" are all the same profile to a human
+// => but different strings to Postgres, and a stray copy-paste space breaks
+// => an exact match too. The regexp_replace chain below strips protocol,
+// => the www./web. subdomain, trailing slash(es), surrounding whitespace,
+// => and case before comparing, so a same-profile duplicate gets caught
+// => regardless of how it was typed. This is the actual fix for the bug
+// => where a matching Facebook link was slipping through as "new".
 export const getDuplicateStudentAccount = async (client, { email, facebookLink }) => {
   const result = await client.query(
     `SELECT sa.student_id,
             CASE
-              WHEN LOWER(sa.username) = LOWER($1) THEN 'email'
+              WHEN LOWER(TRIM(sa.username)) = LOWER(TRIM($1)) THEN 'email'
               ELSE 'facebook'
             END AS matched_field
      FROM student_accounts sa
      JOIN student_profile sp ON sp.student_id = sa.student_id
-     WHERE LOWER(sa.username) = LOWER($1)
-        OR LOWER(sp.facebook_link) = LOWER($2)
+     WHERE LOWER(TRIM(sa.username)) = LOWER(TRIM($1))
+        OR regexp_replace(
+             regexp_replace(
+               regexp_replace(LOWER(TRIM(sp.facebook_link)), '^https?://', ''),
+             '^(www\\.|web\\.)', ''),
+           '/+$', ''
+           )
+           =
+           regexp_replace(
+             regexp_replace(
+               regexp_replace(LOWER(TRIM($2)), '^https?://', ''),
+             '^(www\\.|web\\.)', ''),
+           '/+$', ''
+           )
      LIMIT 1`,
     [email, facebookLink]
   );
@@ -93,8 +114,10 @@ export const insertStudentProfile = async (client, { studentId, body }) => {
       body.middleName        || null,
       body.nameExtension     || body.suffix || null,
       body.contactNo,
-      body.facebookLink      || null,
-      body.email             || null,
+      // => trimmed before storage so stray copy-paste whitespace never
+      // => ends up baked into the stored value in the first place
+      body.facebookLink?.trim() || null,
+      body.email?.trim()        || null,
       body.nationality       || body.citizenship || null,
       body.sex,
       body.civilStatus       || null,

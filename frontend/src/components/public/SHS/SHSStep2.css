@@ -82,6 +82,15 @@
   box-shadow: 0 0 0 3px rgba(192, 57, 43, 0.12);
 }
 
+/* => Locked Grade Level Completed field, same visual language as
+     shs1-input--readonly in SHSStep1.css, duplicated here since each
+     page owns its own CSS per the project's duplication policy */
+.shs2-input--readonly {
+  background: var(--bg-secondary);
+  cursor: default;
+  color: var(--text-secondary);
+}
+
 .shs2-select {
   height: 40px;
   border: 1px solid var(--enroll-field-border);

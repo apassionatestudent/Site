@@ -80,9 +80,15 @@ export const processTesdaEnrollmentSubmission = async (body, files) => {
     facebookLink: (body.facebookLink || '').trim(),
   });
   if (duplicateAccount) {
-    const fieldLabel = duplicateAccount.matched_field === 'email' ? 'email address' : 'Facebook link';
+    // => Field-level specificity intentionally dropped from the message -
+    // => telling the caller exactly WHICH field matched (email vs
+    // => Facebook link) would let someone confirm a specific Facebook
+    // => profile is tied to an existing account here, without ever
+    // => logging in. matched_field is still logged server-side only,
+    // => for support/debugging, never sent back to the client.
+    console.warn(`TESDA duplicate enrollment attempt blocked (matched: ${duplicateAccount.matched_field}).`);
     throw Object.assign(
-      new Error(`An account with this ${fieldLabel} already exists. Please log in and use the Re-enroll option instead.`),
+      new Error('An account with matching details already exists. Please log in and use the Re-enroll option instead.'),
       { statusCode: 400 }
     );
   }
